@@ -1,0 +1,309 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101827">
+<title>G.E.I360 | Gestão Empresarial</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg:#101827;
+  --panel:#192538;
+  --panel2:#213149;
+  --text:#f3f6fc;
+  --muted:#9eacc0;
+  --accent:#36c6a1;
+  --line:#304158;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Arial,sans-serif;
+  color:var(--text);
+  background:radial-gradient(circle at top right,#203c50,var(--bg) 55%);
+}
+header{
+  padding:22px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{
+  width:43px;height:43px;border-radius:13px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#36c6a1,#168b9c);
+  color:#071c25;font-weight:900;font-size:19px;
+}
+.brand strong{font-size:19px;letter-spacing:1px}
+.brand small{display:block;color:var(--muted);margin-top:4px}
+main{width:min(1050px,92%);margin:45px auto}
+.welcome{margin-bottom:25px}
+.welcome h1{font-size:30px;margin:0 0 9px}
+.welcome p{color:var(--muted);line-height:1.5}
+.layout{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:22px;
+}
+.card{
+  background:rgba(25,37,56,.96);
+  border:1px solid var(--line);
+  border-radius:19px;
+  padding:25px;
+  box-shadow:0 15px 45px #0003;
+}
+.card h2{margin:0 0 8px;font-size:21px}
+.description{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:22px}
+label{display:block;font-size:13px;color:#c7d2e1;margin:15px 0 7px}
+input{
+  width:100%;padding:14px;
+  background:#101b2b;border:1px solid var(--line);
+  border-radius:10px;color:white;font-size:15px;
+  outline:none;
+}
+input:focus{border-color:var(--accent)}
+button{
+  width:100%;padding:14px;margin-top:17px;
+  border:0;border-radius:10px;
+  background:var(--accent);color:#08251f;
+  font-weight:bold;font-size:15px;cursor:pointer;
+}
+button.secondary{background:var(--panel2);color:white}
+button:disabled{opacity:.5}
+.message{
+  display:none;margin-top:16px;padding:13px;
+  border-radius:10px;font-size:14px;line-height:1.5;
+  background:#203c3b;color:#b9f4df;
+  overflow-wrap:anywhere;
+}
+.message.error{background:#492b35;color:#ffd0d8}
+.hidden{display:none!important}
+.account{
+  margin-top:20px;padding:17px;
+  background:#101b2b;border-radius:12px;
+  color:var(--muted);font-size:14px;line-height:1.6;
+  overflow-wrap:anywhere;
+}
+footer{
+  text-align:center;color:#8291a6;
+  font-size:12px;padding:30px;
+}
+@media(max-width:700px){
+  .layout{grid-template-columns:1fr}
+  main{margin:30px auto}
+  .welcome h1{font-size:25px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">G</div>
+    <div>
+      <strong>G.E.I360</strong>
+      <small>Gestão Empresarial Integrada</small>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="welcome">
+    <h1>Gestão inteligente. Visão completa.</h1>
+    <p>Uma plataforma centralizada para organizar, controlar e acompanhar a operação da sua empresa.</p>
+  </section>
+
+  <section id="authArea" class="layout">
+    <div class="card">
+      <h2>Acessar sistema</h2>
+      <p class="description">Entre com seu e-mail e senha cadastrados.</p>
+
+      <label for="loginEmail">E-mail</label>
+      <input id="loginEmail" type="email" placeholder="seu@email.com">
+
+      <label for="loginPassword">Senha</label>
+      <input id="loginPassword" type="password" placeholder="Sua senha">
+
+      <button id="loginButton" onclick="login()">Entrar no sistema</button>
+      <div id="loginMessage" class="message"></div>
+    </div>
+
+    <div class="card">
+      <h2>Criar acesso</h2>
+      <p class="description">Cadastre seu usuário para começar a configurar sua empresa.</p>
+
+      <label for="registerName">Nome completo</label>
+      <input id="registerName" type="text" placeholder="Seu nome">
+
+      <label for="registerEmail">E-mail</label>
+      <input id="registerEmail" type="email" placeholder="seu@email.com">
+
+      <label for="registerPassword">Criar senha</label>
+      <input id="registerPassword" type="password" placeholder="Mínimo de 6 caracteres">
+
+      <button onclick="register()">Criar meu acesso</button>
+      <div id="registerMessage" class="message"></div>
+    </div>
+  </section>
+
+  <section id="companyArea" class="card hidden">
+    <h2>Configuração da empresa</h2>
+    <p class="description">Seu acesso está conectado. Agora informe os dados da empresa que será administrada no G.E.I360.</p>
+
+    <label for="companyName">Nome da empresa</label>
+    <input id="companyName" type="text" placeholder="Nome empresarial">
+
+    <label for="companyTax">CNPJ (opcional)</label>
+    <input id="companyTax" type="text" placeholder="00.000.000/0000-00">
+
+    <button id="companyButton" onclick="createCompany()">Cadastrar empresa</button>
+    <div id="companyMessage" class="message"></div>
+
+    <div class="account" id="accountInfo"></div>
+    <button class="secondary" onclick="logout()">Sair da conta</button>
+  </section>
+</main>
+
+<footer>G.E.I360 • Plataforma de Gestão Empresarial</footer>
+
+<script>
+const SUPABASE_URL = "https://mxikqdarqgatqoecfprg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_C1PaxcWAdb5rLfd0yJjl5g_ZUQKK7Dk";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+function showMessage(id, message, error=false) {
+  const box = document.getElementById(id);
+  box.textContent = message;
+  box.className = error ? "message error" : "message";
+  box.style.display = "block";
+}
+
+async function login() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+
+  if (!email || !password) {
+    return showMessage("loginMessage","Preencha o e-mail e a senha.",true);
+  }
+
+  const button = document.getElementById("loginButton");
+  button.disabled = true;
+  button.textContent = "Entrando...";
+
+  const { error } = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  button.disabled = false;
+  button.textContent = "Entrar no sistema";
+
+  if (error) {
+    return showMessage("loginMessage",error.message,true);
+  }
+
+  await updateScreen();
+}
+
+async function register() {
+  const name = document.getElementById("registerName").value.trim();
+  const email = document.getElementById("registerEmail").value.trim();
+  const password = document.getElementById("registerPassword").value;
+
+  if (!name || !email || !password) {
+    return showMessage("registerMessage","Preencha todos os campos.",true);
+  }
+
+  if (password.length < 6) {
+    return showMessage("registerMessage","A senha precisa ter pelo menos 6 caracteres.",true);
+  }
+
+  const { data, error } = await db.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { full_name: name }
+    }
+  });
+
+  if (error) {
+    return showMessage("registerMessage",error.message,true);
+  }
+
+  if (data.session) {
+    await updateScreen();
+  } else {
+    showMessage(
+      "registerMessage",
+      "Cadastro iniciado! Confira seu e-mail para confirmar a conta. Depois volte e faça login."
+    );
+  }
+}
+
+async function createCompany() {
+  const name = document.getElementById("companyName").value.trim();
+  const taxId = document.getElementById("companyTax").value.trim();
+
+  if (!name) {
+    return showMessage("companyMessage","Informe o nome da empresa.",true);
+  }
+
+  const button = document.getElementById("companyButton");
+  button.disabled = true;
+  button.textContent = "Cadastrando...";
+
+  const { data, error } = await db.rpc("create_company", {
+    p_name: name,
+    p_tax_id: taxId || null
+  });
+
+  button.disabled = false;
+  button.textContent = "Cadastrar empresa";
+
+  if (error) {
+    return showMessage("companyMessage",error.message,true);
+  }
+
+  showMessage(
+    "companyMessage",
+    "Empresa cadastrada com sucesso! Identificador: " + data
+  );
+}
+
+async function updateScreen() {
+  const { data: { session } } = await db.auth.getSession();
+
+  if (session) {
+    document.getElementById("authArea").classList.add("hidden");
+    document.getElementById("companyArea").classList.remove("hidden");
+    document.getElementById("accountInfo").textContent =
+      "Conta conectada: " + session.user.email;
+  } else {
+    document.getElementById("authArea").classList.remove("hidden");
+    document.getElementById("companyArea").classList.add("hidden");
+  }
+}
+
+async function logout() {
+  await db.auth.signOut();
+  await updateScreen();
+}
+
+db.auth.onAuthStateChange(() => {
+  updateScreen();
+});
+
+updateScreen();
+</script>
+</body>
+  </html>
+      
