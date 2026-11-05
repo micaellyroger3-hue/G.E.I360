@@ -1,323 +1,51 @@
-
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101827">
-<title>G.E.I360 | Gestão Empresarial</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>G.E.I360 | Gestão Empresarial</title>
 <style>
-:root{--nav:#101827;--blue:#2563eb;--bg:#f3f6fa;--text:#182235;--muted:#718096;--border:#e5eaf1}
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
-button,input{font:inherit}
-button{cursor:pointer}
-.hidden{display:none!important}
-.auth{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#101827,#1d3557)}
-.auth-card{background:white;width:100%;max-width:430px;padding:30px;border-radius:18px}
-.brand{font-size:25px;font-weight:900;margin-bottom:8px}
-.brand span{color:var(--blue)}
-.subtitle{font-size:13px;color:var(--muted);line-height:1.6}
-.auth-card h2{margin-top:30px}
-.field{margin:17px 0}
-.field label{display:block;font-size:13px;font-weight:bold;margin-bottom:7px}
-.field input{width:100%;padding:13px;border:1px solid var(--border);border-radius:9px}
-.primary{width:100%;border:0;background:var(--blue);color:white;padding:14px;border-radius:9px;font-weight:bold}
-.link{border:0;background:none;color:var(--blue);font-weight:bold;padding:12px}
-.message{font-size:13px;margin-top:13px;line-height:1.5;color:#b42318}
-#companyScreen{min-height:100vh;display:grid;place-items:center;padding:20px}
-.company-card{background:white;padding:30px;border-radius:16px;width:100%;max-width:480px}
-.sidebar{position:fixed;inset:0 auto 0 0;width:250px;background:var(--nav);color:white;padding:22px 15px;display:flex;flex-direction:column;z-index:5}
-.side-brand{font-size:24px;font-weight:900;padding:5px 10px 28px}
-.side-brand span{color:#5c91ff}
-.caption{font-size:10px;letter-spacing:1.5px;color:#8190a6;padding:16px 12px 8px}
-.nav{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;background:transparent;color:#bdc9d8;border-radius:9px;text-align:left;font-size:13px;margin:2px 0}
-.nav:hover,.nav.active{background:#263955;color:white}
-.side-bottom{margin-top:auto;border-top:1px solid #ffffff20;padding-top:15px;font-size:12px;color:#aebbd0}
-.main{margin-left:250px;min-height:100vh}
-.topbar{height:70px;background:white;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px}
-.top-title{font-size:15px;font-weight:bold}
-.top-right{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted)}
-.avatar{width:36px;height:36px;border-radius:50%;background:#e8efff;color:var(--blue);display:grid;place-items:center;font-weight:bold}
-.content{padding:28px;max-width:1500px;margin:auto}
-.welcome{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:25px}
-.welcome h1{font-size:25px;margin:0 0 7px}
-.welcome p{font-size:13px;color:var(--muted);margin:0}
-.company-tag{background:white;border:1px solid var(--border);padding:12px 16px;border-radius:10px;font-size:11px;color:var(--muted)}
-.company-tag strong{display:block;color:var(--text);font-size:14px;margin-top:5px}
-.section{font-size:11px;font-weight:bold;letter-spacing:1px;color:var(--muted);margin:25px 0 13px}
-.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.card,.panel,.module{background:white;border:1px solid var(--border);border-radius:12px;padding:18px}
-.card-label{font-size:12px;color:var(--muted)}
-.card-icon{float:right;font-size:20px}
-.card-value{font-size:24px;font-weight:800;margin-top:18px}
-.card-note{font-size:11px;color:var(--muted);margin-top:6px}
-.modules{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
-.module{border:1px solid var(--border);text-align:left;color:var(--text);min-height:112px}
-.module:hover{border-color:var(--blue)}
-.module-icon{font-size:23px;margin-bottom:12px}
-.module strong{display:block;font-size:13px}
-.module small{display:block;font-size:11px;color:var(--muted);margin-top:6px}
-.panels{display:grid;grid-template-columns:1.4fr 1fr;gap:15px}
-.panel h3{font-size:15px;margin:0 0 10px}
-.panel p{font-size:12px;color:var(--muted);line-height:1.7}
-.status{display:inline-block;background:#e8f7ee;color:#16834a;border-radius:20px;padding:5px 9px;font-size:10px;font-weight:bold}
-.mobile-menu{display:none;border:0;background:white;font-size:23px}
-.footer{text-align:center;color:var(--muted);font-size:11px;padding:28px}
-@media(max-width:1050px){.cards{grid-template-columns:repeat(2,1fr)}.modules{grid-template-columns:repeat(2,1fr)}.panels{grid-template-columns:1fr}}
-@media(max-width:700px){.sidebar{transform:translateX(-100%);transition:.2s}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mobile-menu{display:block}.topbar{padding:0 15px;height:62px}.content{padding:20px 14px}.welcome{align-items:flex-start;flex-direction:column}.welcome h1{font-size:21px}.cards{gap:9px}.card{padding:13px}.card-value{font-size:19px}.top-right .email{display:none}}
-</style>
-</head>
-<body>
-
-<section id="authScreen" class="auth">
- <div class="auth-card">
-  <div class="brand">G.E.I<span>360</span></div>
-  <div class="subtitle">GESTÃO EMPRESARIAL INTEGRADA</div>
-  <h2 id="authTitle">Bem-vindo de volta</h2>
-  <p class="subtitle" id="authDescription">Entre para acessar sua plataforma.</p>
-  <div id="nameField" class="field hidden">
-   <label>Nome completo</label>
-   <input id="fullName" placeholder="Seu nome">
-  </div>
-  <div class="field">
-   <label>E-mail</label>
-   <input id="email" type="email" placeholder="seu@email.com">
-  </div>
-  <div class="field">
-   <label>Senha</label>
-   <input id="password" type="password" placeholder="Sua senha">
-  </div>
-  <button class="primary" id="authButton" onclick="authenticate()">Entrar no sistema</button>
-  <div class="message" id="authMessage"></div>
-  <div style="text-align:center;margin-top:15px">
-   <span class="subtitle" id="switchText">Ainda não tem uma conta?</span>
-   <button class="link" id="switchButton" onclick="toggleAuth()">Criar conta</button>
-  </div>
- </div>
-</section>
-
-<section id="companyScreen" class="hidden">
- <div class="company-card">
-  <div class="brand">G.E.I<span>360</span></div>
-  <h2>Configuração da empresa</h2>
-  <p class="subtitle">Informe os dados da empresa que será administrada.</p>
-  <div class="field">
-   <label>Nome da empresa</label>
-   <input id="companyName" placeholder="Nome da empresa">
-  </div>
-  <div class="field">
-   <label>CNPJ (opcional)</label>
-   <input id="taxId" placeholder="00.000.000/0000-00">
-  </div>
-  <button class="primary" onclick="createCompany()">Cadastrar empresa</button>
-  <div class="message" id="companyMessage"></div>
-  <p class="subtitle" id="companyEmail"></p>
-  <button class="link" onclick="logout()">Sair da conta</button>
- </div>
-</section>
-
-<section id="app" class="hidden">
- <aside class="sidebar" id="sidebar">
-  <div class="side-brand">G.E.I<span>360</span></div>
-  <div class="caption">PRINCIPAL</div>
-  <button class="nav active" onclick="showPage('Visão Geral',this)">▦　Visão Geral</button>
-  <div class="caption">GESTÃO EMPRESARIAL</div>
-  <button class="nav" onclick="showPage('Cadastros',this)">▤　Cadastros</button>
-  <button class="nav" onclick="showPage('Estoque',this)">▣　Estoque</button>
-  <button class="nav" onclick="showPage('Vendas',this)">🛒　Vendas</button>
-  <button class="nav" onclick="showPage('Compras',this)">📦　Compras</button>
-  <button class="nav" onclick="showPage('Financeiro',this)">💳　Financeiro</button>
-  <div class="caption">CONTROLE</div>
-  <button class="nav" onclick="showPage('Funcionários',this)">👥　Funcionários</button>
-  <button class="nav" onclick="showPage('Relatórios',this)">▥　Relatórios</button>
-  <button class="nav" onclick="showPage('Configurações',this)">⚙　Configurações</button>
-  <div class="side-bottom">
-   <span class="status">SISTEMA CONECTADO</span>
-   <p id="sideEmail"></p>
-   <button class="nav" onclick="logout()">↪　Sair da conta</button>
-  </div>
- </aside>
-
- <main class="main">
-  <header class="topbar">
-   <div style="display:flex;align-items:center;gap:12px">
-    <button class="mobile-menu" onclick="toggleMenu()">☰</button>
-    <span class="top-title" id="pageTitle">Visão Geral</span>
-   </div>
-   <div class="top-right">
-    <span class="status">● ONLINE</span>
-    <span class="email" id="userEmail"></span>
-    <div class="avatar" id="avatar">G</div>
-   </div>
-  </header>
-
-  <div class="content">
-   <div id="dashboardPage">
-    <div class="welcome">
-     <div>
-      <h1>Painel de controle</h1>
-      <p>Bem-vindo ao centro de gestão da sua empresa.</p>
-     </div>
-     <div class="company-tag">EMPRESA ATIVA<strong id="activeCompany">Carregando...</strong></div>
-    </div>
-
-    <div class="section">INDICADORES DA EMPRESA</div>
-    <div class="cards">
-     <div class="card"><span class="card-label">Faturamento</span><span class="card-icon">📈</span><div class="card-value">R$ 0,00</div><div class="card-note">Aguardando lançamentos</div></div>
-     <div class="card"><span class="card-label">Despesas</span><span class="card-icon">📉</span><div class="card-value">R$ 0,00</div><div class="card-note">Aguardando lançamentos</div></div>
-     <div class="card"><span class="card-label">Produtos</span><span class="card-icon">📦</span><div class="card-value">0</div><div class="card-note">Nenhum produto cadastrado</div></div>
-     <div class="card"><span class="card-label">Funcionários</span><span class="card-icon">👥</span><div class="card-value">0</div><div class="card-note">Nenhum funcionário cadastrado</div></div>
-    </div>
-
-    <div class="section">CENTRAL DE OPERAÇÕES</div>
-    <div class="modules">
-     <button class="module" onclick="showPage('Cadastros')"><div class="module-icon">📋</div><strong>Cadastros</strong><small>Clientes e fornecedores</small></button>
-     <button class="module" onclick="showPage('Estoque')"><div class="module-icon">📦</div><strong>Estoque</strong><small>Produtos e movimentações</small></button>
-     <button class="module" onclick="showPage('Vendas')"><div class="module-icon">🛒</div><strong>Vendas</strong><small>Pedidos e operações</small></button>
-     <button class="module" onclick="showPage('Compras')"><div class="module-icon">🧾</div><strong>Compras</strong><small>Fornecedores e pedidos</small></button>
-     <button class="module" onclick="showPage('Financeiro')"><div class="module-icon">💳</div><strong>Financeiro</strong><small>Contas e fluxo de caixa</small></button>
-     <button class="module" onclick="showPage('Funcionários')"><div class="module-icon">👥</div><strong>Funcionários</strong><small>Equipe e permissões</small></button>
-     <button class="module" onclick="showPage('Relatórios')"><div class="module-icon">📊</div><strong>Relatórios</strong><small>Indicadores e resultados</small></button>
-     <button class="module" onclick="showPage('Configurações')"><div class="module-icon">⚙️</div><strong>Configurações</strong><small>Preferências do sistema</small></button>
-    </div>
-
-    <div class="section">INFORMAÇÕES DO SISTEMA</div>
-    <div class="panels">
-     <div class="panel"><h3>Central de gestão</h3><p>Seu ambiente empresarial está conectado. Os módulos serão implementados por etapas, com cadastros, controles, permissões e relatórios integrados.</p><span class="status">AMBIENTE ATIVO</span></div>
-     <div class="panel"><h3>Dados da conta</h3><p id="accountInfo">Carregando...</p><p>Conta autenticada no banco de dados.</p></div>
-    </div>
-   </div>
-
-   <div id="modulePage" class="hidden">
-    <div class="welcome"><div><h1 id="moduleTitle">Módulo</h1><p>Área de gestão empresarial do G.E.I360.</p></div></div>
-    <div class="panel">
-     <span class="status">EM DESENVOLVIMENTO</span>
-     <h3 style="margin-top:18px">Estrutura do módulo preparada</h3>
-     <p>Esta área receberá seus cadastros, controles, permissões e relatórios, todos integrados ao banco de dados da empresa.</p>
-     <button class="primary" style="max-width:190px" onclick="showPage('Visão Geral')">Voltar ao painel</button>
-    </div>
-   </div>
-   <div class="footer">G.E.I360 • Gestão Empresarial Integrada</div>
-  </div>
- </main>
-</section>
-
+:root{--nav:#101827;--green:#16866d;--bg:#f3f5f9;--line:#e5eaf1}*{box-sizing:border-box}body{margin:0;font:14px system-ui;background:var(--bg);color:#172033}button,input,select,textarea{font:inherit}button{border:0;border-radius:8px;padding:9px 13px;background:var(--green);color:white;cursor:pointer;font-weight:650}.alt{background:#eaf0f5;color:#263449}.danger{background:#fff0ef;color:#b83227}.hidden{display:none!important}.login{min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#101827,#1a3a45);padding:20px}.loginbox{background:white;padding:28px;border-radius:16px;width:min(420px,100%)}.brand{font-size:22px;font-weight:850;margin-bottom:20px}.brand b{color:var(--green)}.field{display:grid;gap:5px;margin:10px 0}.field label{font-size:12px;font-weight:700;color:#526174}.field input,.field select,.field textarea,.search{padding:10px;border:1px solid #dce3ec;border-radius:8px;width:100%}.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}.side{background:var(--nav);color:white;padding:16px 12px}.side .brand{padding:5px}.company{padding:10px;background:#ffffff14;border-radius:8px;font-size:12px;margin-bottom:12px}.nav{display:grid;gap:3px}.nav button{background:transparent;text-align:left;color:#c1ccda}.nav button.active,.nav button:hover{background:#ffffff19;color:white}.main{min-width:0}.top{background:white;padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.content{padding:22px;max-width:1400px;margin:auto}.head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}.head h1{margin:0;font-size:24px}.muted{color:#718096}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:white;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}.metric{font-size:25px;font-weight:800}.tablewrap{overflow:auto;background:white;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%;min-width:600px}td,th{text-align:left;padding:10px;border-bottom:1px solid var(--line);font-size:13px}th{background:#f8fafc;color:#718096;font-size:11px;text-transform:uppercase}.actions{display:flex;gap:5px}.small{font-size:11px;padding:6px 8px}.notice{padding:12px;background:#fff8e8;border:1px solid #f1dfb6;border-radius:9px;color:#78551a;margin:12px 0;line-height:1.5}.modalbg{display:none;position:fixed;inset:0;background:#0008;align-items:center;justify-content:center;padding:15px}.modal{background:white;padding:20px;border-radius:14px;width:min(550px,100%);max-height:90vh;overflow:auto}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.full{grid-column:1/-1}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.search{flex:1;min-width:180px}.empty{text-align:center;color:#718096;padding:25px}
+@media(max-width:850px){.shell{grid-template-columns:1fr}.side{padding:10px}.company{display:none}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.grid{grid-template-columns:repeat(2,1fr)}.content{padding:14px}.top{padding:12px}}@media(max-width:500px){.formgrid{grid-template-columns:1fr}.full{grid-column:auto}.head{align-items:flex-start;flex-direction:column}}
+</style></head><body>
+<div id="login" class="login"><div class="loginbox"><div class="brand">G.E.I<b>360</b></div><h2>Acesso à plataforma</h2><p class="muted">Gestão empresarial integrada</p><div class="field"><label>E-mail</label><input id="email" type="email"></div><div class="field"><label>Senha</label><input id="password" type="password"></div><button style="width:100%" onclick="login()">Entrar</button><button class="alt" style="width:100%;margin-top:8px" onclick="demo()">Modo demonstração</button><p id="msg" class="muted"></p></div></div>
+<div id="app" class="shell hidden"><aside class="side"><div class="brand">G.E.I<b>360</b></div><div class="company" id="company">G.E.I360 EMPRESA TESTE</div><nav class="nav" id="nav"></nav></aside><main class="main"><header class="top"><b id="title">Visão Geral</b><span><small id="who"></small> <button class="alt small" onclick="logout()">Sair</button></span></header><div class="content" id="view"></div></main></div>
+<div class="modalbg" id="modal"><div class="modal"><div class="head"><b id="modalTitle">Novo registro</b><button class="alt small" onclick="closeModal()">Fechar</button></div><form id="form" onsubmit="save(event)"><div class="formgrid" id="fields"></div><p style="text-align:right"><button type="button" class="alt" onclick="closeModal()">Cancelar</button> <button>Salvar</button></p></form></div></div>
 <script>
-const SUPABASE_URL="https://mxikqdarqgatqoecfprg.supabase.co";
-const SUPABASE_KEY="sb_publishable_C1PaxcWAdb5rLfd0yJjl5g_ZUQKK7Dk";
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let isSignup=false;
-
-function showScreen(id){
- ["authScreen","companyScreen","app"].forEach(x=>document.getElementById(x).classList.add("hidden"));
- document.getElementById(id).classList.remove("hidden");
-}
-
-function toggleAuth(){
- isSignup=!isSignup;
- document.getElementById("authTitle").textContent=isSignup?"Criar sua conta":"Bem-vindo de volta";
- document.getElementById("authDescription").textContent=isSignup?"Cadastre seu acesso ao G.E.I360.":"Entre para acessar sua plataforma.";
- document.getElementById("authButton").textContent=isSignup?"Criar conta":"Entrar no sistema";
- document.getElementById("nameField").classList.toggle("hidden",!isSignup);
- document.getElementById("switchText").textContent=isSignup?"Já tem uma conta?":"Ainda não tem uma conta?";
- document.getElementById("switchButton").textContent=isSignup?"Fazer login":"Criar conta";
- document.getElementById("authMessage").textContent="";
-}
-
-async function authenticate(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- const name=document.getElementById("fullName").value.trim();
- const msg=document.getElementById("authMessage");
- const btn=document.getElementById("authButton");
- if(!email||!password){msg.textContent="Informe e-mail e senha.";return;}
- if(isSignup&&!name){msg.textContent="Informe seu nome.";return;}
- btn.disabled=true;btn.textContent="Aguarde...";
- try{
-  let result;
-  if(isSignup){
-   result=await db.auth.signUp({email,password,options:{data:{full_name:name}}});
-  }else{
-   result=await db.auth.signInWithPassword({email,password});
-  }
-  if(result.error)throw result.error;
-  if(isSignup&&!result.data.session){
-   msg.style.color="green";
-   msg.textContent="Conta criada. Confirme seu e-mail e depois entre.";
-   return;
-  }
-  await loadApp();
- }catch(e){msg.textContent=e.message||"Erro ao acessar a conta.";}
- finally{btn.disabled=false;btn.textContent=isSignup?"Criar conta":"Entrar no sistema";}
-}
-
-async function loadApp(){
- const {data:{session},error:sessionError}=await db.auth.getSession();
- if(sessionError)throw sessionError;
- if(!session){showScreen("authScreen");return;}
- const user=session.user;
- document.getElementById("companyEmail").textContent="Conta conectada: "+user.email;
- document.getElementById("userEmail").textContent=user.email;
- document.getElementById("sideEmail").textContent=user.email;
- document.getElementById("avatar").textContent=(user.email||"G")[0].toUpperCase();
-
- const {data,error}=await db.rpc("get_my_companies");
- if(error)throw error;
- if(!data||data.length===0){showScreen("companyScreen");return;}
-
- const company=data[0];
- document.getElementById("activeCompany").textContent=company.name;
- document.getElementById("accountInfo").textContent="Conta: "+user.email+" | Perfil: "+company.role;
- showScreen("app");
-}
-
-async function createCompany(){
- const name=document.getElementById("companyName").value.trim();
- const taxId=document.getElementById("taxId").value.trim();
- const msg=document.getElementById("companyMessage");
- if(!name){msg.textContent="Informe o nome da empresa.";return;}
- try{
-  const {data,error}=await db.rpc("create_company",{p_name:name,p_tax_id:taxId||null});
-  if(error)throw error;
-  msg.style.color="green";
-  msg.textContent="Empresa cadastrada. Carregando painel...";
-  await loadApp();
- }catch(e){msg.textContent=e.message||"Erro ao cadastrar empresa.";}
-}
-
-async function logout(){
- await db.auth.signOut();
- showScreen("authScreen");
-}
-
-function showPage(name,button){
- document.getElementById("pageTitle").textContent=name;
- document.querySelectorAll(".nav").forEach(b=>b.classList.remove("active"));
- if(button)button.classList.add("active");
- document.getElementById("dashboardPage").classList.toggle("hidden",name!=="Visão Geral");
- document.getElementById("modulePage").classList.toggle("hidden",name==="Visão Geral");
- document.getElementById("moduleTitle").textContent=name;
- document.getElementById("sidebar").classList.remove("open");
-}
-
-function toggleMenu(){
- document.getElementById("sidebar").classList.toggle("open");
-}
-
-db.auth.onAuthStateChange((event,session)=>{
- if(event==="SIGNED_OUT")showScreen("authScreen");
-});
-
-(async()=>{
- try{await loadApp();}
- catch(e){
-  console.error(e);
-  document.getElementById("authMessage").textContent="Não foi possível carregar o sistema: "+e.message;
-  showScreen("authScreen");
- }
-})();
-</script>
-</body>
-</html>
+const URL='https://mxikqdarqgatqoecfprg.supabase.co',KEY='sb_publishable_C1PaxcWAdb5rLfd0yJjl5g_ZUQKK7Dk';
+const mods=[['home','Visão Geral'],['customers','Clientes'],['suppliers','Fornecedores'],['products','Produtos e Serviços'],['stock','Estoque'],['purchases','Compras'],['sales','Vendas'],['pos','Frente de Caixa'],['finance','Financeiro'],['services','Gestão de Serviços'],['production','Produção e Indústria'],['employees','Recursos Humanos'],['fiscal','Fiscal'],['reports','Relatórios'],['branches','Multi Filial'],['audit','Auditoria'],['settings','Configurações']];
+const C={
+customers:['Clientes',[['name','Nome'],['document','CPF/CNPJ'],['email','E-mail'],['phone','Telefone'],['address','Endereço'],['notes','Observações','textarea']]],
+suppliers:['Fornecedores',[['name','Nome'],['document','CPF/CNPJ'],['email','E-mail'],['phone','Telefone'],['address','Endereço']]],
+products:['Produtos e Serviços',[['name','Descrição'],['sku','Código'],['category','Categoria'],['unit','Unidade'],['price','Preço','number'],['cost','Custo','number'],['min','Estoque mínimo','number']]],
+stock:['Estoque',[['name','Produto'],['movement','Movimento','select','Entrada|Saída|Ajuste'],['quantity','Quantidade','number'],['reference','Documento']]],
+purchases:['Compras',[['supplier','Fornecedor'],['description','Descrição'],['date','Data','date'],['total','Total','number'],['status','Situação','select','Em aberto|Recebida|Cancelada']]],
+sales:['Vendas',[['customer','Cliente'],['description','Descrição'],['date','Data','date'],['total','Total','number'],['status','Situação','select','Em aberto|Concluída|Cancelada']]],
+pos:['Frente de Caixa',[['description','Item/venda'],['quantity','Quantidade','number'],['unit_price','Preço unitário','number'],['payment','Pagamento','select','Dinheiro|PIX|Débito|Crédito|Outro']]],
+finance:['Financeiro',[['description','Descrição'],['type','Tipo','select','Receita|Despesa'],['due_date','Vencimento','date'],['amount','Valor','number'],['status','Situação','select','Pendente|Pago|Recebido']]],
+services:['Gestão de Serviços',[['customer','Cliente'],['description','Serviço'],['date','Data','date'],['value','Valor','number'],['status','Situação','select','Orçamento|Agendado|Em execução|Concluído']]],
+production:['Produção e Indústria',[['product','Produto'],['order_no','Ordem'],['quantity','Quantidade','number'],['start_date','Início','date'],['status','Situação','select','Planejada|Em produção|Concluída']]],
+employees:['Recursos Humanos',[['name','Nome completo'],['cpf','CPF'],['job','Cargo'],['department','Departamento'],['admission','Admissão','date'],['status','Situação','select','Ativo|Afastado|Desligado']]],
+fiscal:['Fiscal',[['document','Documento','select','NF-e|NFC-e|NFS-e|CT-e'],['reference','Referência'],['amount','Valor','number'],['status','Situação','select','Rascunho|Aguardando integração|Autorizado externamente|Rejeitado'],['notes','Observações','textarea']]],
+branches:['Multi Filial',[['name','Filial'],['document','CNPJ'],['address','Endereço'],['manager','Responsável'],['status','Situação','select','Ativa|Inativa']]]
+};
+let db=JSON.parse(localStorage.getItem('gei360_data')||'{}'),cur='home',edit=-1,token=null,mode='demo',companyName='G.E.I360 EMPRESA TESTE',user='';
+const rows=k=>db[k]||[],saveDB=()=>localStorage.setItem('gei360_data',JSON.stringify(db)),E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function login(){let email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;if(!email||!password){msg.textContent='Informe e-mail e senha.';return}try{let r=await fetch(URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json','apikey':KEY},body:JSON.stringify({email,password})}),j=await r.json();if(!r.ok)throw Error(j.msg||j.message||'Falha no login');token=j.access_token;user=email;mode='supabase';let x=await fetch(URL+'/rest/v1/rpc/get_my_companies',{method:'POST',headers:{'Content-Type':'application/json','apikey':KEY,'Authorization':'Bearer '+token},body:'{}'}),a=await x.json();if(Array.isArray(a)&&a[0])companyName=a[0].name;start()}catch(e){msg.textContent='Erro no acesso: '+e.message}}
+function demo(){mode='demo';user='Demonstração';start()}function start(){loginEl.classList.add('hidden');app.classList.remove('hidden');company.textContent=companyName;who.textContent=user;nav.innerHTML=mods.map(([k,n])=>`<button data-k="${k}" onclick="go('${k}')">${n}</button>`).join('');go('home')}
+function logout(){token=null;app.classList.add('hidden');loginEl.classList.remove('hidden')}function go(k){cur=k;title.textContent=(mods.find(x=>x[0]===k)||[])[1]||'Módulo';document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.k===k));render()}
+function render(){if(cur==='home'){view.innerHTML=`<div class="head"><div><h1>Visão Geral</h1><span class="muted">Resumo da operação empresarial</span></div><small>${mode==='demo'?'Modo demonstração':'Login Supabase'}</small></div><div class="grid">${[['Clientes','customers'],['Produtos','products'],['Vendas','sales'],['Colaboradores','employees']].map(([n,k])=>`<div class="card"><span class="muted">${n}</span><div class="metric">${rows(k).length}</div></div>`).join('')}</div><div class="card"><b>Atalhos dos módulos</b><div class="toolbar" style="margin-top:12px">${mods.slice(1,9).map(([k,n])=>`<button class="alt" onclick="go('${k}')">${n}</button>`).join('')}</div></div><div class="notice">Importante: os cadastros desta entrega ficam no armazenamento local do navegador. O login Supabase está preservado, mas os formulários ainda não sincronizam com o banco.</div>`;return}
+if(cur==='reports'){view.innerHTML=`<div class="head"><h1>Relatórios</h1><button onclick="backup()">Backup JSON</button></div><div class="grid">${Object.keys(C).map(k=>`<div class="card"><span class="muted">${C[k][0]}</span><div class="metric">${rows(k).length}</div></div>`).join('')}</div><button onclick="csvAll()">Exportar CSV</button>`;return}
+if(cur==='audit'){view.innerHTML=`<div class="head"><h1>Auditoria local</h1><button onclick="backup()">Exportar backup</button></div>${table(rows('audit').slice().reverse(),['when','action','module','detail'])}`;return}
+if(cur==='settings'){view.innerHTML=`<div class="head"><h1>Configurações</h1></div><div class="card"><div class="field"><label>Nome da empresa</label><input id="co" value="${E(companyName)}"></div><button onclick="companyName=co.value;company.textContent=companyName;alert('Nome atualizado nesta sessão')">Salvar nome</button> <button class="alt" onclick="backup()">Backup</button> <button class="alt" onclick="document.getElementById('file').click()">Restaurar backup</button> <input id="file" type="file" accept=".json" class="hidden" onchange="restore(event)"> <button class="danger" onclick="if(confirm('Apagar os dados locais?')){db={};saveDB();render()}">Apagar dados locais</button></div>`;return}
+if(cur==='fiscal'||cur==='employees'||cur==='pos'){let note=cur==='fiscal'?'Emissão oficial não habilitada: exige certificado digital, credenciamento, configuração tributária e integração/homologação com SEFAZ ou prefeitura. Este módulo não transmite nem autoriza notas.':cur==='employees'?'Cadastro básico apenas. Não calcula folha legal, encargos, férias/rescisões nem transmite eSocial.':'PDV de registro simples. Não integra TEF, impressora fiscal, gaveta, balança ou emissão fiscal.';view.innerHTML=`<div class="head"><div><h1>${C[cur][0]}</h1></div><button onclick="openForm()">Novo registro</button></div><div class="notice">${note}</div>${table(rows(cur),C[cur][1].map(f=>f[0]))}`;return}
+let c=C[cur];if(!c){view.innerHTML='<div class="card">Módulo em preparação.</div>';return}view.innerHTML=`<div class="head"><div><h1>${c[0]}</h1><span class="muted">Cadastro, pesquisa e manutenção</span></div><button onclick="openForm()">+ Novo registro</button></div><div class="toolbar"><input class="search" id="q" placeholder="Pesquisar..." oninput="filter()"><button class="alt" onclick="csvModule()">Exportar CSV</button></div><div id="table">${table(rows(cur),c[1].map(f=>f[0]))}</div>`}
+const labels={name:'Nome',document:'Documento',email:'E-mail',phone:'Telefone',address:'Endereço',notes:'Observações',sku:'Código',category:'Categoria',unit:'Unidade',price:'Preço',cost:'Custo',min:'Mínimo',movement:'Movimento',quantity:'Quantidade',reference:'Referência',supplier:'Fornecedor',description:'Descrição',date:'Data',total:'Total',status:'Situação',customer:'Cliente',type:'Tipo',due_date:'Vencimento',amount:'Valor',value:'Valor',product:'Produto',order_no:'Ordem',start_date:'Início',cpf:'CPF',job:'Cargo',department:'Departamento',admission:'Admissão',manager:'Responsável',unit_price:'Preço unitário',payment:'Pagamento',when:'Data/hora',action:'Ação',module:'Módulo',detail:'Detalhe'};
+function table(data,keys){if(!data.length)return '<div class="card empty">Nenhum registro cadastrado.</div>';return `<div class="tablewrap"><table><thead><tr>${keys.map(k=>`<th>${labels[k]||k}</th>`).join('')}<th>Ações</th></tr></thead><tbody>${data.map((r,i)=>`<tr>${keys.map(k=>`<td>${E(r[k])}</td>`).join('')}<td><div class="actions"><button class="alt small" onclick="openForm(${i})">Editar</button><button class="danger small" onclick="del(${i})">Excluir</button></div></td></tr>`).join('')}</tbody></table></div>`}
+function openForm(i=-1){edit=i;let fields=C[cur][1],o=i<0?{}:rows(cur)[i];modalTitle.textContent=i<0?'Novo registro':'Editar registro';document.getElementById('fields').innerHTML=fields.map(([k,l,t,opt])=>{let val=E(o[k]??''),el=t==='textarea'?`<textarea name="${k}">${val}</textarea>`:t==='select'?`<select name="${k}">${opt.split('|').map(x=>`<option ${x===o[k]?'selected':''}>${x}</option>`).join('')}</select>`:`<input name="${k}" type="${t==='number'?'number':t==='date'?'date':'text'}" ${t==='number'?'step="0.01"':''} value="${val}">`;return `<div class="field ${t==='textarea'?'full':''}"><label>${l}</label>${el}</div>`}).join('');modal.style.display='flex'}
+function closeModal(){modal.style.display='none'}function save(e){e.preventDefault();let r=Object.fromEntries(new FormData(e.target));db[cur]=db[cur]||[];if(edit<0)db[cur].push(r);else db[cur][edit]=r;log(edit<0?'Criou':'Editou',cur,r.name||r.description||'Registro');saveDB();closeModal();render()}
+function del(i){if(confirm('Excluir este registro?')){let r=rows(cur).splice(i,1)[0];log('Excluiu',cur,r.name||r.description||'Registro');saveDB();render()}}
+function log(action,module,detail){db.audit=db.audit||[];db.audit.push({when:new Date().toLocaleString('pt-BR'),action,module,detail})}
+function filter(){let q=document.getElementById('q').value.toLowerCase(),keys=C[cur][1].map(f=>f[0]);document.getElementById('table').innerHTML=table(rows(cur).filter(r=>Object.values(r).join(' ').toLowerCase().includes(q)),keys)}
+function csv(data){if(!data.length)return '';let k=[...new Set(data.flatMap(Object.keys))];return [k.join(';'),...data.map(r=>k.map(x=>'"'+String(r[x]??'').replace(/"/g,'""')+'"').join(';'))].join('\n')}
+function down(n,s,t){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([s],{type:t}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function csvModule(){down(cur+'.csv','\ufeff'+csv(rows(cur)),'text/csv;charset=utf-8')}function csvAll(){let a=Object.entries(db).flatMap(([m,rs])=>rs.map(r=>({modulo:m,...r})));down('gei360-relatorio.csv','\ufeff'+csv(a),'text/csv;charset=utf-8')}
+function backup(){down('gei360-backup.json',JSON.stringify({company:companyName,data:db},null,2),'application/json')}function restore(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);db=x.data||x;saveDB();render();alert('Backup restaurado')}catch(_){alert('Arquivo inválido')}};r.readAsText(f)}
+const loginEl=document.getElementById('login'),app=document.getElementById('app'),msg=document.getElementById('msg'),company=document.getElementById('company'),who=document.getElementById('who'),nav=document.getElementById('nav'),title=document.getElementById('title'),view=document.getElementById('view'),modal=document.getElementById('modal'),modalTitle=document.getElementById('modalTitle');
+</script></body></html>
