@@ -98,6 +98,36 @@ on public.product_categories
 for delete to authenticated
 using (public.has_company_role(company_id, array['owner','admin']::text[]));
 
+-- Regras RESTRICTIVE também limitam políticas permissivas antigas, caso a tabela já existisse.
+drop policy if exists product_categories_member_guard on public.product_categories;
+create policy product_categories_member_guard
+on public.product_categories as restrictive
+for all to authenticated
+using (public.is_company_member(company_id))
+with check (public.is_company_member(company_id));
+
+drop policy if exists product_categories_manager_insert_guard on public.product_categories;
+create policy product_categories_manager_insert_guard
+on public.product_categories as restrictive
+for insert to authenticated
+with check (
+  created_by = (select auth.uid())
+  and public.has_company_role(company_id, array['owner','admin','manager']::text[])
+);
+
+drop policy if exists product_categories_manager_update_guard on public.product_categories;
+create policy product_categories_manager_update_guard
+on public.product_categories as restrictive
+for update to authenticated
+using (public.has_company_role(company_id, array['owner','admin','manager']::text[]))
+with check (public.has_company_role(company_id, array['owner','admin','manager']::text[]));
+
+drop policy if exists product_categories_admin_delete_guard on public.product_categories;
+create policy product_categories_admin_delete_guard
+on public.product_categories as restrictive
+for delete to authenticated
+using (public.has_company_role(company_id, array['owner','admin']::text[]));
+
 grant select, insert, update, delete on public.product_categories to authenticated;
 
 -- Liga cada produto a uma categoria da mesma empresa, preservando a coluna textual antiga.
