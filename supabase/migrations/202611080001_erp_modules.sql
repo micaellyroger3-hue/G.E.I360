@@ -155,3 +155,71 @@ begin
     execute format('grant select, insert, update, delete on public.%I to authenticated',t);
   end loop;
 end $$;
+
+
+-- Venda atômica: grava cabeçalho, item e baixa estoque em uma única transação.
+create or replace function public.create_sale(
+  p_company_id uuid,
+  p_customer_id uuid,
+  p_product_id uuid,
+  p_quantity numeric,
+  p_discount numeric default 0,
+  p_notes text default null
+) returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_product public.products%rowtype;
+  v_sale public.sales%rowtype;
+  v_subtotal numeric(14,2);
+  v_total numeric(14,2);
+begin
+  if v_user is null then raise exception 'Faça login novamente.'; end if;
+  if not public.has_company_role(p_company_id, array['owner','admin','manager']::text[]) then
+    raise exception 'Você não tem permissão para registrar vendas.';
+  end if;
+  if p_quantity is null or p_quantity <= 0 then raise exception 'Quantidade inválida.'; end if;
+  if p_discount is null or p_discount < 0 then raise exception 'Desconto inválido.'; end if;
+
+  select * into v_product
+  from public.products
+  where id = p_product_id and company_id = p_company_id and active = true
+  for update;
+  if not found then raise exception 'Produto não encontrado ou inativo nesta empresa.'; end if;
+
+  if p_customer_id is not null and not exists (
+    select 1 from public.customers where id = p_customer_id and company_id = p_company_id
+  ) then raise exception 'Cliente não pertence a esta empresa.'; end if;
+
+  if v_product.stock_quantity < p_quantity then
+    raise exception 'Estoque insuficiente. Saldo atual: %', v_product.stock_quantity;
+  end if;
+
+  v_subtotal := round(p_quantity * v_product.sale_price, 2);
+  v_total := v_subtotal - p_discount;
+  if v_total < 0 then raise exception 'O desconto não pode superar o subtotal.'; end if;
+
+  insert into public.sales(company_id, customer_id, status, subtotal, discount, total, notes, created_by)
+  values (p_company_id, p_customer_id, 'confirmed', v_subtotal, p_discount, v_total, p_notes, v_user)
+  returning * into v_sale;
+
+  insert into public.sale_items(company_id, sale_id, product_id, description, quantity, unit_price, created_by)
+  values (p_company_id, v_sale.id, v_product.id, v_product.name, p_quantity, v_product.sale_price, v_user);
+
+  insert into public.stock_movements(company_id, product_id, movement_type, quantity, note, created_by)
+  values (p_company_id, v_product.id, 'out', p_quantity, 'Venda #' || v_sale.sale_number, v_user);
+
+  return jsonb_build_object('id', v_sale.id, 'sale_number', v_sale.sale_number, 'subtotal', v_subtotal, 'discount', p_discount, 'total', v_total);
+end;
+$$;
+
+revoke all on function public.create_sale(uuid, uuid, uuid, numeric, numeric, text) from public;
+grant execute on function public.create_sale(uuid, uuid, uuid, numeric, numeric, text) to authenticated;
+
+-- Ajustes de inventário podem zerar o saldo; entradas e saídas continuam exigindo quantidade positiva.
+alter table public.stock_movements drop constraint if exists stock_movements_quantity_check;
+alter table public.stock_movements add constraint stock_movements_quantity_check
+  check ((movement_type = 'adjustment' and quantity >= 0) or (movement_type in ('in','out') and quantity > 0));
