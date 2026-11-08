@@ -18,8 +18,9 @@ Plataforma de Gestão Empresarial.
 ## Configuração do Supabase
 1. Aplique primeiro `supabase/migrations/202611070001_employees.sql` no SQL Editor.
 2. Aplique depois `supabase/migrations/202611080001_erp_modules.sql` no SQL Editor.
-3. Configure o endereço publicado do GitHub Pages em **Authentication → URL Configuration** (Site URL e Redirect URLs).
-4. Confirme o e-mail de cadastro, caso a confirmação esteja habilitada.
+3. Aplique por último `supabase/migrations/202611080002_finance_links.sql` no SQL Editor. Essa migração vincula automaticamente vendas confirmadas a contas a receber e compras recebidas a contas a pagar. Os lançamentos vinculados não podem ser editados ou excluídos manualmente; a baixa/recebimento continua disponível.
+4. Configure o endereço publicado do GitHub Pages em **Authentication → URL Configuration** (Site URL e Redirect URLs).
+5. Confirme o e-mail de cadastro, caso a confirmação esteja habilitada.
 
 O front-end utiliza a URL do projeto e a chave publicável (publishable/anon) no navegador. Nunca coloque uma chave `service_role` ou chave secreta no front-end.
 
@@ -27,10 +28,11 @@ O front-end utiliza a URL do projeto e a chave publicável (publishable/anon) no
 O workflow de publicação está em `.github/workflows/static.yml` e publica a branch `main` no GitHub Pages. Confira **Actions** e aguarde a execução terminar com sucesso.
 
 ## Limitações desta etapa
-- O arquivo de migração dos módulos precisa ser executado no Supabase antes de usar os novos cadastros. Publicar o site não cria tabelas no banco.
+- As três migrações precisam ser executadas no Supabase, na ordem indicada, antes de usar os novos módulos. Publicar o site não cria tabelas no banco.
 - Vendas já aceitam vários produtos no carrinho e registram a operação de forma transacional. Compras/recebimentos também aceitam vários produtos por pedido e atualizam o estoque transacionalmente.
 - Documentos aceitam anexos PDF e imagens até 10 MB em bucket privado do Supabase Storage; links temporários de visualização respeitam a associação e o perfil do usuário.
 - Leitura por câmera depende de HTTPS, permissão do usuário e suporte do navegador à API BarcodeDetector. Digitação e leitores USB/Bluetooth são alternativas.
+- Vendas confirmadas e compras recebidas geram lançamentos financeiros vinculados automaticamente após a terceira migração. O vínculo evita duplicidade e protege o lançamento de alterações manuais indevidas.
 - Relatórios são operacionais e dependem dos lançamentos registrados; não substituem contabilidade.
 - Emissão oficial de NF-e/NFC-e não está implementada. Ela exige dados fiscais da empresa, certificado digital, credenciamento e integração homologada com provedor/SEFAZ.
 - Ainda é necessário executar testes integrados no ambiente Supabase após aplicar as migrações. As verificações de publicação do GitHub não testam o banco nem os fluxos de negócio.
