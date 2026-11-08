@@ -376,3 +376,91 @@ using (
       and cm.role in ('owner','admin')
   )
 );
+
+
+-- Venda com múltiplos produtos em uma única transação.
+create or replace function public.create_sale_cart(
+  p_company_id uuid,
+  p_customer_id uuid,
+  p_items jsonb,
+  p_discount numeric default 0,
+  p_notes text default null
+) returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_sale public.sales%rowtype;
+  v_item jsonb;
+  v_product public.products%rowtype;
+  v_product_id uuid;
+  v_quantity numeric(14,3);
+  v_subtotal numeric(14,2) := 0;
+  v_total numeric(14,2);
+  v_seen uuid[] := array[]::uuid[];
+  v_items_count integer := 0;
+begin
+  if v_user is null then raise exception 'Faça login novamente.'; end if;
+  if not public.has_company_role(p_company_id, array['owner','admin','manager']::text[]) then
+    raise exception 'Você não tem permissão para registrar vendas.';
+  end if;
+  if jsonb_typeof(p_items) is distinct from 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception 'Adicione pelo menos um produto ao carrinho.';
+  end if;
+  if p_discount is null or p_discount < 0 then raise exception 'Desconto inválido.'; end if;
+  if p_customer_id is not null and not exists (
+    select 1 from public.customers where id = p_customer_id and company_id = p_company_id
+  ) then raise exception 'Cliente não pertence a esta empresa.'; end if;
+
+  -- Bloqueia os produtos em ordem determinística para reduzir risco de deadlock.
+  for v_item in
+    select value from jsonb_array_elements(p_items) order by (value->>'product_id')
+  loop
+    begin
+      v_product_id := (v_item->>'product_id')::uuid;
+      v_quantity := (v_item->>'quantity')::numeric;
+    exception when others then
+      raise exception 'Produto ou quantidade inválida no carrinho.';
+    end;
+    if v_product_id = any(v_seen) then raise exception 'Há produto repetido no carrinho.'; end if;
+    v_seen := array_append(v_seen, v_product_id);
+    if v_quantity is null or v_quantity <= 0 then raise exception 'Quantidade inválida no carrinho.'; end if;
+    select * into v_product from public.products
+      where id = v_product_id and company_id = p_company_id and active = true
+      for update;
+    if not found then raise exception 'Produto não encontrado ou inativo nesta empresa.'; end if;
+    if v_product.stock_quantity < v_quantity then
+      raise exception 'Estoque insuficiente para %. Saldo atual: %', v_product.name, v_product.stock_quantity;
+    end if;
+    v_subtotal := v_subtotal + round(v_quantity * v_product.sale_price, 2);
+    v_items_count := v_items_count + 1;
+  end loop;
+
+  v_total := v_subtotal - p_discount;
+  if v_total < 0 then raise exception 'O desconto não pode superar o subtotal.'; end if;
+
+  insert into public.sales(company_id, customer_id, status, subtotal, discount, total, notes, created_by)
+  values (p_company_id, p_customer_id, 'confirmed', v_subtotal, p_discount, v_total, p_notes, v_user)
+  returning * into v_sale;
+
+  for v_item in select value from jsonb_array_elements(p_items) order by (value->>'product_id')
+  loop
+    v_product_id := (v_item->>'product_id')::uuid;
+    v_quantity := (v_item->>'quantity')::numeric;
+    select * into v_product from public.products
+      where id = v_product_id and company_id = p_company_id;
+    insert into public.sale_items(company_id, sale_id, product_id, description, quantity, unit_price, created_by)
+    values (p_company_id, v_sale.id, v_product.id, v_product.name, v_quantity, v_product.sale_price, v_user);
+    insert into public.stock_movements(company_id, product_id, movement_type, quantity, note, created_by)
+    values (p_company_id, v_product.id, 'out', v_quantity, 'Venda #' || v_sale.sale_number, v_user);
+  end loop;
+
+  return jsonb_build_object('id', v_sale.id, 'sale_number', v_sale.sale_number,
+    'items_count', v_items_count, 'subtotal', v_subtotal, 'discount', p_discount, 'total', v_total);
+end;
+$$;
+
+revoke all on function public.create_sale_cart(uuid, uuid, jsonb, numeric, text) from public;
+grant execute on function public.create_sale_cart(uuid, uuid, jsonb, numeric, text) to authenticated;
