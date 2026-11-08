@@ -10,7 +10,7 @@ Plataforma de Gestão Empresarial.
 - Leitura de código de barras pela câmera quando o navegador oferece suporte; também aceita digitação e leitor USB/Bluetooth.
 - Movimentações de estoque: entrada, saída e ajuste de saldo.
 - Vendas com carrinho de múltiplos produtos, registradas em uma única transação com baixa de estoque.
-- Compras/recebimento de um produto por operação, com entrada de estoque transacional.
+- Compras/recebimento com vários produtos por pedido, atualizando o estoque em uma única transação.
 - Contas a pagar e receber, com situação e forma de pagamento.
 - Registro de documentos empresariais e referências de notas/comprovantes.
 - Relatórios operacionais básicos.
@@ -28,7 +28,7 @@ O workflow de publicação está em `.github/workflows/static.yml` e publica a b
 
 ## Limitações desta etapa
 - O arquivo de migração dos módulos precisa ser executado no Supabase antes de usar os novos cadastros. Publicar o site não cria tabelas no banco.
-- Vendas já aceitam vários produtos no carrinho e registram a operação de forma transacional. Compras/recebimentos ainda aceitam um produto por operação.
+- Vendas já aceitam vários produtos no carrinho e registram a operação de forma transacional. Compras/recebimentos também aceitam vários produtos por pedido e atualizam o estoque transacionalmente.
 - Documentos aceitam anexos PDF e imagens até 10 MB em bucket privado do Supabase Storage; links temporários de visualização respeitam a associação e o perfil do usuário.
 - Leitura por câmera depende de HTTPS, permissão do usuário e suporte do navegador à API BarcodeDetector. Digitação e leitores USB/Bluetooth são alternativas.
 - Relatórios são operacionais e dependem dos lançamentos registrados; não substituem contabilidade.
