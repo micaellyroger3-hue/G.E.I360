@@ -22,9 +22,10 @@ Plataforma de Gestão Empresarial.
 2. Aplique depois `supabase/migrations/202611080001_erp_modules.sql` no SQL Editor.
 3. Aplique em seguida `supabase/migrations/202611080002_finance_links.sql` no SQL Editor. Essa migração vincula automaticamente vendas confirmadas a contas a receber e compras recebidas a contas a pagar. Os lançamentos vinculados não podem ser editados ou excluídos manualmente; a baixa/recebimento continua disponível.
 4. Aplique `supabase/migrations/202611080003_protect_linked_finance.sql` no SQL Editor. Ela reforça no próprio banco a proteção dos lançamentos vinculados, permitindo somente alterar a situação de pagamento.
-5. Aplique `supabase/migrations/202611080004_product_categories.sql` no SQL Editor para criar as categorias com RLS por empresa.
-6. Configure o endereço publicado do GitHub Pages em **Authentication → URL Configuration** (Site URL e Redirect URLs).
-7. Confirme o e-mail de cadastro, caso a confirmação esteja habilitada.
+5. Antes da nova migração, execute a consulta somente de leitura `supabase/diagnostics/202611080004_categories_preflight.sql` para conferir tabelas, colunas, RLS e funções existentes.
+6. Se o diagnóstico confirmar as dependências, aplique `supabase/migrations/202611080004_product_categories.sql` no SQL Editor. Ela cria as categorias por empresa e associa os produtos existentes sem apagar os rótulos antigos.
+7. Configure o endereço publicado do GitHub Pages em **Authentication → URL Configuration** (Site URL e Redirect URLs).
+8. Confirme o e-mail de cadastro, caso a confirmação esteja habilitada.
 
 O front-end utiliza a URL do projeto e a chave publicável (publishable/anon) no navegador. Nunca coloque uma chave `service_role` ou chave secreta no front-end.
 
