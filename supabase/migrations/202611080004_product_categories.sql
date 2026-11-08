@@ -32,6 +32,37 @@ create table if not exists public.product_categories (
   updated_at timestamptz not null default now()
 );
 
+do $gei$
+declare
+  missing_count integer;
+begin
+  select count(*) into missing_count
+  from (values
+    ('product_categories','id'),
+    ('product_categories','company_id'),
+    ('product_categories','name'),
+    ('product_categories','description'),
+    ('product_categories','is_active'),
+    ('product_categories','created_by'),
+    ('product_categories','created_at'),
+    ('product_categories','updated_at'),
+    ('products','company_id'),
+    ('products','category'),
+    ('products','created_by')
+  ) as expected(table_name,column_name)
+  where not exists (
+    select 1 from information_schema.columns c
+    where c.table_schema='public'
+      and c.table_name=expected.table_name
+      and c.column_name=expected.column_name
+  );
+
+  if missing_count > 0 then
+    raise exception 'G.E.I360: faltam % coluna(s) esperadas para Categorias. Migração cancelada.', missing_count;
+  end if;
+end
+$gei$;
+
 create unique index if not exists product_categories_company_name_uidx
   on public.product_categories(company_id, lower(btrim(name)));
 create index if not exists product_categories_company_created_idx
