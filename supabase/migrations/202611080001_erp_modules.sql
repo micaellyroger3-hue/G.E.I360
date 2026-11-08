@@ -125,7 +125,7 @@ returns trigger language plpgsql security definer set search_path = ''
 as $$
 begin
   if new.movement_type = 'in' then
-    update public.products set stock_quantity = stock_quantity + new.quantity where id = new.product_id and company_id = new.company_id;
+    update public.products set stock_quantity = stock_quantity + new.quantity where id = new.product_id and company_id = new.company_id;\n    if not found then raise exception 'Produto não encontrado nesta empresa'; end if;
   elsif new.movement_type = 'out' then
     update public.products set stock_quantity = stock_quantity - new.quantity where id = new.product_id and company_id = new.company_id and stock_quantity >= new.quantity;
     if not found then raise exception 'Estoque insuficiente ou produto não encontrado'; end if;
