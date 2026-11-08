@@ -128,7 +128,8 @@ on public.product_categories as restrictive
 for delete to authenticated
 using (public.has_company_role(company_id, array['owner','admin']::text[]));
 
-grant select, insert, update, delete on public.product_categories to authenticated;
+revoke all on table public.product_categories from anon, public;
+grant select, insert, update, delete on table public.product_categories to authenticated;
 
 -- Liga cada produto a uma categoria da mesma empresa, preservando a coluna textual antiga.
 alter table public.products add column if not exists category_id uuid;
