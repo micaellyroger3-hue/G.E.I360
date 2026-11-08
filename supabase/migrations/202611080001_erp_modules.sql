@@ -302,3 +302,77 @@ end;
 $$;
 revoke all on function public.receive_purchase(uuid,uuid,uuid,numeric,numeric,text) from public;
 grant execute on function public.receive_purchase(uuid,uuid,uuid,numeric,numeric,text) to authenticated;
+
+
+-- Armazenamento privado de anexos empresariais.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('company-documents', 'company-documents', false, 10485760, array['application/pdf','image/jpeg','image/png','image/webp'])
+on conflict (id) do update set
+  public = false,
+  file_size_limit = 10485760,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists company_documents_member_read on storage.objects;
+create policy company_documents_member_read
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'company-documents'
+  and exists (
+    select 1 from public.company_members cm
+    where cm.company_id::text = (storage.foldername(name))[1]
+      and cm.user_id = (select auth.uid())
+      and cm.status = 'active'
+  )
+);
+
+drop policy if exists company_documents_manager_upload on storage.objects;
+create policy company_documents_manager_upload
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'company-documents'
+  and exists (
+    select 1 from public.company_members cm
+    where cm.company_id::text = (storage.foldername(name))[1]
+      and cm.user_id = (select auth.uid())
+      and cm.status = 'active'
+      and cm.role in ('owner','admin','manager')
+  )
+);
+
+drop policy if exists company_documents_manager_update on storage.objects;
+create policy company_documents_manager_update
+on storage.objects for update to authenticated
+using (
+  bucket_id = 'company-documents'
+  and exists (
+    select 1 from public.company_members cm
+    where cm.company_id::text = (storage.foldername(name))[1]
+      and cm.user_id = (select auth.uid())
+      and cm.status = 'active'
+      and cm.role in ('owner','admin','manager')
+  )
+)
+with check (
+  bucket_id = 'company-documents'
+  and exists (
+    select 1 from public.company_members cm
+    where cm.company_id::text = (storage.foldername(name))[1]
+      and cm.user_id = (select auth.uid())
+      and cm.status = 'active'
+      and cm.role in ('owner','admin','manager')
+  )
+);
+
+drop policy if exists company_documents_admin_delete on storage.objects;
+create policy company_documents_admin_delete
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'company-documents'
+  and exists (
+    select 1 from public.company_members cm
+    where cm.company_id::text = (storage.foldername(name))[1]
+      and cm.user_id = (select auth.uid())
+      and cm.status = 'active'
+      and cm.role in ('owner','admin')
+  )
+);
