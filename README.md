@@ -1,25 +1,37 @@
 # G.E.I360
 Plataforma de Gestão Empresarial.
 
-## O que está implementado nesta versão
-- Cadastro e login de usuários pelo Supabase Auth.
-- Cadastro e leitura de empresas vinculadas ao usuário.
-- Criação automática do vínculo do criador como proprietário (`owner`).
-- Painel inicial com resumo da empresa e equipe.
-- Navegação entre Visão geral, Minha empresa e Funcionários.
-- Cadastro, edição, consulta e exclusão de funcionários com controle por RLS.
+## Módulos disponíveis no código
+- Autenticação e sessão de usuários com Supabase Auth.
+- Cadastro e seleção de empresa e vínculo de proprietário.
+- Painel inicial e gestão de funcionários.
+- Cadastro de clientes e fornecedores.
+- Cadastro de produtos, SKU, código de barras, preços e estoque mínimo.
+- Leitura de código de barras pela câmera quando o navegador oferece suporte; também aceita digitação e leitor USB/Bluetooth.
+- Movimentações de estoque: entrada, saída e ajuste de saldo.
+- Vendas de um produto por operação, com baixa de estoque transacional.
+- Compras/recebimento de um produto por operação, com entrada de estoque transacional.
+- Contas a pagar e receber, com situação e forma de pagamento.
+- Registro de documentos empresariais e referências de notas/comprovantes.
+- Relatórios operacionais básicos.
 
-## Configuração necessária no Supabase
-1. Abra o projeto Supabase conectado ao G.E.I360.
-2. Entre em **SQL Editor**.
-3. Abra o arquivo `supabase/migrations/202611070001_employees.sql` deste repositório, copie todo o conteúdo e execute uma única vez.
-4. Em **Authentication → URL Configuration**, adicione o endereço publicado do GitHub Pages em **Site URL** e **Redirect URLs**.
-5. Se a confirmação de e-mail estiver habilitada, confirme o endereço recebido antes de entrar.
+## Configuração do Supabase
+1. Aplique primeiro `supabase/migrations/202611070001_employees.sql` no SQL Editor.
+2. Aplique depois `supabase/migrations/202611080001_erp_modules.sql` no SQL Editor.
+3. Configure o endereço publicado do GitHub Pages em **Authentication → URL Configuration** (Site URL e Redirect URLs).
+4. Confirme o e-mail de cadastro, caso a confirmação esteja habilitada.
 
-O front-end usa a URL do projeto Supabase e a chave publicável (publishable/anon) configurada em `index.html`. Nunca coloque uma `service_role` ou chave secreta no navegador.
+O front-end utiliza a URL do projeto e a chave publicável (publishable/anon) no navegador. Nunca coloque uma chave `service_role` ou chave secreta no front-end.
 
 ## Publicação
-O workflow em `.github/workflows/static.yml` publica o conteúdo do repositório no GitHub Pages quando há commits na branch `main`. Aguarde a execução terminar em **Actions** e abra o endereço do GitHub Pages do repositório.
+O workflow de publicação está em `.github/workflows/static.yml` e publica a branch `main` no GitHub Pages. Confira **Actions** e aguarde a execução terminar com sucesso.
 
-## Escopo desta entrega
-Esta é a primeira versão funcional do núcleo de acesso, empresas e funcionários. Os demais módulos empresariais (estoque, vendas, compras, financeiro, fiscal, RH avançado, emissão fiscal e integrações) ainda precisam de tabelas, regras, validações e integrações próprias. A emissão de nota fiscal não é ativada apenas por uma tela: exige credenciamento, certificado e integração homologada com o provedor fiscal.
+## Limitações desta etapa
+- O arquivo de migração dos módulos precisa ser executado no Supabase antes de usar os novos cadastros. Publicar o site não cria tabelas no banco.
+- Vendas e recebimentos aceitam um produto por operação nesta versão inicial; carrinho e pedidos com vários itens ainda precisam ser desenvolvidos.
+- Documentos armazenam metadados e referência textual; upload seguro de arquivos ainda precisa ser integrado ao Supabase Storage.
+- Leitura por câmera depende de HTTPS, permissão do usuário e suporte do navegador à API BarcodeDetector. Digitação e leitores USB/Bluetooth são alternativas.
+- Relatórios são operacionais e dependem dos lançamentos registrados; não substituem contabilidade.
+- Emissão oficial de NF-e/NFC-e não está implementada. Ela exige dados fiscais da empresa, certificado digital, credenciamento e integração homologada com provedor/SEFAZ.
+- Ainda é necessário executar testes integrados no ambiente Supabase após aplicar as migrações. As verificações de publicação do GitHub não testam o banco nem os fluxos de negócio.
+
