@@ -180,18 +180,25 @@ set search_path = ''
 as $gei$
 declare
   v_category_name text;
+  v_category_active boolean;
 begin
   if new.category_id is null then
     new.category := null;
     return new;
   end if;
 
-  select pc.name into v_category_name
+  select pc.name, pc.is_active
+    into v_category_name, v_category_active
   from public.product_categories pc
   where pc.id = new.category_id and pc.company_id = new.company_id;
 
   if not found then
     raise exception 'A categoria selecionada não pertence à empresa ativa.';
+  end if;
+
+  if not v_category_active
+     and (tg_op = 'INSERT' or new.category_id is distinct from old.category_id) then
+    raise exception 'Esta categoria está inativa e não pode ser atribuída a um novo produto.';
   end if;
 
   new.category := v_category_name;
