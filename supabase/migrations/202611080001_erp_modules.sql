@@ -265,6 +265,8 @@ create table if not exists public.purchase_order_items (
 );
 alter table public.purchase_orders enable row level security;
 alter table public.purchase_order_items enable row level security;
+-- Histórico de compras: leitura para membros; gravação somente pelas funções transacionais.
+-- Impede alterar ou apagar recebimentos sem reverter estoque e financeiro.
 drop policy if exists purchase_orders_member_select on public.purchase_orders;
 drop policy if exists purchase_orders_manager_insert on public.purchase_orders;
 drop policy if exists purchase_orders_manager_update on public.purchase_orders;
@@ -274,14 +276,9 @@ drop policy if exists purchase_items_manager_insert on public.purchase_order_ite
 drop policy if exists purchase_items_manager_update on public.purchase_order_items;
 drop policy if exists purchase_items_admin_delete on public.purchase_order_items;
 create policy purchase_orders_member_select on public.purchase_orders for select to authenticated using (public.is_company_member(company_id));
-create policy purchase_orders_manager_insert on public.purchase_orders for insert to authenticated with check (created_by=auth.uid() and public.has_company_role(company_id,array['owner','admin','manager']::text[]));
-create policy purchase_orders_manager_update on public.purchase_orders for update to authenticated using (public.has_company_role(company_id,array['owner','admin','manager']::text[])) with check (public.has_company_role(company_id,array['owner','admin','manager']::text[]));
-create policy purchase_orders_admin_delete on public.purchase_orders for delete to authenticated using (public.has_company_role(company_id,array['owner','admin']::text[]));
 create policy purchase_items_member_select on public.purchase_order_items for select to authenticated using (public.is_company_member(company_id));
-create policy purchase_items_manager_insert on public.purchase_order_items for insert to authenticated with check (created_by=auth.uid() and public.has_company_role(company_id,array['owner','admin','manager']::text[]));
-create policy purchase_items_manager_update on public.purchase_order_items for update to authenticated using (public.has_company_role(company_id,array['owner','admin','manager']::text[])) with check (public.has_company_role(company_id,array['owner','admin','manager']::text[]));
-create policy purchase_items_admin_delete on public.purchase_order_items for delete to authenticated using (public.has_company_role(company_id,array['owner','admin']::text[]));
-grant select,insert,update,delete on public.purchase_orders,public.purchase_order_items to authenticated;
+grant select on public.purchase_orders,public.purchase_order_items to authenticated;
+revoke insert,update,delete on public.purchase_orders,public.purchase_order_items from authenticated;
 
 create or replace function public.receive_purchase(
   p_company_id uuid,
