@@ -29,7 +29,7 @@ O workflow de publicação está em `.github/workflows/static.yml` e publica a b
 ## Limitações desta etapa
 - O arquivo de migração dos módulos precisa ser executado no Supabase antes de usar os novos cadastros. Publicar o site não cria tabelas no banco.
 - Vendas e recebimentos aceitam um produto por operação nesta versão inicial; carrinho e pedidos com vários itens ainda precisam ser desenvolvidos.
-- Documentos armazenam metadados e referência textual; upload seguro de arquivos ainda precisa ser integrado ao Supabase Storage.
+- Documentos aceitam anexos PDF e imagens até 10 MB em bucket privado do Supabase Storage; links temporários de visualização respeitam a associação e o perfil do usuário.
 - Leitura por câmera depende de HTTPS, permissão do usuário e suporte do navegador à API BarcodeDetector. Digitação e leitores USB/Bluetooth são alternativas.
 - Relatórios são operacionais e dependem dos lançamentos registrados; não substituem contabilidade.
 - Emissão oficial de NF-e/NFC-e não está implementada. Ela exige dados fiscais da empresa, certificado digital, credenciamento e integração homologada com provedor/SEFAZ.
