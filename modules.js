@@ -8,7 +8,7 @@ const ERP = {
 };
 const ERP_LABELS={expense:'Despesa',income:'Receita',pending:'Pendente',paid:'Pago',cancelled:'Cancelado',invoice_received:'Nota recebida',receipt:'Comprovante',contract:'Contrato',quote:'Orçamento',other:'Outro',true:'Sim',false:'Não',in:'Entrada',out:'Saída',adjustment:'Ajuste',draft:'Rascunho',confirmed:'Confirmada'};
 let erpRows=[],erpEditing=null,erpPage='';
-const erpFmt=v=>ERP_LABELS[v]||v??'—';
+const erpFmt=v=>(ERP_LABELS[v]||v||'—');
 const erpMoney=v=>'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 function erpField(f,row={}){const [key,label,type='text',required=false,opts]=f;let value=row[key]??(key==='unit'?'un':key==='status'?'pending':key==='entry_type'?'expense':'');if(type==='select')return '<div class="field"><label>'+label+'</label><select name="'+key+'" '+(required?'required':'')+'>'+opts.map(o=>'<option value="'+o+'" '+(String(value)===o?'selected':'')+'>'+erpFmt(o)+'</option>').join('')+'</select></div>';return '<div class="field"><label>'+label+'</label><input name="'+key+'" type="'+type+'" '+(required?'required':'')+' '+(type==='number'?'step="0.001" min="0"':'')+' value="'+esc(value)+'"></div>'}
 async function erpLoad(table){return await api('/rest/v1/'+table+'?select=*&company_id=eq.'+companyId+'&order=created_at.desc')}
