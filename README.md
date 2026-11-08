@@ -20,7 +20,7 @@ Plataforma de Gestão Empresarial.
 ## Configuração do Supabase
 1. Aplique primeiro `supabase/migrations/202611070001_employees.sql` no SQL Editor.
 2. Aplique depois `supabase/migrations/202611080001_erp_modules.sql` no SQL Editor.
-3. Aplique por último `supabase/migrations/202611080002_finance_links.sql` no SQL Editor. Essa migração vincula automaticamente vendas confirmadas a contas a receber e compras recebidas a contas a pagar. Os lançamentos vinculados não podem ser editados ou excluídos manualmente; a baixa/recebimento continua disponível.
+3. Aplique em seguida `supabase/migrations/202611080002_finance_links.sql` no SQL Editor. Essa migração vincula automaticamente vendas confirmadas a contas a receber e compras recebidas a contas a pagar. Os lançamentos vinculados não podem ser editados ou excluídos manualmente; a baixa/recebimento continua disponível.
 4. Aplique `supabase/migrations/202611080003_protect_linked_finance.sql` no SQL Editor. Ela reforça no próprio banco a proteção dos lançamentos vinculados, permitindo somente alterar a situação de pagamento.
 5. Aplique `supabase/migrations/202611080004_product_categories.sql` no SQL Editor para criar as categorias com RLS por empresa.
 6. Configure o endereço publicado do GitHub Pages em **Authentication → URL Configuration** (Site URL e Redirect URLs).
