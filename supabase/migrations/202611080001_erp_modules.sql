@@ -77,7 +77,9 @@ create table if not exists public.sale_items (
   description text not null,
   quantity numeric(14,3) not null check(quantity > 0),
   unit_price numeric(14,2) not null check(unit_price >= 0),
-  line_total numeric(14,2) generated always as (round(quantity * unit_price,2)) stored
+  line_total numeric(14,2) generated always as (round(quantity * unit_price,2)) stored,
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now()
 );
 create table if not exists public.financial_entries (
   id uuid primary key default gen_random_uuid(),
