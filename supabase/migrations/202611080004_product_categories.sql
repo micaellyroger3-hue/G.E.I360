@@ -9,6 +9,9 @@ begin
   if to_regclass('public.companies') is null then
     raise exception 'G.E.I360: tabela public.companies não encontrada. Migração cancelada.';
   end if;
+  if to_regclass('public.products') is null then
+    raise exception 'G.E.I360: tabela public.products não encontrada. Aplique primeiro a migração ERP. Migração cancelada.';
+  end if;
   if to_regprocedure('public.is_company_member(uuid)') is null then
     raise exception 'G.E.I360: função public.is_company_member(uuid) não encontrada. Migração cancelada.';
   end if;
@@ -65,6 +68,46 @@ for delete to authenticated
 using (public.has_company_role(company_id, array['owner','admin']::text[]));
 
 grant select, insert, update, delete on public.product_categories to authenticated;
+
+-- Liga cada produto a uma categoria da mesma empresa, preservando a coluna textual antiga.
+alter table public.products add column if not exists category_id uuid;
+do $
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.products'::regclass
+      and conname = 'products_category_id_fkey'
+  ) then
+    alter table public.products
+      add constraint products_category_id_fkey
+      foreign key (category_id) references public.product_categories(id)
+      on delete set null;
+  end if;
+end
+$;
+create index if not exists products_company_category_idx
+  on public.products(company_id, category_id);
+
+create or replace function public.gei360_validate_product_category_company()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+begin
+  if new.category_id is not null and not exists (
+    select 1 from public.product_categories pc
+    where pc.id = new.category_id and pc.company_id = new.company_id
+  ) then
+    raise exception 'A categoria selecionada não pertence à empresa ativa.';
+  end if;
+  return new;
+end;
+$;
+revoke all on function public.gei360_validate_product_category_company() from public;
+drop trigger if exists gei360_products_category_company_guard on public.products;
+create trigger gei360_products_category_company_guard
+before insert or update of company_id, category_id on public.products
+for each row execute function public.gei360_validate_product_category_company();
 
 create or replace function public.gei360_guard_product_category_update()
 returns trigger
