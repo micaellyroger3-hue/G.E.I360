@@ -464,3 +464,81 @@ $$;
 
 revoke all on function public.create_sale_cart(uuid, uuid, jsonb, numeric, text) from public;
 grant execute on function public.create_sale_cart(uuid, uuid, jsonb, numeric, text) to authenticated;
+
+
+-- Recebimento de vários produtos em uma única transação.
+create or replace function public.receive_purchase_cart(
+  p_company_id uuid,
+  p_supplier_id uuid,
+  p_items jsonb,
+  p_notes text default null
+) returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_order public.purchase_orders%rowtype;
+  v_item jsonb;
+  v_product public.products%rowtype;
+  v_product_id uuid;
+  v_quantity numeric(14,3);
+  v_unit_cost numeric(14,2);
+  v_total numeric(14,2) := 0;
+  v_seen uuid[] := array[]::uuid[];
+  v_items_count integer := 0;
+begin
+  if v_user is null then raise exception 'Faça login novamente.'; end if;
+  if not public.has_company_role(p_company_id,array['owner','admin','manager']::text[]) then
+    raise exception 'Sem permissão para registrar compras.';
+  end if;
+  if jsonb_typeof(p_items) is distinct from 'array' or jsonb_array_length(p_items)=0 then
+    raise exception 'Adicione pelo menos um produto ao recebimento.';
+  end if;
+  if p_supplier_id is not null and not exists(select 1 from public.suppliers where id=p_supplier_id and company_id=p_company_id) then
+    raise exception 'Fornecedor não pertence a esta empresa.';
+  end if;
+
+  for v_item in select value from jsonb_array_elements(p_items) order by (value->>'product_id')
+  loop
+    begin
+      v_product_id := (v_item->>'product_id')::uuid;
+      v_quantity := (v_item->>'quantity')::numeric;
+      v_unit_cost := (v_item->>'unit_cost')::numeric;
+    exception when others then
+      raise exception 'Produto, quantidade ou custo inválido no recebimento.';
+    end;
+    if v_product_id = any(v_seen) then raise exception 'Há produto repetido no recebimento.'; end if;
+    v_seen := array_append(v_seen,v_product_id);
+    if v_quantity is null or v_quantity<=0 or v_unit_cost is null or v_unit_cost<0 then
+      raise exception 'Quantidade ou custo inválido.';
+    end if;
+    select * into v_product from public.products
+      where id=v_product_id and company_id=p_company_id and active=true for update;
+    if not found then raise exception 'Produto não encontrado ou inativo nesta empresa.'; end if;
+    v_total := v_total + round(v_quantity*v_unit_cost,2);
+    v_items_count := v_items_count+1;
+  end loop;
+
+  insert into public.purchase_orders(company_id,supplier_id,status,total,notes,received_at,created_by)
+  values(p_company_id,p_supplier_id,'received',v_total,p_notes,now(),v_user)
+  returning * into v_order;
+
+  for v_item in select value from jsonb_array_elements(p_items) order by (value->>'product_id')
+  loop
+    v_product_id := (v_item->>'product_id')::uuid;
+    v_quantity := (v_item->>'quantity')::numeric;
+    v_unit_cost := (v_item->>'unit_cost')::numeric;
+    select * into v_product from public.products where id=v_product_id and company_id=p_company_id;
+    insert into public.purchase_order_items(company_id,purchase_order_id,product_id,quantity,unit_cost,created_by)
+    values(p_company_id,v_order.id,v_product_id,v_quantity,v_unit_cost,v_user);
+    insert into public.stock_movements(company_id,product_id,movement_type,quantity,unit_cost,note,created_by)
+    values(p_company_id,v_product_id,'in',v_quantity,v_unit_cost,'Recebimento da compra #'||v_order.order_number,v_user);
+  end loop;
+
+  return jsonb_build_object('id',v_order.id,'order_number',v_order.order_number,'items_count',v_items_count,'total',v_total);
+end;
+$$;
+revoke all on function public.receive_purchase_cart(uuid,uuid,jsonb,text) from public;
+grant execute on function public.receive_purchase_cart(uuid,uuid,jsonb,text) to authenticated;
