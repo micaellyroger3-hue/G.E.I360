@@ -143,7 +143,7 @@ create trigger stock_movement_apply before insert on public.stock_movements for 
 do $$
 declare t text;
 begin
-  foreach t in array array['suppliers','customers','products','stock_movements','sales','sale_items','financial_entries','business_documents'] loop
+  foreach t in array array['suppliers','customers','products','financial_entries','business_documents'] loop
     execute format('alter table public.%I enable row level security',t);
     execute format('drop policy if exists %I on public.%I',t||'_member_read',t);
     execute format('create policy %I on public.%I for select to authenticated using (public.is_company_member(company_id))',t||'_member_read',t);
@@ -156,6 +156,17 @@ begin
     execute format('grant select, insert, update, delete on public.%I to authenticated',t);
   end loop;
 end $$;
+
+-- Histórico operacional: leitura para membros; gravação somente pelas funções transacionais.
+-- Evita inserções/edições manuais que possam desalinhar estoque, vendas e itens.
+foreach t in array array['stock_movements','sales','sale_items'] loop
+  execute format('alter table public.%I enable row level security',t);
+  execute format('drop policy if exists %I on public.%I',t||'_member_read',t);
+  execute format('create policy %I on public.%I for select to authenticated using (public.is_company_member(company_id))',t||'_member_read',t);
+  execute format('grant select on public.%I to authenticated',t);
+  execute format('revoke insert, update, delete on public.%I from authenticated',t);
+end loop;
+
 
 
 -- Venda atômica: grava cabeçalho, item e baixa estoque em uma única transação.
