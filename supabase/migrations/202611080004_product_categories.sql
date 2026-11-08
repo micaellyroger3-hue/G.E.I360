@@ -71,7 +71,7 @@ grant select, insert, update, delete on public.product_categories to authenticat
 
 -- Liga cada produto a uma categoria da mesma empresa, preservando a coluna textual antiga.
 alter table public.products add column if not exists category_id uuid;
-do $
+do $gei$
 begin
   if not exists (
     select 1 from pg_constraint
@@ -84,7 +84,7 @@ begin
       on delete set null;
   end if;
 end
-$;
+$gei$;
 create index if not exists products_company_category_idx
   on public.products(company_id, category_id);
 
@@ -92,22 +92,52 @@ create or replace function public.gei360_validate_product_category_company()
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $gei$
+declare
+  v_category_name text;
 begin
-  if new.category_id is not null and not exists (
-    select 1 from public.product_categories pc
-    where pc.id = new.category_id and pc.company_id = new.company_id
-  ) then
+  if new.category_id is null then
+    new.category := null;
+    return new;
+  end if;
+
+  select pc.name into v_category_name
+  from public.product_categories pc
+  where pc.id = new.category_id and pc.company_id = new.company_id;
+
+  if not found then
     raise exception 'A categoria selecionada não pertence à empresa ativa.';
   end if;
+
+  new.category := v_category_name;
   return new;
 end;
-$;
+$gei$;
 revoke all on function public.gei360_validate_product_category_company() from public;
 drop trigger if exists gei360_products_category_company_guard on public.products;
 create trigger gei360_products_category_company_guard
 before insert or update of company_id, category_id on public.products
 for each row execute function public.gei360_validate_product_category_company();
+
+create or replace function public.gei360_sync_product_category_name()
+returns trigger
+language plpgsql
+set search_path = ''
+as $gei$
+begin
+  if new.name is distinct from old.name then
+    update public.products
+    set category = new.name
+    where company_id = new.company_id and category_id = new.id;
+  end if;
+  return new;
+end;
+$gei$;
+revoke all on function public.gei360_sync_product_category_name() from public;
+drop trigger if exists gei360_product_category_name_sync on public.product_categories;
+create trigger gei360_product_category_name_sync
+after update of name on public.product_categories
+for each row execute function public.gei360_sync_product_category_name();
 
 create or replace function public.gei360_guard_product_category_update()
 returns trigger
