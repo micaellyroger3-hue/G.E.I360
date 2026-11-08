@@ -12,6 +12,10 @@ begin
       raise exception 'Este lancamento esta vinculado a uma venda ou compra e nao pode ser excluido.';
     end if;
 
+    if new.status not in ('pending', 'paid') then
+      raise exception 'Lancamentos vinculados so podem ficar pendentes ou pagos.';
+    end if;
+
     if new.id is distinct from old.id
       or new.company_id is distinct from old.company_id
       or new.entry_type is distinct from old.entry_type
