@@ -24,7 +24,7 @@ Plataforma de Gestão Empresarial.
 4. Aplique `supabase/migrations/202611080003_protect_linked_finance.sql` no SQL Editor. Ela reforça no próprio banco a proteção dos lançamentos vinculados, permitindo somente alterar a situação de pagamento.
 5. Aplique `supabase/migrations/202611080004_product_categories.sql` no SQL Editor para criar as categorias com RLS por empresa.
 6. Configure o endereço publicado do GitHub Pages em **Authentication → URL Configuration** (Site URL e Redirect URLs).
-6. Confirme o e-mail de cadastro, caso a confirmação esteja habilitada.
+7. Confirme o e-mail de cadastro, caso a confirmação esteja habilitada.
 
 O front-end utiliza a URL do projeto e a chave publicável (publishable/anon) no navegador. Nunca coloque uma chave `service_role` ou chave secreta no front-end.
 
