@@ -88,6 +88,29 @@ $gei$;
 create index if not exists products_company_category_idx
   on public.products(company_id, category_id);
 
+-- Migra categorias textuais antigas para a tabela nova sem apagar os valores existentes.
+insert into public.product_categories(company_id, name, created_by)
+select distinct on (p.company_id, lower(btrim(p.category)))
+  p.company_id, btrim(p.category), p.created_by
+from public.products p
+where p.category is not null
+  and btrim(p.category) <> ''
+  and not exists (
+    select 1
+    from public.product_categories pc
+    where pc.company_id = p.company_id
+      and lower(btrim(pc.name)) = lower(btrim(p.category))
+  )
+order by p.company_id, lower(btrim(p.category)), p.created_at, p.id;
+
+update public.products p
+set category_id = pc.id,
+    category = pc.name
+from public.product_categories pc
+where pc.company_id = p.company_id
+  and lower(btrim(pc.name)) = lower(btrim(p.category))
+  and p.category_id is null;
+
 create or replace function public.gei360_validate_product_category_company()
 returns trigger
 language plpgsql
