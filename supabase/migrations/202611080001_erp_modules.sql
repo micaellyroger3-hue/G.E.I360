@@ -125,7 +125,8 @@ returns trigger language plpgsql security definer set search_path = ''
 as $$
 begin
   if new.movement_type = 'in' then
-    update public.products set stock_quantity = stock_quantity + new.quantity where id = new.product_id and company_id = new.company_id;\n    if not found then raise exception 'Produto não encontrado nesta empresa'; end if;
+    update public.products set stock_quantity = stock_quantity + new.quantity where id = new.product_id and company_id = new.company_id;
+    if not found then raise exception 'Produto não encontrado nesta empresa'; end if;
   elsif new.movement_type = 'out' then
     update public.products set stock_quantity = stock_quantity - new.quantity where id = new.product_id and company_id = new.company_id and stock_quantity >= new.quantity;
     if not found then raise exception 'Estoque insuficiente ou produto não encontrado'; end if;
@@ -251,6 +252,14 @@ create table if not exists public.purchase_order_items (
 );
 alter table public.purchase_orders enable row level security;
 alter table public.purchase_order_items enable row level security;
+drop policy if exists purchase_orders_member_select on public.purchase_orders;
+drop policy if exists purchase_orders_manager_insert on public.purchase_orders;
+drop policy if exists purchase_orders_manager_update on public.purchase_orders;
+drop policy if exists purchase_orders_admin_delete on public.purchase_orders;
+drop policy if exists purchase_items_member_select on public.purchase_order_items;
+drop policy if exists purchase_items_manager_insert on public.purchase_order_items;
+drop policy if exists purchase_items_manager_update on public.purchase_order_items;
+drop policy if exists purchase_items_admin_delete on public.purchase_order_items;
 create policy purchase_orders_member_select on public.purchase_orders for select to authenticated using (public.is_company_member(company_id));
 create policy purchase_orders_manager_insert on public.purchase_orders for insert to authenticated with check (created_by=auth.uid() and public.has_company_role(company_id,array['owner','admin','manager']::text[]));
 create policy purchase_orders_manager_update on public.purchase_orders for update to authenticated using (public.has_company_role(company_id,array['owner','admin','manager']::text[])) with check (public.has_company_role(company_id,array['owner','admin','manager']::text[]));
