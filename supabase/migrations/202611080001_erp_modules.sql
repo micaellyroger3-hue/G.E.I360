@@ -171,6 +171,49 @@ begin
   end loop;
 end $$;
 
+-- Movimentação manual de estoque validada e atômica.
+create or replace function public.record_stock_movement(
+  p_company_id uuid,
+  p_product_id uuid,
+  p_movement_type text,
+  p_quantity numeric,
+  p_unit_cost numeric default 0,
+  p_note text default null
+) returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_user uuid := auth.uid();
+  v_product public.products%rowtype;
+  v_movement public.stock_movements%rowtype;
+begin
+  if v_user is null then raise exception 'Faça login novamente.'; end if;
+  if not public.has_company_role(p_company_id,array['owner','admin','manager']::text[]) then
+    raise exception 'Você não tem permissão para movimentar o estoque.';
+  end if;
+  if p_movement_type not in ('in','out','adjustment') then raise exception 'Tipo de movimentação inválido.'; end if;
+  if p_quantity is null or p_quantity < 0 or (p_movement_type <> 'adjustment' and p_quantity = 0) then
+    raise exception 'Quantidade inválida.';
+  end if;
+  if p_unit_cost is null or p_unit_cost < 0 then raise exception 'Custo unitário inválido.'; end if;
+  select * into v_product from public.products
+   where id=p_product_id and company_id=p_company_id for update;
+  if not found then raise exception 'Produto não encontrado nesta empresa.'; end if;
+  if p_movement_type='out' and v_product.stock_quantity < p_quantity then
+    raise exception 'Estoque insuficiente. Saldo atual: %',v_product.stock_quantity;
+  end if;
+  insert into public.stock_movements(company_id,product_id,movement_type,quantity,unit_cost,note,created_by)
+  values(p_company_id,p_product_id,p_movement_type,p_quantity,p_unit_cost,p_note,v_user)
+  returning * into v_movement;
+  return jsonb_build_object('id',v_movement.id,'stock_quantity',
+    (select stock_quantity from public.products where id=p_product_id and company_id=p_company_id));
+end;
+$;
+revoke all on function public.record_stock_movement(uuid,uuid,text,numeric,numeric,text) from public;
+grant execute on function public.record_stock_movement(uuid,uuid,text,numeric,numeric,text) to authenticated;
+
 -- Venda atômica: grava cabeçalho, item e baixa estoque em uma única transação.
 create or replace function public.create_sale(
   p_company_id uuid,
