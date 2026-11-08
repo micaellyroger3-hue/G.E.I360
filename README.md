@@ -7,6 +7,7 @@ Plataforma de Gestão Empresarial.
 - Painel inicial e gestão de funcionários.
 - Cadastro de clientes e fornecedores.
 - Cadastro de categorias de produtos, com nome, descrição, situação ativa/inativa e isolamento por empresa.
+- Associação opcional de cada produto a uma categoria da mesma empresa; a categoria é validada no banco e o vínculo é removido automaticamente se a categoria for excluída.
 - Cadastro de produtos, SKU, código de barras, preços e estoque mínimo.
 - Leitura de código de barras pela câmera quando o navegador oferece suporte; também aceita digitação e leitor USB/Bluetooth.
 - Movimentações de estoque: entrada, saída e ajuste de saldo.
