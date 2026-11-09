@@ -21,7 +21,35 @@ const SESSION_KEY='gei360_session';
 function saveSession(value){session=value;try{localStorage.setItem(SESSION_KEY,JSON.stringify(value))}catch(e){}}
 async function restoreSession(){try{const raw=localStorage.getItem(SESSION_KEY);if(!raw)return;const saved=JSON.parse(raw);if(!saved?.refresh_token)throw Error('Sessão sem token de renovação.');const fresh=await api('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:saved.refresh_token}});saveSession(fresh);await loadCompanies();$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('userLabel').textContent=fresh.user?.email||'';await render()}catch(e){try{localStorage.removeItem(SESSION_KEY)}catch(_){}session=null;}}
 const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function api(path,{method='GET',body,auth=true,headers={}}={}){const h={'apikey':SUPABASE_KEY,'Content-Type':'application/json',...headers};if(auth&&session?.access_token)h.Authorization='Bearer '+session.access_token;else if(auth)throw Error('Sua sessão expirou. Entre novamente.');const r=await fetch(SUPABASE_URL+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)});const raw=await r.text();let data=null;try{data=raw?JSON.parse(raw):null}catch{}if(!r.ok)throw Error(data?.message||data?.msg||data?.hint||data?.details||raw||('HTTP '+r.status));return data}
+let refreshPromise=null;
+async function refreshSessionToken(){
+ if(!session?.refresh_token)throw Error('Sua sessão expirou. Entre novamente.');
+ if(!refreshPromise){
+  refreshPromise=(async()=>{
+   const response=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})});
+   const raw=await response.text();let data=null;try{data=raw?JSON.parse(raw):null}catch(e){}
+   if(!response.ok||!data?.access_token)throw Error(data?.message||data?.msg||'Não foi possível renovar sua sessão.');
+   saveSession(data);return data;
+  })().catch(error=>{session=null;try{localStorage.removeItem(SESSION_KEY)}catch(e){}throw Error('Sua sessão expirou. Entre novamente. '+error.message)}).finally(()=>{refreshPromise=null});
+ }
+ return refreshPromise;
+}
+async function api(path,{method='GET',body,auth=true,headers={}}={}){
+ const send=async()=>{
+  const h={'apikey':SUPABASE_KEY,'Content-Type':'application/json',...headers};
+  if(auth&&session?.access_token)h.Authorization='Bearer '+session.access_token;
+  else if(auth)throw Error('Sua sessão expirou. Entre novamente.');
+  const response=await fetch(SUPABASE_URL+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)});
+  const raw=await response.text();let data=null;try{data=raw?JSON.parse(raw):null}catch(e){}
+  return {response,raw,data};
+ };
+ let result=await send();
+ if(result.response.status===401&&auth&&session?.refresh_token&&!path.startsWith('/auth/v1/token')){
+  await refreshSessionToken();result=await send();
+ }
+ if(!result.response.ok)throw Error(result.data?.message||result.data?.msg||result.data?.hint||result.data?.details||result.raw||('HTTP '+result.response.status));
+ return result.data;
+}
 function message(el,text,type='err'){el.innerHTML='<div class="'+type+'">'+esc(text)+'</div>'}
 $('toggleAuth').onclick=()=>{signup=!signup;$('authTitle').textContent=signup?'Crie sua conta':'Acesse sua plataforma';$('authSubmit').textContent=signup?'Criar conta':'Entrar';$('toggleAuth').textContent=signup?'Já tenho conta':'Criar uma conta';$('password').autocomplete=signup?'new-password':'current-password';$('authMessage').innerHTML=''};
 $('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;$('authMessage').innerHTML='';try{const email=$('email').value.trim(),password=$('password').value;let data;if(signup){data=await api('/auth/v1/signup',{method:'POST',auth:false,body:{email,password}});if(!data?.access_token){message($('authMessage'),'Conta criada. Confirme seu e-mail pelo link enviado e depois entre.','ok');return}saveSession(data)}else{saveSession(await api('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email,password}}))}await loadCompanies();$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('userLabel').textContent=email;render()}catch(err){message($('authMessage'),err.message)}finally{$('authSubmit').disabled=false}};
