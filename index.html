@@ -9,8 +9,9 @@
 @media(max-width:900px){.gei-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.gei-dashboard-grid{grid-template-columns:1fr}}
 @media(max-width:460px){.gei-welcome{padding:19px}.gei-welcome h2{font-size:21px}.gei-welcome-mark{font-size:32px}.gei-kpi{padding:13px}.gei-kpi strong{font-size:19px}.gei-chart{gap:5px}.gei-chart-value{font-size:8px}}
 
-</style></head><body>
+ .offline-screen{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#101827,#173c43)}.offline-card{width:min(460px,100%);background:#fff;border-radius:18px;padding:28px;box-shadow:0 20px 60px #0004}.offline-mark{font-size:25px;font-weight:900;letter-spacing:-1px}.offline-mark b{color:#16866d}.offline-state{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:20px;background:#fff4df;color:#8a5b12;font-size:12px;font-weight:800;margin:18px 0 8px}.offline-dot{width:8px;height:8px;border-radius:50%;background:#d69b27}.offline-card h1{font-size:23px;margin:8px 0}.offline-card p{color:#64748b;line-height:1.55}.offline-card ul{padding-left:20px;color:#475569;line-height:1.7}.offline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}</style></head><body>
 <section id="auth" class="login"><div class="loginbox"><div class="brand">G.E.I<b>360</b></div><h2 id="authTitle">Acesse sua plataforma</h2><p class="muted">Gestão empresarial integrada</p><div id="authMessage"></div><form id="authForm"><div class="field"><label>E-mail</label><input id="email" type="email" autocomplete="email" required></div><div class="field"><label>Senha</label><input id="password" type="password" minlength="6" autocomplete="current-password" required></div><button id="authSubmit" style="width:100%">Entrar</button></form><button class="alt" id="toggleAuth" style="width:100%;margin-top:9px">Criar uma conta</button></div></section>
+<section id="offlineMode" class="offline-screen hidden" role="status" aria-live="polite"><div class="offline-card"><div class="offline-mark">G.E.I<b>360</b></div><div class="offline-state"><span class="offline-dot"></span> MODO OFFLINE</div><h1>Aplicativo aberto sem internet</h1><p>A estrutura básica do G.E.I360 está disponível, mas os módulos e dados da empresa ficam bloqueados até a conexão voltar.</p><ul><li>Nenhum dado empresarial é carregado nesta tela.</li><li>Nenhuma consulta, alteração ou envio é realizado sem conexão.</li><li>Quando a internet voltar, toque em tentar novamente.</li></ul><div class="offline-actions"><button id="offlineRetry" type="button">Tentar novamente</button><button id="offlineInstall" class="alt" type="button" hidden>Instalar aplicativo</button></div><p class="muted" style="font-size:11px;margin-top:18px">No Android: use “Instalar app” ou “Adicionar à tela inicial” no menu do navegador. No computador: use o ícone de instalação na barra de endereço, quando disponível.</p></div></section>
 <div id="app" class="shell hidden"><aside class="side"><div class="brand">G.E.I<b>360</b></div><div class="company" id="companyLabel">Nenhuma empresa selecionada</div><nav class="nav"><button data-page="home" class="active">Visão geral</button><button data-page="company">Minha empresa</button><button data-page="employees">Funcionários</button><button data-page="products">Estoque</button><button data-page="stock">Movimentações</button><button data-page="suppliers">Fornecedores</button><button data-page="customers">Clientes</button><button data-page="sales">Vendas</button><button data-page="purchases">Compras</button><button data-page="finance">Financeiro</button><button data-page="documents">Documentos</button><button data-page="reports">Relatórios</button></nav></aside><main class="main"><header class="top"><b id="pageTitle">Visão geral</b><span><small id="userLabel"></small> <button class="alt small" id="logout">Sair</button></span></header><div class="content" id="view"></div></main></div>
 <div class="modalbg" id="modal"><div class="modal"><div class="head"><b id="modalTitle">Funcionário</b><button class="alt small" id="closeModal">Fechar</button></div><form id="employeeForm"><input id="employeeId" type="hidden"><div class="field"><label>Nome completo</label><input id="full_name" required maxlength="120"></div><div class="field"><label>E-mail</label><input id="emp_email" type="email"></div><div class="field"><label>Telefone</label><input id="phone" maxlength="30"></div><div class="field"><label>Cargo</label><input id="job_title" maxlength="80"></div><div class="field"><label>Departamento</label><input id="department" maxlength="80"></div><div class="field"><label>Situação</label><select id="status"><option value="active">Ativo</option><option value="inactive">Inativo</option></select></div><button>Salvar funcionário</button></form></div></div>
 <script>
@@ -19,7 +20,13 @@ const SUPABASE_KEY='sb_publishable_C1PaxcWAdb5rLfd0yJjl5g_ZUQKK7Dk';
 let session=null,companies=[],companyId=null,companyRole=null,employees=[],signup=false,editing=false;
 const SESSION_KEY='gei360_session';
 function saveSession(value){session=value;try{localStorage.setItem(SESSION_KEY,JSON.stringify(value))}catch(e){}}
+function showOfflineMode(){
+ $('auth').classList.add('hidden');$('app').classList.add('hidden');$('offlineMode').classList.remove('hidden');
+}
+function hideOfflineMode(){$('offlineMode').classList.add('hidden')}
 async function restoreSession(){
+ if(!navigator.onLine){showOfflineMode();return}
+ hideOfflineMode();
  let saved=null;
  try{
   const raw=localStorage.getItem(SESSION_KEY);if(!raw)return;
@@ -33,7 +40,7 @@ async function restoreSession(){
   saveSession(fresh);saved=fresh;
  }catch(e){
   if(e instanceof TypeError||/failed to fetch|networkerror|load failed/i.test(e.message||'')){
-   session=saved;await showApp();message($('view'),'Sem conexão com o servidor. Sua sessão foi preservada; conecte-se à internet para carregar os dados.','notice');return;
+   session=saved;showOfflineMode();return;
   }
   try{localStorage.removeItem(SESSION_KEY)}catch(_){}session=null;return;
  }
@@ -55,6 +62,7 @@ async function refreshSessionToken(){
  return refreshPromise;
 }
 async function api(path,{method='GET',body,auth=true,headers={}}={}){
+ if(!navigator.onLine)throw Error('Modo offline: conecte-se à internet para acessar os dados da empresa.');
  const send=async()=>{
   const h={'apikey':SUPABASE_KEY,'Content-Type':'application/json',...headers};
   if(auth&&session?.access_token)h.Authorization='Bearer '+session.access_token;
@@ -91,5 +99,11 @@ async function deleteEmployee(id){if(!confirm('Excluir este cadastro de funcion�
 async function loadRole(){if(!companyId){companyRole=null;return}const m=await api('/rest/v1/company_members?select=role,status&company_id=eq.'+companyId+'&user_id=eq.'+session.user.id+'&limit=1');companyRole=m?.[0]?.status==='active'?m[0].role:null}
 const oldRender=render;render=async function(){if(companyId)await loadRole();$('companyLabel').textContent=companies.find(c=>c.id===companyId)?.name||'Cadastre sua empresa';if(!companyId)setPage('company');else setPage('home')};
 $('logout').onclick=async()=>{try{if(session?.access_token)await api('/auth/v1/logout',{method:'POST'})}catch(e){}try{localStorage.removeItem(SESSION_KEY)}catch(e){}session=null;companies=[];companyId=null;companyRole=null;employees=[];$('app').classList.add('hidden');$('auth').classList.remove('hidden');$('password').value=''};
+$('offlineRetry').onclick=()=>{if(!navigator.onLine){showOfflineMode();return}restoreSession()};
+window.addEventListener('offline',showOfflineMode);
+window.addEventListener('online',()=>{if(!$('offlineMode').classList.contains('hidden'))restoreSession()});
+let installPrompt=null;
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;$('offlineInstall').hidden=false});
+$('offlineInstall').onclick=async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('offlineInstall').hidden=true};
 restoreSession();
 </script><script src="./modules.js?v=20261109-13"></script><script>if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('G.E.I360 offline shell:',err)));}</script></body></html>
