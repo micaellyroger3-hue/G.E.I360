@@ -30,6 +30,7 @@ const version = html.match(/modules\.js\?v=([^"']+)/)?.[1];
 assert.ok(version, 'Versioned modules.js asset missing');
 assert.ok(worker.includes('./modules.js?v=' + version), 'Service worker must cache the current modules.js version');
 assert.ok(worker.includes('if (url.origin !== self.location.origin) return'), 'Service worker must not intercept external APIs');
+assert.ok(html.includes('refreshSessionToken') && html.includes('refreshPromise'), 'Automatic session refresh missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
 for (const file of [
