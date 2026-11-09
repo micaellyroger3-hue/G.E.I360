@@ -16,6 +16,7 @@ for (const feature of [
   'erpRenderDashboard','erpRenderStock','erpRenderSales','erpRenderPurchases',
   'erpRenderReports','erpUploadDocument','create_sale_cart','receive_purchase_cart'
 ]) assert.ok(modules.includes(feature) || html.includes(feature), 'Missing feature: ' + feature);
+assert.ok(modules.includes('A receber') && modules.includes('A pagar') && modules.includes('Vencido'), 'Expanded financial report missing');
 assert.ok(modules.includes('pageSize=500') && modules.includes('offset=\'+offset') && modules.includes('created_at.desc,id.desc'), 'Company data pagination missing');
 
 for (const page of [
