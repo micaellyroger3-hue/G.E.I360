@@ -107,4 +107,4 @@ let installPrompt=null;
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;$('offlineInstall').hidden=false});
 $('offlineInstall').onclick=async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('offlineInstall').hidden=true};
 restoreSession();
-</script><script src="./modules.js?v=20261109-13"></script><script>if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('G.E.I360 offline shell:',err)));}</script></body></html>
+</script><script src="./modules.js?v=20261109-14"></script><script>if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('G.E.I360 offline shell:',err)));}</script></body></html>
