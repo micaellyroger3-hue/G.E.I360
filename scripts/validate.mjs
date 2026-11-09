@@ -44,13 +44,18 @@ assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase ke
 
 for (const file of [
   '202611070001_employees.sql','202611080001_erp_modules.sql',
-  '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql'
+  '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
+  '202611090001_integrity_hardening.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const coreSql = fs.readFileSync('supabase/migrations/202611080001_erp_modules.sql', 'utf8');
 assert.ok(coreSql.includes('enable row level security'), 'RLS setup missing from core migration');
 assert.ok(coreSql.includes("values ('company-documents', 'company-documents', false"), 'Private document bucket configuration missing');
 assert.ok(coreSql.includes('create_sale_cart') && coreSql.includes('receive_purchase_cart'), 'Transactional sales/purchase RPCs missing');
+const hardeningSql = fs.readFileSync('supabase/migrations/202611090001_integrity_hardening.sql', 'utf8');
+assert.ok(hardeningSql.includes('quantity >= 0'), 'Zero-stock adjustment support missing');
+assert.ok(hardeningSql.includes('revoke update on table public.products'), 'Direct stock quantity update protection missing');
+assert.ok(hardeningSql.includes('revoke insert, update on table public.financial_entries'), 'Financial source link protection missing');
 
 assert.ok(fs.existsSync('docs/AI_ASSISTANT_ARCHITECTURE.md'), 'AI assistant security architecture missing');
 assert.ok(fs.existsSync('docs/FISCAL_INTEGRATION_PLAN.md'), 'Fiscal integration plan missing');
