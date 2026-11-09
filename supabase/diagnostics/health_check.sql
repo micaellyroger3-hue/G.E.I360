@@ -78,3 +78,30 @@ order by table_name;
 -- * Contagem zero não é falha por si só; pode não haver registros de teste.
 -- * SQL Editor usa privilégios administrativos; isso NÃO comprova isolamento entre usuários.
 --   O isolamento exige dois usuários autenticados em empresas diferentes, testados pela API.
+
+
+-- Hardening da migration 202611090001_integrity_hardening.sql
+select
+  has_column_privilege('authenticated','public.products','stock_quantity','UPDATE') as autenticado_pode_alterar_saldo_diretamente,
+  has_column_privilege('authenticated','public.financial_entries','source_type','INSERT') as autenticado_pode_definir_origem_financeira_no_insert,
+  has_column_privilege('authenticated','public.financial_entries','source_type','UPDATE') as autenticado_pode_alterar_origem_financeira;
+
+select
+  p.proname as funcao_de_trigger,
+  has_function_privilege('anon',p.oid,'EXECUTE') as anon_pode_executar,
+  has_function_privilege('authenticated',p.oid,'EXECUTE') as autenticado_pode_executar
+from pg_proc p
+join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public'
+  and p.proname in (
+    'apply_stock_movement',
+    'create_sale_financial_entry',
+    'create_purchase_financial_entry',
+    'protect_linked_financial_entry'
+  )
+order by p.proname;
+
+select conname, pg_get_constraintdef(oid) as regra
+from pg_constraint
+where conrelid='public.stock_movements'::regclass
+  and conname='stock_movements_quantity_valid_check';
