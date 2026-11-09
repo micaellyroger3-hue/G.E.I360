@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "G.E.I360 — Gestão Empresarial",
+  "short_name": "G.E.I360",
+  "description": "Plataforma de gestão empresarial.",
+  "lang": "pt-BR",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3f5f9",
+  "theme_color": "#101827",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
