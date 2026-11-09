@@ -3,14 +3,13 @@ import assert from 'node:assert/strict';
 
 const html = fs.readFileSync('index.html', 'utf8');
 const modules = fs.readFileSync('modules.js', 'utf8');
-const manifestText = fs.readFileSync('manifest.webmanifest', 'utf8');
+const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const worker = fs.readFileSync('sw.js', 'utf8');
-const manifest = JSON.parse(manifestText);
 
 new Function(modules);
-const inlineScripts = [...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)]
+const inlineScripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
   .map(match => match[1]).filter(source => source.trim());
-assert.ok(inlineScripts.length > 0, 'index.html must contain the authentication/application script');
+assert.ok(inlineScripts.length > 0, 'index.html must contain application scripts');
 inlineScripts.forEach(source => new Function(source));
 
 for (const feature of [
@@ -27,10 +26,10 @@ assert.equal(manifest.display, 'standalone', 'PWA must be installable in standal
 assert.equal(manifest.start_url, './index.html', 'PWA start URL must point to the app');
 assert.ok(html.includes('rel="manifest"'), 'Manifest link missing');
 assert.ok(html.includes("navigator.serviceWorker.register('./sw.js')"), 'Service worker registration missing');
-const version = html.match(/modules\\.js\\?v=([^"']+)/)?.[1];
+const version = html.match(/modules\.js\?v=([^"']+)/)?.[1];
 assert.ok(version, 'Versioned modules.js asset missing');
 assert.ok(worker.includes('./modules.js?v=' + version), 'Service worker must cache the current modules.js version');
-assert.ok(worker.includes("if (url.origin !== self.location.origin) return"), 'Service worker must not intercept external APIs');
+assert.ok(worker.includes('if (url.origin !== self.location.origin) return'), 'Service worker must not intercept external APIs');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
 for (const file of [
