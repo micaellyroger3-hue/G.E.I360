@@ -39,7 +39,7 @@ assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery ha
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
 assert.ok(worker.includes("gei360-shell-v8"), 'Offline shell cache version missing');
-assert.ok(html.includes('Sem conexão com o servidor. Sua sessão foi preservada'), 'Offline session preservation missing');
+assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
 for (const file of [
