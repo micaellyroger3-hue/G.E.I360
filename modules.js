@@ -32,3 +32,42 @@ async function erpInitBarcode(){const b=$('scanBarcode');if(!b)return;b.onclick=
 
 const erpSetPage= setPage;
 setPage=async function(page){erpStopBarcode();document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));const titles={home:'Visão geral',company:'Minha empresa',employees:'Funcionários',products:'Estoque',stock:'Movimentações',suppliers:'Fornecedores',customers:'Clientes',sales:'Vendas',purchases:'Compras',finance:'Financeiro',documents:'Documentos',reports:'Relatórios'};$('pageTitle').textContent=titles[page]||'G.E.I360';if(['home','company','employees'].includes(page)){return erpSetPage(page)}if(!companyId){return erpPageShell('Empresa necessária','Cadastre ou selecione uma empresa antes de usar os módulos.','<div class="notice">Acesse Minha empresa e conclua o cadastro.</div>')}if(!['owner','admin','manager'].includes(companyRole)){if(ERP[page])return erpRenderCrud(page,{readOnly:true});if(page==='stock')return erpRenderStock({readOnly:true});if(page==='sales')return erpRenderSales({readOnly:true});if(page==='purchases')return erpRenderPurchases({readOnly:true});if(page==='reports')return erpRenderReports();}if(ERP[page])return erpRenderCrud(page);if(page==='stock')return erpRenderStock();if(page==='sales')return erpRenderSales();if(page==='purchases')return erpRenderPurchases();if(page==='reports')return erpRenderReports()};
+
+
+// Proteções de interação: mantém os controles principais funcionais mesmo após
+// a troca dinâmica do conteúdo da tela.
+document.addEventListener('click', function(event) {
+  const newEmployeeButton = event.target.closest('#newEmployee');
+  if (newEmployeeButton) {
+    event.preventDefault();
+    if (!companyId) {
+      message($('view'), 'Selecione ou cadastre uma empresa antes de incluir funcionários.');
+      return;
+    }
+    openEmployee();
+    return;
+  }
+  if (event.target.closest('#closeModal')) {
+    event.preventDefault();
+    $('modal').style.display = 'none';
+    return;
+  }
+  if (event.target === $('modal')) {
+    $('modal').style.display = 'none';
+  }
+});
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape' && $('modal')?.style.display === 'flex') {
+    $('modal').style.display = 'none';
+  }
+});
+
+// Evita que uma falha inesperada deixe o painel sem explicação.
+window.addEventListener('unhandledrejection', function(event) {
+  const view = $('view');
+  if (view && $('app') && !$('app').classList.contains('hidden')) {
+    message(view, 'O módulo encontrou um erro ao executar uma operação: ' +
+      (event.reason?.message || String(event.reason || 'erro desconhecido')));
+  }
+});
