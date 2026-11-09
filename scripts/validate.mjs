@@ -16,6 +16,7 @@ for (const feature of [
   'erpRenderDashboard','erpRenderStock','erpRenderSales','erpRenderPurchases',
   'erpRenderReports','erpUploadDocument','create_sale_cart','receive_purchase_cart'
 ]) assert.ok(modules.includes(feature) || html.includes(feature), 'Missing feature: ' + feature);
+assert.ok(modules.includes('pageSize=500') && modules.includes('offset=\'+offset'), 'Company data pagination missing');
 
 for (const page of [
   'home','company','employees','products','stock','suppliers','customers',
