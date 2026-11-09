@@ -57,7 +57,8 @@ assert.ok(coreSql.includes("values ('company-documents', 'company-documents', fa
 assert.ok(coreSql.includes('create_sale_cart') && coreSql.includes('receive_purchase_cart'), 'Transactional sales/purchase RPCs missing');
 const hardeningSql = fs.readFileSync('supabase/migrations/202611090001_integrity_hardening.sql', 'utf8');
 assert.ok(hardeningSql.includes('quantity >= 0'), 'Zero-stock adjustment support missing');
-assert.ok(hardeningSql.includes('revoke update on table public.products'), 'Direct stock quantity update protection missing');
+assert.ok(hardeningSql.includes('revoke insert, update on table public.products'), 'Direct stock quantity insert/update protection missing');
+assert.ok(hardeningSql.includes('grant insert (') && !/grant insert\s*\([^)]*stock_quantity/s.test(hardeningSql), 'Product stock must not be set directly on insert');
 assert.ok(hardeningSql.includes('revoke insert, update on table public.financial_entries'), 'Financial source link protection missing');
 
 assert.ok(fs.existsSync('docs/AI_ASSISTANT_ARCHITECTURE.md'), 'AI assistant security architecture missing');
