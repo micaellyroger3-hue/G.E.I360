@@ -30,10 +30,10 @@ order by tablename, policyname;
 
 with expected(function_name) as (
   values
-    ('has_company_role'),('is_company_member'),('record_stock_movement'),
-    ('create_sale'),('receive_purchase'),('create_sale_cart'),
-    ('receive_purchase_cart'),('protect_linked_financial_entry'),
-    ('purchase_create_financial_entry'),('sales_create_financial_entry')
+    ('apply_stock_movement'),('record_stock_movement'),('create_sale'),
+    ('receive_purchase'),('create_sale_cart'),('receive_purchase_cart'),
+    ('create_sale_financial_entry'),('create_purchase_financial_entry'),
+    ('protect_linked_financial_entry')
 )
 select e.function_name,
        exists (
@@ -51,7 +51,8 @@ where trigger_schema = 'public'
   and trigger_name in (
     'stock_movement_apply',
     'purchase_create_financial_entry',
-    'sales_create_financial_entry'
+    'sales_create_financial_entry',
+    'protect_linked_financial_entry'
   )
 order by event_object_table, trigger_name;
 
