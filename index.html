@@ -24,14 +24,15 @@ function showOfflineMode(){
  $('auth').classList.add('hidden');$('app').classList.add('hidden');$('offlineMode').classList.remove('hidden');
 }
 function hideOfflineMode(){$('offlineMode').classList.add('hidden')}
+function showLogin(){hideOfflineMode();$('app').classList.add('hidden');$('auth').classList.remove('hidden')}
 async function restoreSession(){
  if(!navigator.onLine){showOfflineMode();return}
  hideOfflineMode();
  let saved=null;
  try{
-  const raw=localStorage.getItem(SESSION_KEY);if(!raw)return;
+  const raw=localStorage.getItem(SESSION_KEY);if(!raw){showLogin();return;}
   saved=JSON.parse(raw);if(!saved?.refresh_token)throw Error('Sessão sem token de renovação.');
- }catch(e){try{localStorage.removeItem(SESSION_KEY)}catch(_){}return}
+ }catch(e){try{localStorage.removeItem(SESSION_KEY)}catch(_){}showLogin();return}
  const showApp=async()=>{
   $('auth').classList.add('hidden');$('app').classList.remove('hidden');$('userLabel').textContent=saved.user?.email||'';
  };
@@ -42,7 +43,7 @@ async function restoreSession(){
   if(e instanceof TypeError||/failed to fetch|networkerror|load failed/i.test(e.message||'')){
    session=saved;showOfflineMode();return;
   }
-  try{localStorage.removeItem(SESSION_KEY)}catch(_){}session=null;return;
+  try{localStorage.removeItem(SESSION_KEY)}catch(_){}session=null;showLogin();return;
  }
  try{await loadCompanies();await showApp();await render()}
  catch(e){await showApp();message($('view'),'Não foi possível carregar os dados da empresa. Verifique a conexão e tente novamente. '+e.message,'notice')}
