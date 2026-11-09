@@ -1,5 +1,5 @@
 -- G.E.I360 — diagnóstico somente leitura do Supabase
--- Execute no SQL Editor depois de aplicar as quatro migrations.
+-- Execute no SQL Editor depois de aplicar as cinco migrations.
 -- Este arquivo NÃO cria, altera ou apaga dados.
 
 with expected(table_name) as (
