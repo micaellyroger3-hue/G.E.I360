@@ -1,6 +1,9 @@
 # G.E.I360
 Plataforma de Gestão Empresarial.
 
+## Aplicativo instalável
+O G.E.I360 pode ser instalado pelo navegador compatível no Android/desktop (menu do navegador → Instalar aplicativo ou Adicionar à tela inicial). O service worker mantém apenas a estrutura estática do aplicativo disponível para abrir sem conexão; autenticação, cadastros, consultas, estoque, vendas e financeiro continuam exigindo internet e acesso ao Supabase. Nenhum dado empresarial ou token de sessão é colocado no cache offline.
+
 ## Módulos disponíveis no código
 - Autenticação e sessão de usuários com Supabase Auth.
 - Cadastro e seleção de empresa e vínculo de proprietário.
