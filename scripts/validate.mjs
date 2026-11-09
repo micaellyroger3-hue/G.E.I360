@@ -33,6 +33,12 @@ assert.ok(version, 'Versioned modules.js asset missing');
 assert.ok(worker.includes('./modules.js?v=' + version), 'Service worker must cache the current modules.js version');
 assert.ok(worker.includes('if (url.origin !== self.location.origin) return'), 'Service worker must not intercept external APIs');
 assert.ok(html.includes('refreshSessionToken') && html.includes('refreshPromise'), 'Automatic session refresh missing');
+assert.ok(html.includes('id="offlineMode"') && html.includes('MODO OFFLINE'), 'Offline launch screen missing');
+assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), 'Offline event handling missing');
+assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
+assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
+assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
+assert.ok(worker.includes("gei360-shell-v8"), 'Offline shell cache version missing');
 assert.ok(html.includes('Sem conexão com o servidor. Sua sessão foi preservada'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
