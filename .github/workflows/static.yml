@@ -31,11 +31,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate JavaScript syntax
-        run: |
-          node --check modules.js
-          node -e "const fs=require('fs');const html=fs.readFileSync('index.html','utf8');const scripts=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)].map(m=>m[1]).filter(s=>s.trim());if(!scripts.length)throw new Error('No inline application script found');scripts.forEach((source,index)=>{new Function(source);console.log('Inline script '+(index+1)+' syntax OK')})"
-          node -e "const fs=require('fs');const m=fs.readFileSync('modules.js','utf8');const h=fs.readFileSync('index.html','utf8');const required=['erpRenderDashboard','erpRenderStock','erpRenderSales','erpRenderPurchases','erpRenderReports','erpUploadDocument','create_sale_cart','receive_purchase_cart'];for(const x of required)if(!m.includes(x)&&!h.includes(x))throw new Error('Missing application feature: '+x);const bs=String.fromCharCode(92);if(m.includes(bs+bs+'uFEFF')||m.includes(bs+bs+'r'+bs+bs+'n'))throw new Error('Escaped CSV markers detected');if(/service_role|sb_secret_/i.test(h))throw new Error('A secret key must not be shipped to the browser');for(const f of ['202611070001_employees.sql','202611080001_erp_modules.sql','202611080002_finance_links.sql','202611080003_protect_linked_finance.sql'])if(!fs.existsSync('supabase/migrations/'+f))throw new Error('Missing migration: '+f);console.log('Application smoke checks OK')"
+      - name: Validate application, PWA and database migrations
+        run: node scripts/validate.mjs
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
