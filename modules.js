@@ -89,6 +89,17 @@ async function erpRenderDashboard(){
     const payable=entries.filter(e=>e.entry_type==='expense'&&e.status==='pending').reduce((n,e)=>n+Number(e.amount||0),0);
     const receivable=entries.filter(e=>e.entry_type==='income'&&e.status==='pending').reduce((n,e)=>n+Number(e.amount||0),0);
     const low=products.filter(p=>p.active&&Number(p.stock_quantity)<=Number(p.min_stock));
+    const overdue=entries.filter(e=>e.status==='pending'&&e.due_date<now.toISOString().slice(0,10));
+    const overdueTotal=overdue.reduce((n,e)=>n+Number(e.amount||0),0);
+    const inactiveProducts=products.filter(p=>!p.active).length;
+    const insights=[];
+    if(low.length)insights.push({level:'alert',title:'Reposição de estoque',text:low.length+' produto(s) estão no estoque mínimo ou abaixo. Confira a lista de estoque antes de novas vendas.'});
+    else insights.push({level:'good',title:'Estoque dentro do mínimo cadastrado',text:'Nenhum produto ativo está no nível mínimo ou abaixo, conforme os limites informados.'});
+    if(overdue.length)insights.push({level:'alert',title:'Contas vencidas',text:overdue.length+' lançamento(s) pendente(s), somando '+erpMoney(overdueTotal)+'. Priorize a conferência das cobranças e vencimentos.'});
+    if(receivable>0)insights.push({level:'info',title:'Valores a receber',text:'Há '+erpMoney(receivable)+' em receitas pendentes. Confira datas e situação no Financeiro.'});
+    if(payable>0)insights.push({level:'info',title:'Compromissos a pagar',text:'Há '+erpMoney(payable)+' em despesas pendentes. Planeje os pagamentos conforme o caixa disponível.'});
+    if(monthSales.length===0)insights.push({level:'info',title:'Movimento de vendas',text:'Ainda não há vendas confirmadas neste mês nos registros carregados.'});
+    if(inactiveProducts)insights.push({level:'info',title:'Produtos inativos',text:inactiveProducts+' produto(s) estão marcados como inativos e não entram na lista de venda.'});
     const keys=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);keys.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
     const totals=keys.map(k=>confirmed.filter(s=>erpMonthKey(s.sale_date)===k).reduce((n,s)=>n+Number(s.total||0),0));
     const max=Math.max(1,...totals);
@@ -109,10 +120,14 @@ async function erpRenderDashboard(){
           <article class="gei-panel"><div class="gei-panel-head"><div><h3>Atenção ao estoque</h3><p>Produtos no mínimo ou abaixo</p></div><span class="gei-count">${low.length}</span></div>${low.length?'<div class="gei-alert-list">'+low.slice(0,6).map(p=>'<div><span>'+esc(p.name)+'</span><b>'+Number(p.stock_quantity).toLocaleString('pt-BR')+' / mín. '+Number(p.min_stock).toLocaleString('pt-BR')+'</b></div>').join('')+'</div>':'<div class="gei-empty-state">Tudo certo. Nenhum produto em alerta.</div>'}</article>
           <article class="gei-panel"><div class="gei-panel-head"><div><h3>Vendas recentes</h3><p>Últimas operações confirmadas</p></div></div>${recent.length?'<div class="gei-recent-list">'+recent.map(s=>'<div><span>Venda #'+s.sale_number+'<small>'+new Date(s.sale_date+'T12:00:00').toLocaleDateString('pt-BR')+'</small></span><b>'+erpMoney(s.total)+'</b></div>').join('')+'</div>':'<div class="gei-empty-state">As vendas confirmadas aparecerão aqui.</div>'}</article>
         </section>
+        <section class="gei-panel gei-insights"><div class="gei-panel-head"><div><h3>Inteligência de gestão</h3><p>Análises automáticas com os dados registrados nesta empresa</p></div><span class="gei-panel-tag">ANÁLISE</span></div><div class="gei-insight-list">${insights.map(x=>'<article class="gei-insight gei-insight-'+x.level+'"><b>'+esc(x.title)+'</b><p>'+esc(x.text)+'</p></article>').join('')}</div><p class="gei-footnote">Esta primeira camada usa regras e cálculos transparentes, não um modelo de IA generativa. Os resultados dependem da qualidade e atualização dos registros; confira os módulos antes de decidir.</p></section>
         <p class="gei-footnote">Indicadores calculados a partir dos lançamentos cadastrados. Confira os módulos de origem antes de tomar decisões financeiras.</p>
       </div>`);
   }catch(e){erpPageShell('Visão geral','Indicadores da empresa','<div class="err">Não foi possível carregar o painel: '+esc(e.message)+'</div>')}
 }
+
+.gei-insights{border-color:#d9e9e3}.gei-insight-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.gei-insight{border:1px solid #e8edf1;border-radius:9px;padding:12px;background:#fbfcfd}.gei-insight b{font-size:12px}.gei-insight p{margin:6px 0 0;color:#64748b;font-size:12px;line-height:1.5}.gei-insight-alert{border-left:4px solid #d69b27}.gei-insight-good{border-left:4px solid #16866d}.gei-insight-info{border-left:4px solid #6b8eae}
+@media(max-width:600px){.gei-insight-list{grid-template-columns:1fr}}
 
 const erpSetPage= setPage;
 setPage=async function(page){erpStopBarcode();document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));const titles={home:'Visão geral',company:'Minha empresa',employees:'Funcionários',products:'Estoque',stock:'Movimentações',suppliers:'Fornecedores',customers:'Clientes',sales:'Vendas',purchases:'Compras',finance:'Financeiro',documents:'Documentos',reports:'Relatórios'};$('pageTitle').textContent=titles[page]||'G.E.I360';if(page==='home'){return erpRenderDashboard()}if(['company','employees'].includes(page)){return erpSetPage(page)}if(!companyId){return erpPageShell('Empresa necessária','Cadastre ou selecione uma empresa antes de usar os módulos.','<div class="notice">Acesse Minha empresa e conclua o cadastro.</div>')}if(!['owner','admin','manager'].includes(companyRole)){if(ERP[page])return erpRenderCrud(page,{readOnly:true});if(page==='stock')return erpRenderStock({readOnly:true});if(page==='sales')return erpRenderSales({readOnly:true});if(page==='purchases')return erpRenderPurchases({readOnly:true});if(page==='reports')return erpRenderReports();}if(ERP[page])return erpRenderCrud(page);if(page==='stock')return erpRenderStock();if(page==='sales')return erpRenderSales();if(page==='purchases')return erpRenderPurchases();if(page==='reports')return erpRenderReports()};
