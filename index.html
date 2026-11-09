@@ -12,14 +12,14 @@
  .offline-screen{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#101827,#173c43)}.offline-card{width:min(460px,100%);background:#fff;border-radius:18px;padding:28px;box-shadow:0 20px 60px #0004}.offline-mark{font-size:25px;font-weight:900;letter-spacing:-1px}.offline-mark b{color:#16866d}.offline-state{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:20px;background:#fff4df;color:#8a5b12;font-size:12px;font-weight:800;margin:18px 0 8px}.offline-dot{width:8px;height:8px;border-radius:50%;background:#d69b27}.offline-card h1{font-size:23px;margin:8px 0}.offline-card p{color:#64748b;line-height:1.55}.offline-card ul{padding-left:20px;color:#475569;line-height:1.7}.offline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.gei-insights{border-color:#d9e9e3}.gei-insight-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.gei-insight{border:1px solid #e8edf1;border-radius:9px;padding:12px;background:#fbfcfd}.gei-insight b{font-size:12px}.gei-insight p{margin:6px 0 0;color:#64748b;font-size:12px;line-height:1.5}.gei-insight-alert{border-left:4px solid #d69b27}.gei-insight-good{border-left:4px solid #16866d}.gei-insight-info{border-left:4px solid #6b8eae}
 @media(max-width:600px){.gei-insight-list{grid-template-columns:1fr}}
 </style></head><body>
-<section id="auth" class="login"><div class="loginbox"><div class="brand">G.E.I<b>360</b></div><h2 id="authTitle">Acesse sua plataforma</h2><p class="muted">Gestão empresarial integrada</p><div id="authMessage"></div><form id="authForm"><div class="field"><label>E-mail</label><input id="email" type="email" autocomplete="email" required></div><div class="field"><label>Senha</label><input id="password" type="password" minlength="6" autocomplete="current-password" required></div><button id="authSubmit" style="width:100%">Entrar</button></form><button class="alt" id="toggleAuth" style="width:100%;margin-top:9px">Criar uma conta</button></div></section>
+<section id="auth" class="login"><div class="loginbox"><div class="brand">G.E.I<b>360</b></div><h2 id="authTitle">Acesse sua plataforma</h2><p class="muted">Gestão empresarial integrada</p><div id="authMessage"></div><form id="authForm"><div class="field"><label>E-mail</label><input id="email" type="email" autocomplete="email" required></div><div class="field"><label>Senha</label><input id="password" type="password" minlength="6" autocomplete="current-password" required></div><button id="authSubmit" style="width:100%">Entrar</button></form><button class="alt" id="toggleAuth" style="width:100%;margin-top:9px">Criar uma conta</button><button class="alt" id="forgotPassword" type="button" style="width:100%;margin-top:7px">Esqueci minha senha</button></div></section>
 <section id="offlineMode" class="offline-screen hidden" role="status" aria-live="polite"><div class="offline-card"><div class="offline-mark">G.E.I<b>360</b></div><div class="offline-state"><span class="offline-dot"></span> MODO OFFLINE</div><h1>Aplicativo aberto sem internet</h1><p>A estrutura básica do G.E.I360 está disponível, mas os módulos e dados da empresa ficam bloqueados até a conexão voltar.</p><ul><li>Nenhum dado empresarial é carregado nesta tela.</li><li>Nenhuma consulta, alteração ou envio é realizado sem conexão.</li><li>Quando a internet voltar, toque em tentar novamente.</li></ul><div class="offline-actions"><button id="offlineRetry" type="button">Tentar novamente</button><button id="offlineInstall" class="alt" type="button" hidden>Instalar aplicativo</button></div><p class="muted" style="font-size:11px;margin-top:18px">No Android: use “Instalar app” ou “Adicionar à tela inicial” no menu do navegador. No computador: use o ícone de instalação na barra de endereço, quando disponível.</p></div></section>
 <div id="app" class="shell hidden"><aside class="side"><div class="brand">G.E.I<b>360</b></div><div class="company" id="companyLabel">Nenhuma empresa selecionada</div><nav class="nav"><button data-page="home" class="active">Visão geral</button><button data-page="company">Minha empresa</button><button data-page="employees">Funcionários</button><button data-page="products">Estoque</button><button data-page="stock">Movimentações</button><button data-page="suppliers">Fornecedores</button><button data-page="customers">Clientes</button><button data-page="sales">Vendas</button><button data-page="purchases">Compras</button><button data-page="finance">Financeiro</button><button data-page="documents">Documentos</button><button data-page="reports">Relatórios</button></nav></aside><main class="main"><header class="top"><b id="pageTitle">Visão geral</b><span><small id="userLabel"></small> <button class="alt small" id="logout">Sair</button></span></header><div class="content" id="view"></div></main></div>
 <div class="modalbg" id="modal"><div class="modal"><div class="head"><b id="modalTitle">Funcionário</b><button class="alt small" id="closeModal">Fechar</button></div><form id="employeeForm"><input id="employeeId" type="hidden"><div class="field"><label>Nome completo</label><input id="full_name" required maxlength="120"></div><div class="field"><label>E-mail</label><input id="emp_email" type="email"></div><div class="field"><label>Telefone</label><input id="phone" maxlength="30"></div><div class="field"><label>Cargo</label><input id="job_title" maxlength="80"></div><div class="field"><label>Departamento</label><input id="department" maxlength="80"></div><div class="field"><label>Situação</label><select id="status"><option value="active">Ativo</option><option value="inactive">Inativo</option></select></div><button>Salvar funcionário</button></form></div></div>
 <script>
 const SUPABASE_URL='https://mxikqdarqgatqoecfprg.supabase.co';
 const SUPABASE_KEY='sb_publishable_C1PaxcWAdb5rLfd0yJjl5g_ZUQKK7Dk';
-let session=null,companies=[],companyId=null,companyRole=null,employees=[],signup=false,editing=false;
+let session=null,companies=[],companyId=null,companyRole=null,employees=[],signup=false,editing=false,recovering=false;
 const SESSION_KEY='gei360_session';
 function saveSession(value){session=value;try{localStorage.setItem(SESSION_KEY,JSON.stringify(value))}catch(e){}}
 function showOfflineMode(){
@@ -82,8 +82,57 @@ async function api(path,{method='GET',body,auth=true,headers={}}={}){
  return result.data;
 }
 function message(el,text,type='err'){el.innerHTML='<div class="'+type+'">'+esc(text)+'</div>'}
-$('toggleAuth').onclick=()=>{signup=!signup;$('authTitle').textContent=signup?'Crie sua conta':'Acesse sua plataforma';$('authSubmit').textContent=signup?'Criar conta':'Entrar';$('toggleAuth').textContent=signup?'Já tenho conta':'Criar uma conta';$('password').autocomplete=signup?'new-password':'current-password';$('authMessage').innerHTML=''};
-$('authForm').onsubmit=async e=>{e.preventDefault();$('authSubmit').disabled=true;$('authMessage').innerHTML='';try{const email=$('email').value.trim(),password=$('password').value;let data;if(signup){data=await api('/auth/v1/signup',{method:'POST',auth:false,body:{email,password}});if(!data?.access_token){message($('authMessage'),'Conta criada. Confirme seu e-mail pelo link enviado e depois entre.','ok');return}saveSession(data)}else{saveSession(await api('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email,password}}))}await loadCompanies();$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('userLabel').textContent=email;render()}catch(err){message($('authMessage'),err.message)}finally{$('authSubmit').disabled=false}};
+$('toggleAuth').onclick=()=>{signup=!signup;$('authTitle').textContent=signup?'Crie sua conta':'Acesse sua plataforma';$('authSubmit').textContent=signup?'Criar conta':'Entrar';$('toggleAuth').textContent=signup?'Já tenho conta':'Criar uma conta';$('password').autocomplete=signup?'new-password':'current-password';$('authMessage').innerHTML='';$('forgotPassword').classList.toggle('hidden',signup||recovering)};
+$('authForm').onsubmit=async e=>{
+ e.preventDefault();$('authSubmit').disabled=true;$('authMessage').innerHTML='';
+ try{
+  const email=$('email').value.trim(),password=$('password').value;
+  if(recovering){
+   await api('/auth/v1/user',{method:'PUT',body:{password}});
+   try{localStorage.removeItem(SESSION_KEY)}catch(_){}
+   session=null;recovering=false;
+   history.replaceState(null,'',location.pathname+location.search);
+   $('toggleAuth').classList.remove('hidden');$('forgotPassword').classList.remove('hidden');
+   $('authTitle').textContent='Acesse sua plataforma';$('authSubmit').textContent='Entrar';
+   $('password').value='';$('toggleAuth').textContent='Criar uma conta';
+   message($('authMessage'),'Senha atualizada. Entre com sua nova senha.','ok');
+   return;
+  }
+  let data;
+  if(signup){
+   data=await api('/auth/v1/signup',{method:'POST',auth:false,body:{email,password}});
+   if(!data?.access_token){message($('authMessage'),'Conta criada. Confirme seu e-mail pelo link enviado e depois entre.','ok');return}
+   saveSession(data);
+  }else{
+   saveSession(await api('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email,password}}));
+  }
+  await loadCompanies();$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('userLabel').textContent=email;render();
+ }catch(err){message($('authMessage'),err.message)}
+ finally{$('authSubmit').disabled=false}
+};
+$('forgotPassword').onclick=async()=>{
+ const email=$('email').value.trim();
+ if(!email){message($('authMessage'),'Informe seu e-mail para receber o link de recuperação.');$('email').focus();return}
+ const button=$('forgotPassword');button.disabled=true;
+ try{
+  await api('/auth/v1/recover?redirect_to='+encodeURIComponent(location.origin+location.pathname),{method:'POST',auth:false,body:{email}});
+  message($('authMessage'),'Se esse e-mail estiver cadastrado, as instruções de recuperação serão enviadas. Confira também o spam.','ok');
+ }catch(err){message($('authMessage'),'Não foi possível solicitar a recuperação: '+err.message)}
+ finally{button.disabled=false}
+};
+function handleRecoveryLink(){
+ const params=new URLSearchParams(location.hash.replace(/^#/,''));
+ const accessToken=params.get('access_token');
+ if(params.get('type')!=='recovery'||!accessToken)return false;
+ session={access_token:accessToken,refresh_token:params.get('refresh_token'),token_type:params.get('token_type')||'bearer'};
+ recovering=true;signup=false;showLogin();
+ $('authTitle').textContent='Defina sua nova senha';
+ $('authSubmit').textContent='Salvar nova senha';
+ $('password').value='';$('password').autocomplete='new-password';
+ $('toggleAuth').classList.add('hidden');$('forgotPassword').classList.add('hidden');
+ $('authMessage').innerHTML='<div class="notice">Digite uma nova senha com pelo menos 6 caracteres.</div>';
+ return true;
+}
 async function loadCompanies(){companies=await api('/rest/v1/companies?select=id,name,tax_id,created_at&order=created_at.asc');if(!Array.isArray(companies))companies=[];companyId=companies[0]?.id||null}
 function setPage(page){document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('pageTitle').textContent=({home:'Visão geral',company:'Minha empresa',employees:'Funcionários'})[page];if(page==='home')renderHome();if(page==='company')renderCompany();if(page==='employees')renderEmployees()}
 document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>setPage(b.dataset.page));
@@ -118,5 +167,5 @@ window.addEventListener('online',()=>{if(!$('offlineMode').classList.contains('h
 let installPrompt=null;
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;$('offlineInstall').hidden=false});
 $('offlineInstall').onclick=async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('offlineInstall').hidden=true};
-restoreSession();
+if(!handleRecoveryLink())restoreSession();
 </script><script src="./modules.js?v=20261109-14"></script><script>if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('G.E.I360 offline shell:',err)));}</script></body></html>
