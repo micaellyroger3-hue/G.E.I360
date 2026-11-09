@@ -12,8 +12,12 @@ alter table public.stock_movements
     or (movement_type in ('in','out') and quantity > 0)
   );
 
--- O saldo só pode mudar por meio de movimentações validadas e seus triggers.
-revoke update on table public.products from authenticated;
+-- O saldo nasce em zero e só pode mudar por meio de movimentações validadas e seus triggers.
+revoke insert, update on table public.products from authenticated;
+grant insert (
+  company_id, name, sku, barcode, category, unit,
+  cost_price, sale_price, min_stock, active, created_by
+) on table public.products to authenticated;
 grant update (
   name, sku, barcode, category, unit,
   cost_price, sale_price, min_stock, active
