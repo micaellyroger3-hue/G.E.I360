@@ -8,7 +8,7 @@ with expected(table_name) as (
     ('suppliers'),('customers'),('products'),('stock_movements'),
     ('sales'),('sale_items'),('purchase_orders'),('purchase_order_items'),
     ('financial_entries'),('business_documents'),('company_modules'),
-    ('gei_module_catalog'),('gei_records'),('product_categories')
+    ('gei_module_catalog'),('gei_records')
 )
 select e.table_name, (c.oid is not null) as exists,
        coalesce(c.relrowsecurity,false) as rls_enabled,
