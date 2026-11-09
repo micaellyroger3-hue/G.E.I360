@@ -42,3 +42,6 @@ O workflow de publicação está em `.github/workflows/static.yml` e publica a b
 - Emissão oficial de NF-e/NFC-e não está implementada. Ela exige dados fiscais completos da empresa, enquadramento tributário, certificado digital, credenciamento fiscal quando aplicável e integração homologada com provedor/SEFAZ. O módulo de documentos organiza notas recebidas e anexos, mas não autoriza nem transmite documentos fiscais.
 - Ainda é necessário executar testes integrados no ambiente Supabase após aplicar as migrações. As verificações de publicação do GitHub não testam o banco nem os fluxos de negócio.
 
+
+## Inteligência de gestão e IA
+O painel já apresenta análises automáticas transparentes a partir dos registros da empresa (estoque mínimo, contas vencidas, valores a receber/pagar, vendas e produtos inativos). Essa camada inicial é baseada em regras e cálculos, não em IA generativa. A arquitetura segura para o futuro assistente conversacional está documentada em `docs/AI_ASSISTANT_ARCHITECTURE.md`; a IA generativa só será ativada após configurar um provedor e uma função de servidor com autenticação, isolamento por empresa e segredo protegido.
