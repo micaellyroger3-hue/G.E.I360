@@ -13,7 +13,7 @@ Plataforma de Gestão Empresarial.
 - Compras/recebimento com vários produtos por pedido, atualizando o estoque em uma única transação.
 - Contas a pagar e receber, com situação e forma de pagamento.
 - Registro de documentos empresariais e referências de notas/comprovantes.
-- Relatórios operacionais básicos.
+- Relatórios operacionais básicos com exportação CSV.
 
 ## Configuração do Supabase
 1. Aplique primeiro `supabase/migrations/202611070001_employees.sql` no SQL Editor.
@@ -35,6 +35,6 @@ O workflow de publicação está em `.github/workflows/static.yml` e publica a b
 - Leitura por câmera depende de HTTPS, permissão do usuário e suporte do navegador à API BarcodeDetector. Digitação e leitores USB/Bluetooth são alternativas.
 - Vendas confirmadas e compras recebidas geram lançamentos financeiros vinculados automaticamente após a terceira migração. O vínculo evita duplicidade. A quarta migração reforça a proteção no banco, permitindo somente alterar a situação de pagamento.
 - Relatórios são operacionais e dependem dos lançamentos registrados; não substituem contabilidade.
-- Emissão oficial de NF-e/NFC-e não está implementada. Ela exige dados fiscais da empresa, certificado digital, credenciamento e integração homologada com provedor/SEFAZ.
+- Emissão oficial de NF-e/NFC-e não está implementada. Ela exige dados fiscais completos da empresa, enquadramento tributário, certificado digital, credenciamento fiscal quando aplicável e integração homologada com provedor/SEFAZ. O módulo de documentos organiza notas recebidas e anexos, mas não autoriza nem transmite documentos fiscais.
 - Ainda é necessário executar testes integrados no ambiente Supabase após aplicar as migrações. As verificações de publicação do GitHub não testam o banco nem os fluxos de negócio.
 
