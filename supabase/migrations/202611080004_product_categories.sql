@@ -35,6 +35,8 @@ create table if not exists public.product_categories (
 do $gei$
 declare
   missing_count integer;
+  duplicate_count integer;
+  invalid_link_count integer;
 begin
   select count(*) into missing_count
   from (values
@@ -59,6 +61,47 @@ begin
 
   if missing_count > 0 then
     raise exception 'G.E.I360: faltam % coluna(s) esperadas para Categorias. Migração cancelada.', missing_count;
+  end if;
+
+  if exists (
+    select 1
+    from public.products
+    where category is not null
+      and btrim(category) <> ''
+      and created_by is null
+  ) then
+    raise exception 'G.E.I360: existem produtos com categoria preenchida e created_by nulo. Revise esses registros antes da migração.';
+  end if;
+
+  select count(*) into duplicate_count
+  from (
+    select company_id, lower(btrim(name))
+    from public.product_categories
+    group by company_id, lower(btrim(name))
+    having count(*) > 1
+  ) duplicates;
+
+  if duplicate_count > 0 then
+    raise exception 'G.E.I360: existem % grupos de categorias duplicadas na mesma empresa. Revise antes de criar o índice único.', duplicate_count;
+  end if;
+
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema='public'
+      and table_name='products'
+      and column_name='category_id'
+  ) then
+    execute
+      'select count(*) from public.products p
+       left join public.product_categories pc
+         on pc.id = p.category_id and pc.company_id = p.company_id
+       where p.category_id is not null and pc.id is null'
+      into invalid_link_count;
+
+    if invalid_link_count > 0 then
+      raise exception 'G.E.I360: existem % produtos com category_id sem categoria correspondente na mesma empresa. Revise antes da migração.', invalid_link_count;
+    end if;
   end if;
 end
 $gei$;
@@ -196,9 +239,12 @@ begin
     raise exception 'A categoria selecionada não pertence à empresa ativa.';
   end if;
 
-  if not v_category_active
-     and (tg_op = 'INSERT' or new.category_id is distinct from old.category_id) then
-    raise exception 'Esta categoria está inativa e não pode ser atribuída a um novo produto.';
+  if not v_category_active then
+    if tg_op = 'INSERT' then
+      raise exception 'Esta categoria está inativa e não pode ser atribuída a um novo produto.';
+    elsif new.category_id is distinct from old.category_id then
+      raise exception 'Esta categoria está inativa e não pode ser atribuída a um novo produto.';
+    end if;
   end if;
 
   new.category := v_category_name;
