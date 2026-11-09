@@ -114,7 +114,48 @@ select
   'has_company_role(uuid,text[])',
   to_regprocedure('public.has_company_role(uuid,text[])') is not null;
 
--- 5. Relacionamentos de empresa e categoria
+-- 5. Verificações de dados legados
+-- O bloco apenas consulta e emite NOTICE; não altera nenhum registro.
+do $
+declare
+  affected_count bigint;
+begin
+  if to_regclass('public.products') is not null
+     and exists (
+       select 1 from information_schema.columns
+       where table_schema='public'
+         and table_name='products'
+         and column_name='created_by'
+     )
+     and exists (
+       select 1 from information_schema.columns
+       where table_schema='public'
+         and table_name='products'
+         and column_name='category'
+     ) then
+    execute
+      'select count(*) from public.products
+       where category is not null and btrim(category) <> ''''
+         and created_by is null'
+      into affected_count;
+    raise notice 'Produtos com categoria preenchida e created_by nulo: %', affected_count;
+  end if;
+
+  if to_regclass('public.product_categories') is not null then
+    execute
+      'select count(*) from (
+         select company_id, lower(btrim(name))
+         from public.product_categories
+         group by company_id, lower(btrim(name))
+         having count(*) > 1
+       ) duplicate_groups'
+      into affected_count;
+    raise notice 'Grupos de categorias duplicadas na mesma empresa: %', affected_count;
+  end if;
+end
+$;
+
+-- 6. Relacionamentos de empresa e categoria
 select
   tc.table_name,
   kcu.column_name,
