@@ -19,7 +19,27 @@ const SUPABASE_KEY='sb_publishable_C1PaxcWAdb5rLfd0yJjl5g_ZUQKK7Dk';
 let session=null,companies=[],companyId=null,companyRole=null,employees=[],signup=false,editing=false;
 const SESSION_KEY='gei360_session';
 function saveSession(value){session=value;try{localStorage.setItem(SESSION_KEY,JSON.stringify(value))}catch(e){}}
-async function restoreSession(){try{const raw=localStorage.getItem(SESSION_KEY);if(!raw)return;const saved=JSON.parse(raw);if(!saved?.refresh_token)throw Error('Sessão sem token de renovação.');const fresh=await api('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:saved.refresh_token}});saveSession(fresh);await loadCompanies();$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('userLabel').textContent=fresh.user?.email||'';await render()}catch(e){try{localStorage.removeItem(SESSION_KEY)}catch(_){}session=null;}}
+async function restoreSession(){
+ let saved=null;
+ try{
+  const raw=localStorage.getItem(SESSION_KEY);if(!raw)return;
+  saved=JSON.parse(raw);if(!saved?.refresh_token)throw Error('Sessão sem token de renovação.');
+ }catch(e){try{localStorage.removeItem(SESSION_KEY)}catch(_){}return}
+ const showApp=async()=>{
+  $('auth').classList.add('hidden');$('app').classList.remove('hidden');$('userLabel').textContent=saved.user?.email||'';
+ };
+ try{
+  const fresh=await api('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:saved.refresh_token}});
+  saveSession(fresh);saved=fresh;
+ }catch(e){
+  if(e instanceof TypeError||/failed to fetch|networkerror|load failed/i.test(e.message||'')){
+   session=saved;await showApp();message($('view'),'Sem conexão com o servidor. Sua sessão foi preservada; conecte-se à internet para carregar os dados.','notice');return;
+  }
+  try{localStorage.removeItem(SESSION_KEY)}catch(_){}session=null;return;
+ }
+ try{await loadCompanies();await showApp();await render()}
+ catch(e){await showApp();message($('view'),'Não foi possível carregar os dados da empresa. Verifique a conexão e tente novamente. '+e.message,'notice')}
+}
 const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let refreshPromise=null;
 async function refreshSessionToken(){
