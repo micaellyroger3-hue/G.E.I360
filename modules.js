@@ -30,8 +30,51 @@ let erpBarcodeStream=null,erpBarcodeTimer=null;
 function erpStopBarcode(){if(erpBarcodeTimer){clearInterval(erpBarcodeTimer);erpBarcodeTimer=null}if(erpBarcodeStream){erpBarcodeStream.getTracks().forEach(t=>t.stop());erpBarcodeStream=null}const v=$('barcodeVideo');if(v){v.pause();v.srcObject=null;v.classList.add('hidden')}}
 async function erpInitBarcode(){const b=$('scanBarcode');if(!b)return;b.onclick=async()=>{const status=$('barcodeStatus'),video=$('barcodeVideo'),field=$('erpForm').elements.barcode;if(!('BarcodeDetector' in window)){status.textContent='Leitura automática indisponível neste navegador. Digite o código ou use leitor USB/Bluetooth.';return}try{erpStopBarcode();const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf']});erpBarcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});video.srcObject=erpBarcodeStream;video.classList.remove('hidden');await video.play();status.textContent='Aponte a câmera para o código.';erpBarcodeTimer=setInterval(async()=>{try{const found=await detector.detect(video);if(found.length){field.value=found[0].rawValue;status.textContent='Código lido: '+found[0].rawValue;erpStopBarcode()}}catch(e){}},350)}catch(e){status.textContent='Câmera indisponível. Verifique a permissão do navegador.';erpStopBarcode()}}}
 
+
+function erpMonthKey(date){const d=new Date(date+'T12:00:00');return Number.isNaN(d.getTime())?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function erpMonthLabel(key){const [y,m]=key.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','')}
+async function erpRenderDashboard(){
+  erpPage='dashboard';
+  try{
+    const [products,sales,entries,customers,suppliers]=await Promise.all([
+      erpLoad('products'),erpLoad('sales'),erpLoad('financial_entries'),erpLoad('customers'),erpLoad('suppliers')
+    ]);
+    await loadEmployees();
+    const now=new Date(),monthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    const confirmed=sales.filter(s=>s.status==='confirmed');
+    const monthSales=confirmed.filter(s=>erpMonthKey(s.sale_date)===monthKey);
+    const monthTotal=monthSales.reduce((n,s)=>n+Number(s.total||0),0);
+    const received=entries.filter(e=>e.entry_type==='income'&&e.status==='paid').reduce((n,e)=>n+Number(e.amount||0),0);
+    const payable=entries.filter(e=>e.entry_type==='expense'&&e.status==='pending').reduce((n,e)=>n+Number(e.amount||0),0);
+    const receivable=entries.filter(e=>e.entry_type==='income'&&e.status==='pending').reduce((n,e)=>n+Number(e.amount||0),0);
+    const low=products.filter(p=>p.active&&Number(p.stock_quantity)<=Number(p.min_stock));
+    const keys=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);keys.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
+    const totals=keys.map(k=>confirmed.filter(s=>erpMonthKey(s.sale_date)===k).reduce((n,s)=>n+Number(s.total||0),0));
+    const max=Math.max(1,...totals);
+    const bars=keys.map((k,i)=>'<div class="gei-chart-col"><div class="gei-chart-value">'+(totals[i]?erpMoney(totals[i]):'')+'</div><div class="gei-chart-track"><div class="gei-chart-bar" style="height:'+Math.max(2,totals[i]/max*100)+'%"></div></div><small>'+erpMonthLabel(k)+'</small></div>').join('');
+    const recent=confirmed.slice().sort((a,b)=>String(b.sale_date).localeCompare(String(a.sale_date))).slice(0,5);
+    erpPageShell('Visão geral','Indicadores da operação · '+now.toLocaleDateString('pt-BR'),`
+      <div class="gei-dashboard">
+        <section class="gei-welcome"><div><span class="gei-eyebrow">PAINEL DE GESTÃO</span><h2>Visão clara do seu negócio.</h2><p>Resumo atualizado com os registros da empresa selecionada.</p></div><div class="gei-welcome-mark">360°</div></section>
+        <section class="gei-kpis">
+          <article class="gei-kpi"><span>Vendas neste mês</span><strong>${erpMoney(monthTotal)}</strong><small>${monthSales.length} venda(s) confirmada(s)</small></article>
+          <article class="gei-kpi"><span>Valores recebidos</span><strong>${erpMoney(received)}</strong><small>Contas marcadas como recebidas</small></article>
+          <article class="gei-kpi"><span>A receber</span><strong>${erpMoney(receivable)}</strong><small>Contas pendentes de entrada</small></article>
+          <article class="gei-kpi"><span>A pagar</span><strong>${erpMoney(payable)}</strong><small>Contas pendentes de saída</small></article>
+        </section>
+        <section class="gei-dashboard-grid">
+          <article class="gei-panel gei-sales-panel"><div class="gei-panel-head"><div><h3>Desempenho de vendas</h3><p>Vendas confirmadas · últimos 6 meses</p></div><span class="gei-panel-tag">R$</span></div><div class="gei-chart">${bars}</div></article>
+          <article class="gei-panel"><div class="gei-panel-head"><div><h3>Visão operacional</h3><p>Cadastros da empresa</p></div></div><div class="gei-stat-list"><div><span>Produtos ativos</span><b>${products.filter(p=>p.active).length}</b></div><div><span>Funcionários</span><b>${employees.filter(e=>e.status==='active').length}</b></div><div><span>Clientes</span><b>${customers.length}</b></div><div><span>Fornecedores</span><b>${suppliers.length}</b></div></div></article>
+          <article class="gei-panel"><div class="gei-panel-head"><div><h3>Atenção ao estoque</h3><p>Produtos no mínimo ou abaixo</p></div><span class="gei-count">${low.length}</span></div>${low.length?'<div class="gei-alert-list">'+low.slice(0,6).map(p=>'<div><span>'+esc(p.name)+'</span><b>'+Number(p.stock_quantity).toLocaleString('pt-BR')+' / mín. '+Number(p.min_stock).toLocaleString('pt-BR')+'</b></div>').join('')+'</div>':'<div class="gei-empty-state">Tudo certo. Nenhum produto em alerta.</div>'}</article>
+          <article class="gei-panel"><div class="gei-panel-head"><div><h3>Vendas recentes</h3><p>Últimas operações confirmadas</p></div></div>${recent.length?'<div class="gei-recent-list">'+recent.map(s=>'<div><span>Venda #'+s.sale_number+'<small>'+new Date(s.sale_date+'T12:00:00').toLocaleDateString('pt-BR')+'</small></span><b>'+erpMoney(s.total)+'</b></div>').join('')+'</div>':'<div class="gei-empty-state">As vendas confirmadas aparecerão aqui.</div>'}</article>
+        </section>
+        <p class="gei-footnote">Indicadores calculados a partir dos lançamentos cadastrados. Confira os módulos de origem antes de tomar decisões financeiras.</p>
+      </div>`);
+  }catch(e){erpPageShell('Visão geral','Indicadores da empresa','<div class="err">Não foi possível carregar o painel: '+esc(e.message)+'</div>')}
+}
+
 const erpSetPage= setPage;
-setPage=async function(page){erpStopBarcode();document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));const titles={home:'Visão geral',company:'Minha empresa',employees:'Funcionários',products:'Estoque',stock:'Movimentações',suppliers:'Fornecedores',customers:'Clientes',sales:'Vendas',purchases:'Compras',finance:'Financeiro',documents:'Documentos',reports:'Relatórios'};$('pageTitle').textContent=titles[page]||'G.E.I360';if(['home','company','employees'].includes(page)){return erpSetPage(page)}if(!companyId){return erpPageShell('Empresa necessária','Cadastre ou selecione uma empresa antes de usar os módulos.','<div class="notice">Acesse Minha empresa e conclua o cadastro.</div>')}if(!['owner','admin','manager'].includes(companyRole)){if(ERP[page])return erpRenderCrud(page,{readOnly:true});if(page==='stock')return erpRenderStock({readOnly:true});if(page==='sales')return erpRenderSales({readOnly:true});if(page==='purchases')return erpRenderPurchases({readOnly:true});if(page==='reports')return erpRenderReports();}if(ERP[page])return erpRenderCrud(page);if(page==='stock')return erpRenderStock();if(page==='sales')return erpRenderSales();if(page==='purchases')return erpRenderPurchases();if(page==='reports')return erpRenderReports()};
+setPage=async function(page){erpStopBarcode();document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));const titles={home:'Visão geral',company:'Minha empresa',employees:'Funcionários',products:'Estoque',stock:'Movimentações',suppliers:'Fornecedores',customers:'Clientes',sales:'Vendas',purchases:'Compras',finance:'Financeiro',documents:'Documentos',reports:'Relatórios'};$('pageTitle').textContent=titles[page]||'G.E.I360';if(page==='home'){return erpRenderDashboard()}if(['company','employees'].includes(page)){return erpSetPage(page)}if(!companyId){return erpPageShell('Empresa necessária','Cadastre ou selecione uma empresa antes de usar os módulos.','<div class="notice">Acesse Minha empresa e conclua o cadastro.</div>')}if(!['owner','admin','manager'].includes(companyRole)){if(ERP[page])return erpRenderCrud(page,{readOnly:true});if(page==='stock')return erpRenderStock({readOnly:true});if(page==='sales')return erpRenderSales({readOnly:true});if(page==='purchases')return erpRenderPurchases({readOnly:true});if(page==='reports')return erpRenderReports();}if(ERP[page])return erpRenderCrud(page);if(page==='stock')return erpRenderStock();if(page==='sales')return erpRenderSales();if(page==='purchases')return erpRenderPurchases();if(page==='reports')return erpRenderReports()};
 
 
 // Proteções de interação: mantém os controles principais funcionais mesmo após
