@@ -14,7 +14,7 @@ function erpField(f,row={}){const [key,label,type='text',required=false,opts]=f;
 async function erpLoad(table){
  const all=[];const pageSize=500;let offset=0;
  while(true){
-  const rows=await api('/rest/v1/'+table+'?select=*&company_id=eq.'+companyId+'&order=created_at.desc&limit='+pageSize+'&offset='+offset);
+  const rows=await api('/rest/v1/'+table+'?select=*&company_id=eq.'+companyId+'&order=created_at.desc,id.desc&limit='+pageSize+'&offset='+offset);
   if(!Array.isArray(rows))throw Error('Resposta inválida ao carregar '+table+'.');
   all.push(...rows);if(rows.length<pageSize)break;offset+=pageSize;
  }
