@@ -6,6 +6,9 @@ alter table public.stock_movements
   drop constraint if exists stock_movements_quantity_check;
 
 alter table public.stock_movements
+  drop constraint if exists stock_movements_quantity_valid_check;
+
+alter table public.stock_movements
   add constraint stock_movements_quantity_valid_check
   check (
     (movement_type = 'adjustment' and quantity >= 0)
