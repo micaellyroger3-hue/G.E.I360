@@ -64,3 +64,7 @@ O painel já apresenta análises automáticas transparentes a partir dos registr
 4. Consulte `docs/CATEGORIES_SETUP.md` para os testes funcionais.
 
 A migração cria categorias por empresa, vincula produtos por chave estrangeira composta, mantém o texto antigo e bloqueia vínculos entre empresas. Ela ainda não foi aplicada ao Supabase. Não execute a migração antes da revisão do diagnóstico.
+
+
+## Códigos de barras
+O cadastro de produtos aceita digitação, leitor USB/Bluetooth e leitura pela câmera em navegadores compatíveis. Para impedir códigos duplicados dentro da mesma empresa, revise primeiro `supabase/diagnostics/202611100003_barcode_preflight.sql` e depois, se não houver duplicidades, aplique `supabase/migrations/202611100003_product_barcode_integrity.sql`. Consulte `docs/BARCODE_SETUP.md`. A migração ainda não foi aplicada ao Supabase.
