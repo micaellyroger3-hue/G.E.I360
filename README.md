@@ -47,3 +47,10 @@ O workflow de publicação está em `.github/workflows/static.yml` e publica a b
 
 ## Inteligência de gestão e IA
 O painel já apresenta análises automáticas transparentes a partir dos registros da empresa (estoque mínimo, contas vencidas, valores a receber/pagar, vendas e produtos inativos). Essa camada inicial é baseada em regras e cálculos, não em IA generativa. A arquitetura segura para o futuro assistente conversacional está documentada em `docs/AI_ASSISTANT_ARCHITECTURE.md`; a IA generativa só será ativada após configurar um provedor e uma função de servidor com autenticação, isolamento por empresa e segredo protegido.
+
+\n## Perfil inteligente por ramo e canais comerciais\n
+- O cadastro da empresa permite selecionar o ramo (restaurante, mercado, varejo, serviços, distribuidora, e-commerce, construção ou outro) e canais como iFood, WhatsApp, Instagram, loja física, entrega própria e marketplaces.
+- O perfil recomenda módulos de acordo com o ramo e identifica quando o iFood foi selecionado.
+- A migração `supabase/migrations/202611100002_company_business_profiles.sql` cria a tabela de perfil com RLS: membros podem consultar; somente proprietário/administrador pode cadastrar ou alterar.
+- A migração ainda precisa ser aplicada no Supabase depois de conferir o diagnóstico `supabase/diagnostics/202611100002_business_profiles_check.sql`.
+- Selecionar iFood não significa integração ativa. Importação de pedidos, sincronização de cardápio, cancelamentos e conciliação exigem credenciais liberadas pelo iFood, backend seguro e testes de homologação. Nenhum token de terceiro é solicitado ou armazenado no navegador.
