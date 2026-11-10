@@ -49,7 +49,7 @@ for (const file of [
   '202611070001_employees.sql','202611080001_erp_modules.sql',
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
   '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
-  '202611100002_company_business_profiles.sql'
+  '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const coreSql = fs.readFileSync('supabase/migrations/202611080001_erp_modules.sql', 'utf8');
@@ -85,6 +85,16 @@ assert.ok(profileSql.includes("array['owner','admin']"), 'Business profile owner
 assert.ok(profileSql.includes('revoke all on public.company_business_profiles from public, anon'), 'Anonymous access to business profiles must be revoked');
 assert.ok(fs.existsSync('docs/IFOOD_INTEGRATION_PLAN.md'), 'Official iFood integration plan missing');
 
+
+const barcodeModule = fs.readFileSync('modules.js', 'utf8');
+assert.ok(barcodeModule.includes("['barcode','Código de barras','text']"), 'Product barcode field missing');
+assert.ok(barcodeModule.includes("id=\"scanBarcode\"") && barcodeModule.includes("BarcodeDetector"), 'Camera barcode scanning missing');
+assert.ok(barcodeModule.includes("getUserMedia"), 'Camera permission flow missing');
+const barcodeSql = fs.readFileSync('supabase/migrations/202611100003_product_barcode_integrity.sql', 'utf8');
+assert.ok(barcodeSql.includes('products_company_barcode_uidx'), 'Company-scoped unique barcode index missing');
+assert.ok(barcodeSql.includes('gei360_normalize_product_barcode'), 'Barcode normalization trigger missing');
+assert.ok(fs.existsSync('supabase/diagnostics/202611100003_barcode_preflight.sql'), 'Barcode preflight diagnostic missing');
+assert.ok(fs.existsSync('docs/BARCODE_SETUP.md'), 'Barcode setup guide missing');
 
 const categoryModule = fs.readFileSync('modules.js', 'utf8');
 assert.ok(html.includes('data-page="categories"'), 'Categories navigation missing');
