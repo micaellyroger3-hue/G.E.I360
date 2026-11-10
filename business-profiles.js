@@ -50,12 +50,18 @@ function selectedChannels(){return CHANNELS.filter(([key])=>$id('gei_channel_'+k
 function profileMarkup(){
  const typeOptions=TYPES.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
  const channelOptions=CHANNELS.map(([v,l])=>'<label style="display:flex;gap:8px;align-items:center;border:1px solid #e5eaf1;border-radius:8px;padding:9px;font-size:12px"><input type="checkbox" id="gei_channel_'+v+'" value="'+v+'"> '+l+'</label>').join('');
- return '<section class="card" id="geiBusinessProfile"><h3 style="margin:0 0 6px">Perfil inteligente da empresa</h3><p class="muted" style="margin:0 0 12px">Escolha o ramo e os canais utilizados. O G.E.I360 organiza os módulos recomendados para esse negócio.</p><div class="field"><label for="geiBusinessType">Ramo de atividade</label><select id="geiBusinessType">'+typeOptions+'</select></div><div class="field"><label>Canais de venda e atendimento</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px">'+channelOptions+'</div></div><div id="geiProfilePreview" class="notice" style="margin-top:12px">Selecione o ramo para visualizar os módulos recomendados.</div><div id="geiIfodPanel" class="notice hidden"></div><div id="geiIfodPanel" class="notice hidden"></div><p id="geiProfileStatus" class="muted" style="font-size:11px;margin:8px 0 0">O perfil será salvo junto com os dados da empresa.</p></section>';
+ return '<section class="card" id="geiBusinessProfile"><h3 style="margin:0 0 6px">Perfil inteligente da empresa</h3><p class="muted" style="margin:0 0 12px">Escolha o ramo e os canais utilizados. O G.E.I360 organiza os módulos recomendados para esse negócio.</p><div id="geiProfileCompleteness" class="notice">Cadastro incompleto: escolha o ramo e pelo menos um canal.</div><div class="field"><label for="geiBusinessType">Ramo de atividade</label><select id="geiBusinessType">'+typeOptions+'</select></div><div class="field"><label>Canais de venda e atendimento</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px">'+channelOptions+'</div></div><div id="geiProfilePreview" class="notice" style="margin-top:12px">Selecione o ramo para visualizar os módulos recomendados.</div><div id="geiIfodPanel" class="notice hidden"></div><div id="geiIfodPanel" class="notice hidden"></div><p id="geiProfileStatus" class="muted" style="font-size:11px;margin:8px 0 0">O perfil será salvo junto com os dados da empresa.</p></section>';
 }
 function updatePreview(){
  const type=$id('geiBusinessType')?.value||'other';
  const channels=selectedChannels();
  const modules=MODULES[type]||MODULES.other;
+ const complete=!!($id('companyName')?.value.trim()&&type&&channels.length);
+ const completeness=$id('geiProfileCompleteness');
+ if(completeness){
+  completeness.className=complete?'ok':'notice';
+  completeness.textContent=complete?'Cadastro completo: empresa, ramo e pelo menos um canal foram informados.':'Cadastro incompleto: informe o nome da empresa, escolha o ramo e marque ao menos um canal.';
+ }
  const preview=$id('geiProfilePreview');
  if(preview){preview.innerHTML='<b>Módulos recomendados:</b><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'+modules.map(x=>ROUTES[x]?'<button type="button" class="alt small" data-gei-page="'+ROUTES[x]+'">'+esc(x)+'</button>':'<span style="background:#f1f5f9;color:#64748b;border-radius:7px;padding:6px 8px;font-size:11px">'+esc(x)+' · planejado</span>').join('')+'</div><p style="font-size:10px;color:#718096;margin:9px 0 0">Botões abrem módulos disponíveis. Itens marcados como planejado ainda precisam ser desenvolvidos.</p>';preview.querySelectorAll('[data-gei-page]').forEach(button=>button.addEventListener('click',()=>setPage(button.dataset.geiPage)));}
  const ifood=$id('geiIfodPanel');
@@ -100,6 +106,7 @@ function attachProfile(){
  type.value=currentProfile?.business_type||'other';
  for(const [key] of CHANNELS){const el=$id('gei_channel_'+key);if(el)el.checked=(currentProfile?.sales_channels||[]).includes(key)}
  type.onchange=updatePreview;
+ const companyName=$id('companyName');if(companyName)companyName.addEventListener('input',updatePreview);
  for(const [key] of CHANNELS){const el=$id('gei_channel_'+key);if(el)el.onchange=updatePreview}
  updatePreview();
 }
