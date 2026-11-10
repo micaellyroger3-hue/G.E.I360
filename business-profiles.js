@@ -57,7 +57,7 @@ function updatePreview(){
 }
 async function loadProfile(){
  currentProfile=null;
- if(!window.companyId||!window.api)return;
+ if(!companyId)return;
  try{
   const rows=await api('/rest/v1/company_business_profiles?select=company_id,business_type,sales_channels,created_by,updated_at&company_id=eq.'+encodeURIComponent(companyId)+'&limit=1');
   currentProfile=rows?.[0]||null;
@@ -68,8 +68,8 @@ async function loadProfile(){
 }
 async function saveProfile(){
  const status=$id('geiProfileStatus');
- if(!window.companyId)throw Error('Salve primeiro os dados da empresa.');
- if(!window.api||!window.session?.user?.id)throw Error('Sessão inválida. Entre novamente.');
+ if(!companyId)throw Error('Salve primeiro os dados da empresa.');
+ if(!session?.user?.id)throw Error('Sessão inválida. Entre novamente.');
  const payload={company_id:companyId,business_type:$id('geiBusinessType')?.value||'other',sales_channels:selectedChannels()};
  if(currentProfile){
   await api('/rest/v1/company_business_profiles?company_id=eq.'+encodeURIComponent(companyId),{method:'PATCH',body:payload});
@@ -89,9 +89,9 @@ function attachProfile(){
  for(const [key] of CHANNELS){const el=$id('gei_channel_'+key);if(el)el.onchange=updatePreview}
  updatePreview();
 }
-const originalRenderCompany=window.renderCompany;
+const originalRenderCompany=renderCompany;
 if(typeof originalRenderCompany==='function'){
- window.renderCompany=function(){
+ renderCompany=function(){
   originalRenderCompany();
   const form=$id('companyForm');
   if(form&&!$id('geiBusinessProfile')){
