@@ -71,13 +71,17 @@ async function saveProfile(){
  if(!companyId)throw Error('Salve primeiro os dados da empresa.');
  if(!session?.user?.id)throw Error('Sessão inválida. Entre novamente.');
  const payload={company_id:companyId,business_type:$id('geiBusinessType')?.value||'other',sales_channels:selectedChannels()};
- if(currentProfile){
-  await api('/rest/v1/company_business_profiles?company_id=eq.'+encodeURIComponent(companyId),{method:'PATCH',body:payload});
- }else{
-  await api('/rest/v1/company_business_profiles',{method:'POST',body:{...payload,created_by:session.user.id}});
+ try{
+  if(currentProfile){
+   await api('/rest/v1/company_business_profiles?company_id=eq.'+encodeURIComponent(companyId),{method:'PATCH',body:payload});
+  }else{
+   await api('/rest/v1/company_business_profiles',{method:'POST',body:{...payload,created_by:session.user.id}});
+  }
+  currentProfile={...payload,created_by:currentProfile?.created_by||session.user.id};
+  if(status)status.textContent='Perfil empresarial salvo com sucesso.';
+ }catch(error){
+  if(status)status.textContent='Empresa salva. Perfil inteligente aguardando a migração e as permissões no Supabase: '+error.message;
  }
- currentProfile={...payload,created_by:currentProfile?.created_by||session.user.id};
- if(status)status.textContent='Perfil empresarial salvo com sucesso.';
 }
 function attachProfile(){
  const form=$id('companyForm');
