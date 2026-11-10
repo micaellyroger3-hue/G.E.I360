@@ -84,4 +84,17 @@ assert.ok(profileSql.includes("array['owner','admin']"), 'Business profile owner
 assert.ok(profileSql.includes('revoke all on public.company_business_profiles from public, anon'), 'Anonymous access to business profiles must be revoked');
 assert.ok(fs.existsSync('docs/IFOOD_INTEGRATION_PLAN.md'), 'Official iFood integration plan missing');
 
+
+const categoryModule = fs.readFileSync('modules.js', 'utf8');
+assert.ok(html.includes('data-page="categories"'), 'Categories navigation missing');
+assert.ok(categoryModule.includes("categories:{table:'product_categories'"), 'Categories CRUD module missing');
+assert.ok(categoryModule.includes("category_id") && categoryModule.includes("product_categories"), 'Product/category relationship missing');
+const categorySql = fs.readFileSync('supabase/migrations/202611100001_product_categories.sql', 'utf8');
+assert.ok(categorySql.includes('products_company_category_fk'), 'Company-scoped product/category foreign key missing');
+assert.ok(categorySql.includes('enable row level security'), 'Product category RLS missing');
+assert.ok(categorySql.includes('gei360_categories_member_guard'), 'Restrictive company-membership guard missing');
+assert.ok(categorySql.includes('gei360_validate_product_category_company'), 'Cross-company category validation trigger missing');
+assert.ok(fs.existsSync('supabase/diagnostics/202611100001_categories_preflight.sql'), 'Category preflight diagnostic missing');
+assert.ok(fs.existsSync('docs/CATEGORIES_SETUP.md'), 'Category installation guide missing');
+
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
