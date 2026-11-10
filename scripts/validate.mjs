@@ -20,7 +20,7 @@ assert.ok(modules.includes('A receber') && modules.includes('A pagar') && module
 assert.ok(modules.includes('pageSize=500') && modules.includes('offset=\'+offset') && modules.includes('created_at.desc,id.desc'), 'Company data pagination missing');
 
 for (const page of [
-  'home','company','employees','products','stock','suppliers','customers',
+  'home','company','employees','products','stock','suppliers','customers','categories',
   'sales','purchases','finance','documents','reports'
 ]) assert.ok(html.includes('data-page="' + page + '"'), 'Missing navigation page: ' + page);
 
@@ -48,13 +48,19 @@ assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase ke
 for (const file of [
   '202611070001_employees.sql','202611080001_erp_modules.sql',
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
-  '202611090001_integrity_hardening.sql'
+  '202611090001_integrity_hardening.sql','202611100001_product_categories.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const coreSql = fs.readFileSync('supabase/migrations/202611080001_erp_modules.sql', 'utf8');
 assert.ok(coreSql.includes('enable row level security'), 'RLS setup missing from core migration');
 assert.ok(coreSql.includes("values ('company-documents', 'company-documents', false"), 'Private document bucket configuration missing');
 assert.ok(coreSql.includes('create_sale_cart') && coreSql.includes('receive_purchase_cart'), 'Transactional sales/purchase RPCs missing');
+const categoriesSql = fs.readFileSync('supabase/migrations/202611100001_product_categories.sql', 'utf8');
+assert.ok(modules.includes("categories:{table:'product_categories'"), 'Categories CRUD module missing');
+assert.ok(modules.includes("['category_id','Categoria','category']"), 'Product category selector missing');
+assert.ok(categoriesSql.includes('products_company_category_fk'), 'Company-scoped product/category foreign key missing');
+assert.ok(categoriesSql.includes('gei360_categories_member_guard'), 'Restrictive category membership policy missing');
+assert.ok(categoriesSql.includes('grant insert (category_id)') && categoriesSql.includes('grant update (category_id)'), 'Product category column grants missing');
 const hardeningSql = fs.readFileSync('supabase/migrations/202611090001_integrity_hardening.sql', 'utf8');
 assert.ok(hardeningSql.includes('quantity >= 0'), 'Zero-stock adjustment support missing');
 assert.ok(hardeningSql.includes('revoke insert, update on table public.products'), 'Direct stock quantity insert/update protection missing');
