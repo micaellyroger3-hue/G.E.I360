@@ -33,7 +33,8 @@ with expected(function_name) as (
     ('apply_stock_movement'),('record_stock_movement'),('create_sale'),
     ('receive_purchase'),('create_sale_cart'),('receive_purchase_cart'),
     ('create_sale_financial_entry'),('create_purchase_financial_entry'),
-    ('protect_linked_financial_entry')
+    ('protect_linked_financial_entry'),('gei360_validate_product_category_company'),
+    ('gei360_sync_product_category_name'),('gei360_guard_product_category_update')
 )
 select e.function_name,
        exists (
@@ -52,7 +53,10 @@ where trigger_schema = 'public'
     'stock_movement_apply',
     'purchase_create_financial_entry',
     'sales_create_financial_entry',
-    'protect_linked_financial_entry'
+    'protect_linked_financial_entry',
+    'gei360_products_category_company_guard',
+    'gei360_product_category_name_sync',
+    'gei360_product_category_guard_update'
   )
 order by event_object_table, trigger_name;
 
@@ -98,7 +102,10 @@ where n.nspname='public'
     'apply_stock_movement',
     'create_sale_financial_entry',
     'create_purchase_financial_entry',
-    'protect_linked_financial_entry'
+    'protect_linked_financial_entry',
+    'gei360_products_category_company_guard',
+    'gei360_product_category_name_sync',
+    'gei360_product_category_guard_update'
   )
 order by p.proname;
 
