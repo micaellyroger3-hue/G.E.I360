@@ -41,14 +41,15 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v10"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v11"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
 for (const file of [
   '202611070001_employees.sql','202611080001_erp_modules.sql',
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
-  '202611090001_integrity_hardening.sql','202611100002_company_business_profiles.sql'
+  '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
+  '202611100002_company_business_profiles.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const coreSql = fs.readFileSync('supabase/migrations/202611080001_erp_modules.sql', 'utf8');
