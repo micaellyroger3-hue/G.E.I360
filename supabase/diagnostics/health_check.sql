@@ -4,7 +4,7 @@
 
 with expected(table_name) as (
   values
-    ('companies'),('company_members'),('profiles'),('employees'),
+    ('companies'),('company_members'),('profiles'),('employees'),('product_categories'),
     ('suppliers'),('customers'),('products'),('stock_movements'),
     ('sales'),('sale_items'),('purchase_orders'),('purchase_order_items'),
     ('financial_entries'),('business_documents'),('company_modules'),
@@ -22,7 +22,7 @@ from pg_policies
 where schemaname = 'public'
   and tablename in (
     'companies','company_members','profiles','employees','suppliers',
-    'customers','products','stock_movements','sales','sale_items',
+    'customers','product_categories','products','stock_movements','sales','sale_items',
     'purchase_orders','purchase_order_items','financial_entries',
     'business_documents','company_modules','gei_records'
   )
@@ -33,7 +33,8 @@ with expected(function_name) as (
     ('apply_stock_movement'),('record_stock_movement'),('create_sale'),
     ('receive_purchase'),('create_sale_cart'),('receive_purchase_cart'),
     ('create_sale_financial_entry'),('create_purchase_financial_entry'),
-    ('protect_linked_financial_entry')
+    ('protect_linked_financial_entry'),('gei360_validate_product_category_company'),
+    ('gei360_sync_product_category_name'),('gei360_guard_product_category_update')
 )
 select e.function_name,
        exists (
@@ -52,7 +53,10 @@ where trigger_schema = 'public'
     'stock_movement_apply',
     'purchase_create_financial_entry',
     'sales_create_financial_entry',
-    'protect_linked_financial_entry'
+    'protect_linked_financial_entry',
+    'gei360_products_category_company_guard',
+    'gei360_product_category_name_sync',
+    'gei360_product_category_guard_update'
   )
 order by event_object_table, trigger_name;
 
@@ -63,6 +67,7 @@ where id = 'company-documents';
 select 'companies' as table_name, count(*) as total from public.companies
 union all select 'company_members', count(*) from public.company_members
 union all select 'employees', count(*) from public.employees
+union all select 'product_categories', count(*) from public.product_categories
 union all select 'products', count(*) from public.products
 union all select 'stock_movements', count(*) from public.stock_movements
 union all select 'sales', count(*) from public.sales
@@ -97,7 +102,10 @@ where n.nspname='public'
     'apply_stock_movement',
     'create_sale_financial_entry',
     'create_purchase_financial_entry',
-    'protect_linked_financial_entry'
+    'protect_linked_financial_entry',
+    'gei360_products_category_company_guard',
+    'gei360_product_category_name_sync',
+    'gei360_product_category_guard_update'
   )
 order by p.proname;
 
