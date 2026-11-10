@@ -1,10 +1,11 @@
-const CACHE_NAME = 'gei360-shell-v9';
+const CACHE_NAME = 'gei360-shell-v10';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icon.svg',
-  './modules.js?v=20261109-14'
+  './modules.js?v=20261109-14',
+  './business-profiles.js?v=20261110-01'
 ];
 
 self.addEventListener('install', event => {

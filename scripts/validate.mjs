@@ -41,14 +41,14 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v9"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v10"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
 for (const file of [
   '202611070001_employees.sql','202611080001_erp_modules.sql',
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
-  '202611090001_integrity_hardening.sql'
+  '202611090001_integrity_hardening.sql','202611100002_company_business_profiles.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const coreSql = fs.readFileSync('supabase/migrations/202611080001_erp_modules.sql', 'utf8');
@@ -66,4 +66,22 @@ assert.ok(fs.existsSync('docs/FISCAL_INTEGRATION_PLAN.md'), 'Fiscal integration 
 assert.ok(fs.existsSync('docs/CLIENT_READINESS.md'), 'Client readiness checklist missing');
 assert.ok(fs.existsSync('supabase/diagnostics/health_check.sql'), 'Supabase diagnostics missing');
 assert.ok(modules.includes('não um modelo de IA generativa'), 'Dashboard must disclose deterministic insights, not generative AI');
+
+const profileJs = fs.readFileSync('business-profiles.js', 'utf8');
+new Function(profileJs);
+assert.ok(html.includes('business-profiles.js?v=20261110-01'), 'Business profile script not loaded');
+assert.ok(worker.includes('./business-profiles.js?v=20261110-01'), 'Business profile script missing from offline shell');
+assert.ok(worker.includes('gei360-shell-v10'), 'Offline shell cache version missing');
+assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
+assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
+assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
+assert.ok(profileJs.includes('business_type') && profileJs.includes('sales_channels'), 'Business profile persistence fields missing');
+assert.ok(!/access_token|refresh_token|client_secret|service_role/i.test(profileJs), 'Third-party secrets must not be stored in browser profile code');
+const profileSql = fs.readFileSync('supabase/migrations/202611100002_company_business_profiles.sql', 'utf8');
+assert.ok(profileSql.includes('enable row level security'), 'Business profile RLS missing');
+assert.ok(profileSql.includes('is_company_member(company_id)'), 'Business profile member read policy missing');
+assert.ok(profileSql.includes("array['owner','admin']"), 'Business profile owner/admin write guard missing');
+assert.ok(profileSql.includes('revoke all on public.company_business_profiles from public, anon'), 'Anonymous access to business profiles must be revoked');
+assert.ok(fs.existsSync('docs/IFOOD_INTEGRATION_PLAN.md'), 'Official iFood integration plan missing');
+
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
