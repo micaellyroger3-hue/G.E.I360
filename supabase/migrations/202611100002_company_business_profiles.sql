@@ -57,7 +57,26 @@ on public.company_business_profiles for update to authenticated
 using (public.has_company_role(company_id,array['owner','admin']::text[]))
 with check (public.has_company_role(company_id,array['owner','admin']::text[]));
 
-revoke all on public.company_business_profiles from public, anon;
-grant select,insert,update on public.company_business_profiles to authenticated;
+revoke all on public.company_business_profiles from public, anon, authenticated;
+grant select on public.company_business_profiles to authenticated;
+grant insert (company_id,business_type,sales_channels,created_by) on public.company_business_profiles to authenticated;
+grant update (business_type,sales_channels) on public.company_business_profiles to authenticated;
+
+create or replace function public.gei360_set_business_profile_updated_at()
+returns trigger
+language plpgsql
+set search_path = public
+as $function$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$function$;
+
+revoke all on function public.gei360_set_business_profile_updated_at() from public, anon, authenticated;
+drop trigger if exists gei360_business_profile_updated_at on public.company_business_profiles;
+create trigger gei360_business_profile_updated_at
+before update on public.company_business_profiles
+for each row execute function public.gei360_set_business_profile_updated_at();
 
 commit;
