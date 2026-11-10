@@ -48,12 +48,12 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 let currentProfile=null;
 function selectedChannels(){return CHANNELS.filter(([key])=>$id('gei_channel_'+key)?.checked).map(([key])=>key)}
 function profileMarkup(){
- const typeOptions=TYPES.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
+ const typeOptions='<option value="">Selecione o ramo...</option>'+TYPES.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
  const channelOptions=CHANNELS.map(([v,l])=>'<label style="display:flex;gap:8px;align-items:center;border:1px solid #e5eaf1;border-radius:8px;padding:9px;font-size:12px"><input type="checkbox" id="gei_channel_'+v+'" value="'+v+'"> '+l+'</label>').join('');
- return '<section class="card" id="geiBusinessProfile"><h3 style="margin:0 0 6px">Perfil inteligente da empresa</h3><p class="muted" style="margin:0 0 12px">Escolha o ramo e os canais utilizados. O G.E.I360 organiza os módulos recomendados para esse negócio.</p><div id="geiProfileCompleteness" class="notice">Cadastro incompleto: escolha o ramo e pelo menos um canal.</div><div class="field"><label for="geiBusinessType">Ramo de atividade</label><select id="geiBusinessType">'+typeOptions+'</select></div><div class="field"><label>Canais de venda e atendimento</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px">'+channelOptions+'</div></div><div id="geiProfilePreview" class="notice" style="margin-top:12px">Selecione o ramo para visualizar os módulos recomendados.</div><div id="geiIfodPanel" class="notice hidden"></div><div id="geiIfodPanel" class="notice hidden"></div><p id="geiProfileStatus" class="muted" style="font-size:11px;margin:8px 0 0">O perfil será salvo junto com os dados da empresa.</p></section>';
+ return '<section class="card" id="geiBusinessProfile"><h3 style="margin:0 0 6px">Perfil inteligente da empresa</h3><p class="muted" style="margin:0 0 12px">Escolha o ramo e os canais utilizados. O G.E.I360 organiza os módulos recomendados para esse negócio.</p><div id="geiProfileCompleteness" class="notice">Cadastro incompleto: escolha o ramo e pelo menos um canal.</div><div class="field"><label for="geiBusinessType">Ramo de atividade</label><select id="geiBusinessType">'+typeOptions+'</select></div><div class="field"><label>Canais de venda e atendimento</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px">'+channelOptions+'</div></div><div id="geiProfilePreview" class="notice" style="margin-top:12px">Selecione o ramo para visualizar os módulos recomendados.</div><div id="geiIfodPanel" class="notice hidden"></div><p id="geiProfileStatus" class="muted" style="font-size:11px;margin:8px 0 0">O perfil será salvo junto com os dados da empresa.</p></section>';
 }
 function updatePreview(){
- const type=$id('geiBusinessType')?.value||'other';
+ const type=$id('geiBusinessType')?.value||'';
  const channels=selectedChannels();
  const modules=MODULES[type]||MODULES.other;
  const complete=!!($id('companyName')?.value.trim()&&type&&channels.length);
@@ -86,7 +86,10 @@ async function saveProfile(){
  const status=$id('geiProfileStatus');
  if(!companyId)throw Error('Salve primeiro os dados da empresa.');
  if(!session?.user?.id)throw Error('Sessão inválida. Entre novamente.');
- const payload={company_id:companyId,business_type:$id('geiBusinessType')?.value||'other',sales_channels:selectedChannels()};
+ const businessType=$id('geiBusinessType')?.value||'';
+ const channels=selectedChannels();
+ if(!businessType||!channels.length){if(status)status.textContent='Empresa salva. Perfil incompleto: escolha o ramo e marque pelo menos um canal.';return}
+ const payload={company_id:companyId,business_type:businessType,sales_channels:channels};
  try{
   if(currentProfile){
    await api('/rest/v1/company_business_profiles?company_id=eq.'+encodeURIComponent(companyId),{method:'PATCH',body:{business_type:payload.business_type,sales_channels:payload.sales_channels}});
@@ -103,7 +106,7 @@ function attachProfile(){
  const form=$id('companyForm');
  if(!form||!$id('geiBusinessProfile'))return;
  const type=$id('geiBusinessType');
- type.value=currentProfile?.business_type||'other';
+ type.value=currentProfile?.business_type||'';
  for(const [key] of CHANNELS){const el=$id('gei_channel_'+key);if(el)el.checked=(currentProfile?.sales_channels||[]).includes(key)}
  type.onchange=updatePreview;
  const companyName=$id('companyName');if(companyName)companyName.addEventListener('input',updatePreview);
