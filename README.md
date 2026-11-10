@@ -56,3 +56,6 @@ O painel já apresenta análises automáticas transparentes a partir dos registr
 - A migração `supabase/migrations/202611100002_company_business_profiles.sql` cria a tabela de perfil com RLS: membros podem consultar; somente proprietário/administrador pode cadastrar ou alterar.
 - A migração ainda precisa ser aplicada no Supabase depois de conferir o diagnóstico `supabase/diagnostics/202611100002_business_profiles_check.sql`.
 - Selecionar iFood não significa integração ativa. Importação de pedidos, sincronização de cardápio, cancelamentos e conciliação exigem credenciais liberadas pelo iFood, backend seguro e testes de homologação. Nenhum token de terceiro é solicitado ou armazenado no navegador.
+
+## Integração iFood
+Consulte `docs/IFOOD_INTEGRATION_PLAN.md` para elegibilidade, credenciais, fluxo de homologação e requisitos de segurança. O perfil iFood no cadastro não significa integração de pedidos ativa.
