@@ -79,6 +79,7 @@ assert.ok(html.includes('business-profiles.js?v=20261110-01'), 'Business profile
 assert.ok(worker.includes('./business-profiles.js?v=20261110-01'), 'Business profile script missing from offline shell');
 assert.ok(worker.includes('gei360-shell-v11'), 'Offline shell cache version not bumped');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
+assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
 assert.ok(profileJs.includes('business_type') && profileJs.includes('sales_channels'), 'Business profile persistence fields missing');
 assert.ok(!/access_token|refresh_token|client_secret|service_role/i.test(profileJs), 'Third-party secrets must not be stored in browser profile code');
