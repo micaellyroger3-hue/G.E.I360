@@ -55,3 +55,12 @@ O painel já apresenta análises automáticas transparentes a partir dos registr
 - O cadastro exibe estado completo/incompleto e recomenda módulos já existentes, com acesso direto aos módulos.
 - Aplique `supabase/migrations/202611100002_company_business_profiles.sql` após executar o diagnóstico somente leitura `supabase/diagnostics/202611100002_business_profiles_check.sql`.
 - Selecionar iFood não ativa pedidos reais. Veja `docs/IFOOD_INTEGRATION_PLAN.md` para requisitos oficiais, credenciais, segurança e homologação.
+
+
+## Instalação do módulo Categorias
+1. Execute primeiro o diagnóstico somente leitura `supabase/diagnostics/202611100001_categories_preflight.sql`.
+2. Confira tabelas, funções de autorização, colunas, duplicidades e vínculos existentes.
+3. Se o diagnóstico estiver consistente, revise e execute `supabase/migrations/202611100001_product_categories.sql` no SQL Editor do projeto correto.
+4. Consulte `docs/CATEGORIES_SETUP.md` para os testes funcionais.
+
+A migração cria categorias por empresa, vincula produtos por chave estrangeira composta, mantém o texto antigo e bloqueia vínculos entre empresas. Ela ainda não foi aplicada ao Supabase. Não execute a migração antes da revisão do diagnóstico.
