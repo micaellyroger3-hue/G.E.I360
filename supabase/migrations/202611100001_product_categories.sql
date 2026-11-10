@@ -218,7 +218,7 @@ grant select,insert,update,delete on table public.product_categories to authenti
 grant insert (category_id) on table public.products to authenticated;
 grant update (category_id) on table public.products to authenticated;
 
-create or replace function public.gei360_validate_product_category()
+create or replace function public.gei360_validate_product_category_company()
 returns trigger language plpgsql set search_path=''
 as $function$
 declare v_name text; v_active boolean;
@@ -246,11 +246,11 @@ begin
   return new;
 end;
 $function$;
-revoke all on function public.gei360_validate_product_category() from public,anon,authenticated;
-drop trigger if exists gei360_products_category_guard on public.products;
-create trigger gei360_products_category_guard
+revoke all on function public.gei360_validate_product_category_company() from public,anon,authenticated;
+drop trigger if exists gei360_products_category_company_guard on public.products;
+create trigger gei360_products_category_company_guard
 before insert or update on public.products
-for each row execute function public.gei360_validate_product_category();
+for each row execute function public.gei360_validate_product_category_company();
 
 -- Renomear categoria sincroniza o rótulo legado dos produtos da mesma empresa.
 create or replace function public.gei360_sync_product_category_name()
@@ -285,8 +285,8 @@ begin
 end;
 $function$;
 revoke all on function public.gei360_guard_product_category_update() from public,anon,authenticated;
-drop trigger if exists gei360_product_category_update_guard on public.product_categories;
-create trigger gei360_product_category_update_guard
+drop trigger if exists gei360_product_category_guard_update on public.product_categories;
+create trigger gei360_product_category_guard_update
 before update on public.product_categories
 for each row execute function public.gei360_guard_product_category_update();
 
