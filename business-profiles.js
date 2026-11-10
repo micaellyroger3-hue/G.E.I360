@@ -27,7 +27,11 @@ const ROUTES={
  'Cardápio e produtos':'products','Estoque':'products','Movimentações de estoque':'stock',
  'Vendas e pedidos':'sales','Compras':'purchases','Fornecedores':'suppliers',
  'Clientes':'customers','Financeiro':'finance','Documentos':'documents',
- 'Relatórios':'reports','Funcionários':'employees'
+ 'Relatórios':'reports','Funcionários':'employees',
+ 'Produtos e cardápio':'products','Produtos e códigos de barras':'products','Catálogo e preços':'products','Catálogo e tabela de preços':'products',
+ 'Estoque e ficha de insumos':'products','Estoque e validade':'products','Estoque e depósitos':'products','Materiais e estoque':'products',
+ 'Pedidos e vendas':'sales','Vendas e caixa':'sales','Compras e fornecedores':'purchases',
+ 'Financeiro e relatórios':'finance','Documentos e relatórios':'documents','Clientes e fornecedores':'customers'
 };
 const MODULES={
  restaurant:['Produtos e cardápio','Estoque e ficha de insumos','Pedidos e vendas','Compras e fornecedores','Clientes','Financeiro','Entregas','Documentos e relatórios'],
@@ -53,7 +57,7 @@ function updatePreview(){
  const channels=selectedChannels();
  const modules=MODULES[type]||MODULES.other;
  const preview=$id('geiProfilePreview');
- if(preview){preview.innerHTML='<b>Módulos recomendados (toque para abrir):</b><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'+modules.map(x=>'<button type="button" class="alt small" data-gei-page="'+(ROUTES[x]||'')+'">'+esc(x)+'</button>').join('')+'</div>';preview.querySelectorAll('[data-gei-page]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.geiPage)setPage(button.dataset.geiPage)}));}
+ if(preview){preview.innerHTML='<b>Módulos recomendados:</b><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'+modules.map(x=>ROUTES[x]?'<button type="button" class="alt small" data-gei-page="'+ROUTES[x]+'">'+esc(x)+'</button>':'<span style="background:#f1f5f9;color:#64748b;border-radius:7px;padding:6px 8px;font-size:11px">'+esc(x)+' · planejado</span>').join('')+'</div><p style="font-size:10px;color:#718096;margin:9px 0 0">Botões abrem módulos disponíveis. Itens marcados como planejado ainda precisam ser desenvolvidos.</p>';preview.querySelectorAll('[data-gei-page]').forEach(button=>button.addEventListener('click',()=>setPage(button.dataset.geiPage)));}
  const ifood=$id('geiIfodPanel');
  if(ifood){
   const active=channels.includes('ifood');
