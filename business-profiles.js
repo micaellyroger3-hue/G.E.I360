@@ -23,6 +23,12 @@ const CHANNELS=[
  ['ecommerce','Loja virtual'],
  ['marketplace','Outros marketplaces']
 ];
+const ROUTES={
+ 'Cardápio e produtos':'products','Estoque':'products','Movimentações de estoque':'stock',
+ 'Vendas e pedidos':'sales','Compras':'purchases','Fornecedores':'suppliers',
+ 'Clientes':'customers','Financeiro':'finance','Documentos':'documents',
+ 'Relatórios':'reports','Funcionários':'employees'
+};
 const MODULES={
  restaurant:['Produtos e cardápio','Estoque e ficha de insumos','Pedidos e vendas','Compras e fornecedores','Clientes','Financeiro','Entregas','Documentos e relatórios'],
  grocery:['Produtos e códigos de barras','Estoque e validade','Compras e fornecedores','Vendas e caixa','Clientes','Financeiro','Documentos e relatórios'],
@@ -47,7 +53,7 @@ function updatePreview(){
  const channels=selectedChannels();
  const modules=MODULES[type]||MODULES.other;
  const preview=$id('geiProfilePreview');
- if(preview)preview.innerHTML='<b>Módulos recomendados:</b><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'+modules.map(x=>'<span style="background:#edf7f4;color:#17664e;border-radius:7px;padding:6px 8px;font-size:11px">'+esc(x)+'</span>').join('')+'</div>';
+ if(preview){preview.innerHTML='<b>Módulos recomendados (toque para abrir):</b><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'+modules.map(x=>'<button type="button" class="alt small" data-gei-page="'+(ROUTES[x]||'')+'">'+esc(x)+'</button>').join('')+'</div>';preview.querySelectorAll('[data-gei-page]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.geiPage)setPage(button.dataset.geiPage)}));}
  const ifood=$id('geiIfodPanel');
  if(ifood){
   const active=channels.includes('ifood');
