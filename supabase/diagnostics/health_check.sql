@@ -4,7 +4,7 @@
 
 with expected(table_name) as (
   values
-    ('companies'),('company_members'),('profiles'),('employees'),
+    ('companies'),('company_members'),('profiles'),('employees'),('product_categories'),
     ('suppliers'),('customers'),('products'),('stock_movements'),
     ('sales'),('sale_items'),('purchase_orders'),('purchase_order_items'),
     ('financial_entries'),('business_documents'),('company_modules'),
@@ -22,7 +22,7 @@ from pg_policies
 where schemaname = 'public'
   and tablename in (
     'companies','company_members','profiles','employees','suppliers',
-    'customers','products','stock_movements','sales','sale_items',
+    'customers','product_categories','products','stock_movements','sales','sale_items',
     'purchase_orders','purchase_order_items','financial_entries',
     'business_documents','company_modules','gei_records'
   )
@@ -63,6 +63,7 @@ where id = 'company-documents';
 select 'companies' as table_name, count(*) as total from public.companies
 union all select 'company_members', count(*) from public.company_members
 union all select 'employees', count(*) from public.employees
+union all select 'product_categories', count(*) from public.product_categories
 union all select 'products', count(*) from public.products
 union all select 'stock_movements', count(*) from public.stock_movements
 union all select 'sales', count(*) from public.sales
