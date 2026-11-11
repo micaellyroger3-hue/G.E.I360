@@ -21,13 +21,14 @@ O G.E.I360 pode ser instalado pelo navegador compatível no Android/desktop (men
 - Carregamento paginado dos registros da empresa para evitar o limite padrão de retorno do PostgREST.
 
 ## Configuração do Supabase
-1. Aplique primeiro `supabase/migrations/202611070001_employees.sql` no SQL Editor.
-2. Aplique depois `supabase/migrations/202611080001_erp_modules.sql` no SQL Editor.
-3. Aplique por último `supabase/migrations/202611080002_finance_links.sql` no SQL Editor. Essa migração vincula automaticamente vendas confirmadas a contas a receber e compras recebidas a contas a pagar. Os lançamentos vinculados não podem ser editados ou excluídos manualmente; a baixa/recebimento continua disponível.
-4. Aplique `supabase/migrations/202611080003_protect_linked_finance.sql` no SQL Editor. Ela reforça no próprio banco a proteção dos lançamentos vinculados, permitindo somente alterar a situação de pagamento.
-5. Aplique `supabase/migrations/202611090001_integrity_hardening.sql` no SQL Editor. Ela permite ajustes de estoque para saldo zero, protege o saldo contra alterações diretas e restringe os campos de vínculo financeiro.
-6. Configure o endereço publicado do GitHub Pages em **Authentication → URL Configuration** (Site URL e Redirect URLs).
-7. Confirme o e-mail de cadastro, caso a confirmação esteja habilitada.
+1. Abra o projeto Supabase correto: `mxikqdarqgatqoecfprg`.
+2. Execute primeiro `supabase/diagnostics/FINALIZATION_PRECHECK.sql`. É somente leitura. Guarde o resultado e não continue se houver tabela/função ausente, schema incompatível ou duplicidades.
+3. Faça um backup do banco.
+4. Para aplicar as dez migrations na ordem correta em uma única transação, execute o conteúdo de `supabase/INSTALL_GEI360_ALL.sql` no SQL Editor. Se qualquer etapa falhar, a transação inteira será revertida.
+5. Confira as duas consultas de privilégios no final do instalador: ambas devem retornar zero linhas.
+6. Faça os testes funcionais e de isolamento descritos em `docs/FINALIZATION_AUDIT.md`.
+7. Configure o endereço publicado do GitHub Pages em **Authentication → URL Configuration** (Site URL e Redirect URLs).
+8. Confirme o e-mail de cadastro, caso a confirmação esteja habilitada.
 
 O front-end utiliza a URL do projeto e a chave publicável (publishable/anon) no navegador. Nunca coloque uma chave `service_role` ou chave secreta no front-end.
 
