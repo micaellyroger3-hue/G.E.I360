@@ -43,6 +43,7 @@ Foram criados registros temporários dentro de uma transação e tudo foi revert
 - Recebimento de compra com um item: criou pedido/item, entrada de estoque e despesa financeira automática; saldo de estoque conferido em 10 — PASS.
 - Venda com um item: criou venda/item, saída de estoque e receita financeira automática; saldo conferido em 8 — PASS.
 - Três tentativas sob o papel `authenticated`: escrita direta em `stock_quantity`, atualização direta do saldo e gravação direta de `source_type/source_id` no financeiro foram negadas — PASS.
+- Teste adicional de isolamento: foi criada uma segunda empresa temporária e a associação do usuário foi marcada como inativa; sob o papel `authenticated`, a leitura dessa empresa retornou zero linhas e a tentativa de escrita foi negada — PASS.
 - Os registros temporários não permaneceram no banco.
 
 ## Alertas restantes do Supabase Advisor
