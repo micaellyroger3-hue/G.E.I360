@@ -72,11 +72,10 @@ assert.ok(fs.existsSync('supabase/diagnostics/FINALIZATION_PRECHECK.sql'), 'Cons
 const finalPrecheck = fs.readFileSync('supabase/diagnostics/FINALIZATION_PRECHECK.sql', 'utf8');
 assert.ok(finalPrecheck.includes('from pg_policies') && finalPrecheck.includes('information_schema.table_privileges') && finalPrecheck.includes('pg_get_functiondef'), 'Finalization precheck must inspect RLS, grants and function definitions');
 assert.ok(fs.existsSync('supabase/migrations/202611120001_api_privilege_hardening.sql'), 'Consolidated API privilege hardening migration missing');
-assert.ok(fs.existsSync('supabase/INSTALL_GEI360_ALL.sql'), 'Single-transaction Supabase installer missing');
+assert.ok(fs.existsSync('supabase/INSTALL_GEI360_ALL.sql'), 'Supabase migration safety notice missing');
 const installer = fs.readFileSync('supabase/INSTALL_GEI360_ALL.sql', 'utf8');
-assert.ok(installer.includes('INSTALADOR SQL CONSOLIDADO') && installer.includes('202611120001_api_privilege_hardening.sql'), 'Installer must include the final security migration');
-assert.equal((installer.match(/^begin;$/gim)||[]).length, 1, 'Installer must use one outer transaction');
-assert.equal((installer.match(/^commit;$/gim)||[]).length, 1, 'Installer must use one outer transaction');
+assert.ok(installer.includes('INSTALLER_DISABLED_SCHEMA_DRIFT') && installer.includes('NÃO EXECUTE COMO INSTALADOR'), 'Legacy installer must be disabled when schema drift exists');
+assert.ok(installer.includes('api_privilege_hardening'), 'Disabled installer must document the targeted security migration');
 
 const privilegeHardening = fs.readFileSync('supabase/migrations/202611120001_api_privilege_hardening.sql', 'utf8');
 assert.ok(privilegeHardening.includes('from anon, public'), 'Anonymous and PUBLIC table grants must be revoked');
@@ -89,7 +88,7 @@ const profileJs = fs.readFileSync('business-profiles.js', 'utf8');
 new Function(profileJs);
 assert.ok(html.includes('business-profiles.js?v=20261110-01'), 'Business profile script not loaded');
 assert.ok(worker.includes('./business-profiles.js?v=20261110-01'), 'Business profile script missing from offline shell');
-assert.ok(worker.includes('gei360-shell-v11'), 'Offline shell cache version missing');
+assert.ok(worker.includes('gei360-shell-v12'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
 assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
