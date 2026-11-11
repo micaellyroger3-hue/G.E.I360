@@ -153,4 +153,16 @@ assert.ok(employeeSecurity.includes('gei360_employees_insert_guard') && employee
 assert.ok(fs.existsSync('supabase/diagnostics/202611110001_employee_integrity_preflight.sql'), 'Employee security preflight diagnostic missing');
 assert.ok(fs.existsSync('docs/EMPLOYEE_SECURITY.md'), 'Employee security installation guide missing');
 
+
+// Auditoria de isolamento multiempresa: diagnóstico somente leitura e documentação.
+const tenantAudit = fs.readFileSync('supabase/diagnostics/202611110002_tenant_isolation_audit.sql', 'utf8');
+assert.ok(tenantAudit.includes("('companies'),('company_members'),('profiles'),('empresas')"), 'Tenant audit must inspect company identity tables and legacy empresas');
+assert.ok(tenantAudit.includes('pg_get_functiondef(p.oid)'), 'Tenant audit must expose authorization function definitions');
+assert.ok(tenantAudit.includes('p.prosecdef') && tenantAudit.includes('p.proconfig'), 'Tenant audit must inspect SECURITY DEFINER and search_path');
+assert.ok(tenantAudit.includes('from pg_policies'), 'Tenant audit must inspect RLS policies');
+assert.ok(tenantAudit.includes('information_schema.column_privileges'), 'Tenant audit must inspect sensitive column grants');
+assert.ok(tenantAudit.includes('pg_constraint') && tenantAudit.includes('pg_indexes'), 'Tenant audit must inspect membership constraints and indexes');
+assert.ok(tenantAudit.includes('SQL Editor usa privilégios administrativos'), 'Tenant audit must disclose that SQL Editor does not prove API isolation');
+assert.ok(fs.existsSync('docs/TENANT_ISOLATION_AUDIT.md'), 'Tenant isolation audit guide missing');
+
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
