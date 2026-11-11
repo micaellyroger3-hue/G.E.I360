@@ -1,94 +1,80 @@
 # G.E.I360 — auditoria consolidada de finalização
 
-Atualizado em 2026-11-11. Documento de trabalho para concluir a versão integrada sem abrir tarefas pequenas e desconectadas.
+Atualizado em 2026-11-11 após inspeção e correções no Supabase.
 
-## Estado técnico confirmado
+## Estado confirmado
 
-- Repositório: `micaellyroger3-hue/G.E.I360`; branch principal: `main`.
-- A versão integrada está na PR #5, branch `integration/categorias-perfil-empresarial-20261110`.
-- A PR #5 continua aberta/em rascunho; não foi publicada na branch principal.
-- A validação estática anterior passou. A validação dos commits desta revisão está aguardando execução no GitHub Actions.
-- As migrations mais recentes de categorias, perfil empresarial, código de barras e integridade de funcionários estão no GitHub, mas ainda não foram aplicadas no Supabase.
-- Nenhuma alteração foi feita diretamente no banco nesta revisão.
+- Repositório: `micaellyroger3-hue/G.E.I360`.
+- Integração de código: PR #5, branch `integration/categorias-perfil-empresarial-20261110`.
+- A PR continua separada da `main`; não declarar deploy concluído.
+- Projeto Supabase `mxikqdarqgatqoecfprg`: `ACTIVE_HEALTHY`, PostgreSQL 17.
+- O banco já possuía tabelas e dados antes desta revisão, mas o histórico de migrations estava vazio. Não foi seguro executar o antigo instalador de dez migrations como um único bloco.
 
-## Funcionalidades já presentes no código integrado
+## Correções aplicadas diretamente no Supabase
 
-| Área | O que existe |
+Migrations registradas no projeto:
+1. `company_business_profiles`
+2. `integrity_hardening`
+3. `product_categories`
+4. `product_barcode_integrity`
+5. `employee_integrity`
+6. `foreign_key_indexes_rls_tuning`
+7. `deduplicate_category_policies`
+8. `api_privilege_hardening`
+
+Além delas, o hardening inicial de ACL foi aplicado e depois formalizado pela migration `api_privilege_hardening`.
+
+### Verificações pós-correção
+
+| Verificação | Resultado |
 |---|---|
-| Acesso | Cadastro, login, renovação de sessão, recuperação de senha e logout |
-| Empresas | Cadastro, seleção de empresa e leitura do vínculo/cargo |
-| Funcionários | Cadastro, edição, exclusão e controle de ações por cargo |
-| Perfil empresarial | Ramo de atividade, canais comerciais e recomendações de módulos |
-| Clientes e fornecedores | Cadastro, pesquisa, edição e exclusão |
-| Categorias | Cadastro por empresa e vínculo de produtos com integridade referencial |
-| Produtos | Catálogo, SKU, código de barras, preço, custo, estoque mínimo e situação |
-| Código de barras | Digitação, leitor USB/Bluetooth e câmera em navegadores compatíveis |
-| Estoque | Entrada, saída e ajuste por operação transacional |
-| Vendas | Carrinho com vários produtos, baixa de estoque e lançamento financeiro automático |
-| Compras | Recebimento com vários produtos, entrada no estoque e lançamento financeiro automático |
-| Financeiro | Contas a pagar/receber, situação, vencimentos e proteção de lançamentos vinculados |
-| Documentos | Upload privado de PDF/imagens e abertura por URL assinada temporária |
-| Relatórios | Indicadores operacionais/financeiros e exportação CSV |
-| PWA | Instalação no Android/desktop e shell estático offline |
+| Tabelas públicas auditadas com RLS habilitado | 20 de 20 |
+| Grants de tabela a `anon` nas tabelas auditadas | 0 |
+| Privilégios estruturais de `authenticated` (`TRUNCATE`, `REFERENCES`, `TRIGGER`, `MAINTAIN`) | 0 |
+| FKs públicas sem índice de cobertura | 0 |
+| Bucket `company-documents` | Privado |
+| Duplicidade de código de barras entre produtos atuais | 0 grupos |
+| Helpers do proprietário (`is_company_member` / `has_company_role`) | PASS |
 
-## Correções e entregas aplicadas nesta revisão
+### Testes transacionais executados
 
-O formulário de criação de empresa fazia um INSERT manual em `company_members`, embora o banco já possua o gatilho `handle_new_company_owner` que cria o vínculo do proprietário. Isso podia gerar uma tentativa duplicada e erro de chave única.
+Foram criados registros temporários dentro de uma transação e tudo foi revertido por `ROLLBACK`:
 
-- Removida do frontend a inserção duplicada.
-- O gatilho existente permanece responsável por criar o proprietário.
-- Adicionado teste de regressão ao validador estático.
-- Cache do service worker atualizado de `gei360-shell-v11` para `gei360-shell-v12`, para que dispositivos instalados recebam a versão nova.
+- Recebimento de compra com um item: criou pedido/item, entrada de estoque e despesa financeira automática; saldo de estoque conferido em 10 — PASS.
+- Venda com um item: criou venda/item, saída de estoque e receita financeira automática; saldo conferido em 8 — PASS.
+- Três tentativas sob o papel `authenticated`: escrita direta em `stock_quantity`, atualização direta do saldo e gravação direta de `source_type/source_id` no financeiro foram negadas — PASS.
+- Os registros temporários não permaneceram no banco.
 
-## Segurança: pacote consolidado preparado
+## Alertas restantes do Supabase Advisor
 
-- Criada a migration `supabase/migrations/202611120001_api_privilege_hardening.sql`.
-- Criado `supabase/INSTALL_GEI360_ALL.sql`, instalador único com as dez migrations na ordem oficial, executadas em uma única transação; se uma etapa falhar, o bloco inteiro é revertido.
-- Ela revoga privilégios de tabela de `anon` e `PUBLIC` nas tabelas empresariais existentes, remove `TRUNCATE`, `REFERENCES`, `TRIGGER` e `MAINTAIN` de `authenticated`, preserva os privilégios operacionais de linha já concedidos e limita a execução das RPCs e funções de trigger.
-- Criado `supabase/diagnostics/FINALIZATION_PRECHECK.sql`, um único diagnóstico somente leitura que reúne estrutura/RLS, policies, grants, funções, triggers, constraints, índices, bucket e contagens.
-- O diagnóstico e a migration estão versionados, mas ainda não foram executados no Supabase. O resultado das duas consultas de pós-verificação da migration deve ser zero linhas.
-- A migration não apaga dados nem substitui a revisão das políticas RLS. O teste multiempresa real ainda precisa de duas contas autenticadas.
+- `public.empresas`: RLS habilitado sem policies. É uma tabela legada; não foi apagada nem recebeu policy permissiva. Deve continuar inacessível até uma decisão consciente sobre migração/remoção.
+- Nove funções `SECURITY DEFINER` continuam executáveis por `authenticated`: RPCs transacionais e helpers do aplicativo. O alerta do Advisor é esperado para esse desenho, mas essas funções exigem revisão periódica. As funções de trigger foram bloqueadas para chamadas diretas por API.
+- Proteção contra senhas vazadas está desativada; ativar em Authentication nas configurações do Supabase.
+- Índices recém-criados aparecem como não utilizados porque há pouco tráfego; não remover sem observar carga real.
+- O Advisor não substitui teste com duas contas reais.
 
-## O que ainda não deve ser anunciado como integração concluída
+## O que ainda não está comprovado
 
-- **NF-e/NFC-e:** o módulo organiza documentos e anexos; não emite nem transmite documentos à SEFAZ.
-- **iFood:** o perfil permite selecionar o canal, mas não importa pedidos nem sincroniza catálogo.
-- **IA generativa:** o painel usa regras e cálculos transparentes; não existe assistente generativo conectado.
-- **Convites de funcionários:** cadastrar uma ficha de funcionário não cria uma conta de acesso/login.
-- **Operação offline:** apenas a tela estática de abertura fica disponível sem internet; os dados e módulos exigem conexão.
+- Isolamento ponta a ponta entre duas empresas e dois usuários diferentes.
+- Matriz completa de permissões para owner/admin/manager/employee/viewer usando sessões reais.
+- Fluxo de upload/download de documentos usando duas empresas e contas diferentes.
+- Homologação completa do frontend publicado.
+- Execução bem-sucedida do GitHub Actions na cabeça atual da PR #5, merge para `main` e deploy.
 
-## Pendências para liberar a versão integrada
+## Importante: migrations e instalador
 
-### 1. Consolidar e validar o banco, sem apagar dados
+O banco tinha schema e dados antes da revisão, mas nenhum histórico de migrations. Foram aplicadas oito migrations direcionadas, registradas pelo Supabase com versões geradas pelo serviço. Isso **não equivale** a ter reconciliado toda a sequência histórica do repositório.
 
-- Conferir as definições reais de `is_company_member` e `has_company_role`.
-- Revisar todas as políticas permissivas e restritivas de RLS, especialmente `companies`, `company_members`, `profiles`, tabelas comerciais e financeiras.
-- Corrigir privilégios de `anon`: remover escrita e, principalmente, `TRUNCATE` das tabelas empresariais.
-- Aplicar privilégio mínimo a `authenticated`, preservando as operações que passam pelas RPCs transacionais.
-- Conferir funções `SECURITY DEFINER`, `search_path`, permissões de execução, sequências, triggers e bucket privado.
-- Avaliar `empresas` como legado; não apagar nem migrar sem rastrear referências e dados.
-- Preparar uma migração consolidada, idempotente e com preflight/validações. Não aplicar automaticamente sem conferir o resultado no projeto correto.
+O arquivo `supabase/INSTALL_GEI360_ALL.sql` foi desativado para impedir que alguém execute migrations-base incompatíveis com o schema já existente. Não usar o antigo instalador nem `supabase db push` até reconciliar os arquivos locais e o histórico remoto.
 
-### 2. Testes funcionais integrados
+## Funcionalidades e limites do produto
 
-- Duas contas autenticadas e duas empresas: impedir leitura e escrita cruzadas.
-- Testar owner, admin, manager, employee e viewer conforme a matriz de permissões definida.
-- Criar produto, categoria e código de barras; confirmar bloqueio de duplicidade na mesma empresa.
-- Registrar entrada, saída e ajuste; conferir saldo e histórico.
-- Fazer venda com vários produtos; conferir cabeçalho, itens, baixa de estoque e lançamento financeiro.
-- Receber compra com vários produtos; conferir pedido, itens, entrada de estoque e despesa financeira.
-- Marcar lançamento financeiro como pago e confirmar proteção dos dados de origem.
-- Enviar, abrir e excluir documento; confirmar que o bucket continua privado e que outra empresa não acessa o arquivo.
-- Testar paginação, filtros, exportação CSV, recuperação de senha e troca de empresa.
+- NF-e/NFC-e: documentos e anexos; sem emissão/transmissão SEFAZ.
+- iFood: seleção de canal; sem sincronização real.
+- IA generativa: não conectada.
+- Ficha de funcionário não cria usuário de login.
+- Offline: apenas shell estático.
 
-### 3. Homologação e publicação
+## Critério de liberação
 
-- Aguardar GitHub Actions verde na revisão atual.
-- Revisar a PR integrada e só então incorporá-la à `main`.
-- Confirmar publicação do GitHub Pages e atualização do PWA em Android e desktop.
-- Fazer backup e testar restauração antes de liberar clientes.
-- Só habilitar recursos fiscais/iFood depois das credenciais, contratos, configuração e homologações externas necessárias.
-
-## Critério de conclusão
-
-O G.E.I360 só deve ser considerado pronto para clientes quando os testes autenticados provarem o isolamento multiempresa, os fluxos de venda/compra/estoque/financeiro fecharem corretamente, os anexos estiverem privados, o backup puder ser restaurado e a versão publicada corresponder ao código validado.
+Liberar para clientes somente após: isolamento multiempresa comprovado com duas contas; testes de permissões e documentos; proteção de senha vazada ativada; validação verde do GitHub Actions; revisão/merge da PR #5; deploy e smoke test da versão publicada; backup e teste de restauração.
