@@ -68,6 +68,9 @@ assert.ok(fs.existsSync('docs/AI_ASSISTANT_ARCHITECTURE.md'), 'AI assistant secu
 assert.ok(fs.existsSync('docs/FISCAL_INTEGRATION_PLAN.md'), 'Fiscal integration plan missing');
 assert.ok(fs.existsSync('docs/CLIENT_READINESS.md'), 'Client readiness checklist missing');
 assert.ok(fs.existsSync('supabase/diagnostics/health_check.sql'), 'Supabase diagnostics missing');
+assert.ok(fs.existsSync('supabase/diagnostics/FINALIZATION_PRECHECK.sql'), 'Consolidated finalization precheck missing');
+const finalPrecheck = fs.readFileSync('supabase/diagnostics/FINALIZATION_PRECHECK.sql', 'utf8');
+assert.ok(finalPrecheck.includes('from pg_policies') && finalPrecheck.includes('information_schema.table_privileges') && finalPrecheck.includes('pg_get_functiondef'), 'Finalization precheck must inspect RLS, grants and function definitions');
 assert.ok(fs.existsSync('supabase/migrations/202611120001_api_privilege_hardening.sql'), 'Consolidated API privilege hardening migration missing');
 const privilegeHardening = fs.readFileSync('supabase/migrations/202611120001_api_privilege_hardening.sql', 'utf8');
 assert.ok(privilegeHardening.includes('from anon, public'), 'Anonymous and PUBLIC table grants must be revoked');
