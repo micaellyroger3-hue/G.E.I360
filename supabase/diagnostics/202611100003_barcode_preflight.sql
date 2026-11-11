@@ -38,10 +38,17 @@ begin
     return;
   end if;
 
-  execute 'select count(*) from public.products where barcode is not null and btrim(barcode)<>'''' '
+  execute $query$select count(*) from public.products where barcode is not null and btrim(barcode) <> ''$query$
     into v_count;
-  execute 'select count(*) from (select company_id,btrim(barcode) from public.products where barcode is not null and btrim(barcode)<>'''' group by company_id,btrim(barcode) having count(*)>1) d'
-    into v_duplicates;
+  execute $query$
+    select count(*) from (
+      select company_id,btrim(barcode)
+      from public.products
+      where barcode is not null and btrim(barcode) <> ''
+      group by company_id,btrim(barcode)
+      having count(*)>1
+    ) d
+  $query$ into v_duplicates;
   raise notice 'Produtos com código: %; grupos duplicados na mesma empresa: %',
     v_count,v_duplicates;
 end
