@@ -49,7 +49,8 @@ for (const file of [
   '202611070001_employees.sql','202611080001_erp_modules.sql',
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
   '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
-  '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql'
+  '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql',
+  '202611110001_employee_integrity.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const coreSql = fs.readFileSync('supabase/migrations/202611080001_erp_modules.sql', 'utf8');
@@ -164,5 +165,18 @@ assert.ok(tenantAudit.includes('information_schema.column_privileges'), 'Tenant 
 assert.ok(tenantAudit.includes('pg_constraint') && tenantAudit.includes('pg_indexes'), 'Tenant audit must inspect membership constraints and indexes');
 assert.ok(tenantAudit.includes('SQL Editor usa privilégios administrativos'), 'Tenant audit must disclose that SQL Editor does not prove API isolation');
 assert.ok(fs.existsSync('docs/TENANT_ISOLATION_AUDIT.md'), 'Tenant isolation audit guide missing');
+
+
+
+// Os diagnósticos devem continuar executáveis antes da criação das tabelas opcionais.
+const businessProfileCheck = fs.readFileSync('supabase/diagnostics/202611100002_business_profiles_check.sql', 'utf8');
+assert.ok(businessProfileCheck.includes("to_regclass('public.company_business_profiles')"), 'Business profile preflight must detect a missing table');
+assert.ok(businessProfileCheck.includes('if to_regclass') && businessProfileCheck.includes('return;'), 'Business profile preflight must safely skip absent tables');
+const employeePreflight = fs.readFileSync('supabase/diagnostics/202611110001_employee_integrity_preflight.sql', 'utf8');
+assert.ok(employeePreflight.includes("to_regclass('public.employees')") && employeePreflight.includes('return;'), 'Employee preflight must safely handle a missing table');
+const barcodePreflight = fs.readFileSync('supabase/diagnostics/202611100003_barcode_preflight.sql', 'utf8');
+assert.ok(barcodePreflight.includes("to_regclass('public.products')") && barcodePreflight.includes('return;'), 'Barcode preflight must safely handle a missing table');
+assert.ok(tenantAudit.includes('aclexplode') && tenantAudit.includes('a.grantee=0'), 'Tenant audit must inspect PUBLIC function grants through ACL, not a pseudo-role');
+assert.ok(!tenantAudit.includes("has_function_privilege('public'"), 'Tenant audit must not treat PUBLIC as a normal database role');
 
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
