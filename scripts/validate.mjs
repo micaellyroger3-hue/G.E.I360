@@ -68,6 +68,12 @@ assert.ok(fs.existsSync('docs/AI_ASSISTANT_ARCHITECTURE.md'), 'AI assistant secu
 assert.ok(fs.existsSync('docs/FISCAL_INTEGRATION_PLAN.md'), 'Fiscal integration plan missing');
 assert.ok(fs.existsSync('docs/CLIENT_READINESS.md'), 'Client readiness checklist missing');
 assert.ok(fs.existsSync('supabase/diagnostics/health_check.sql'), 'Supabase diagnostics missing');
+assert.ok(fs.existsSync('supabase/migrations/202611120001_api_privilege_hardening.sql'), 'Consolidated API privilege hardening migration missing');
+const privilegeHardening = fs.readFileSync('supabase/migrations/202611120001_api_privilege_hardening.sql', 'utf8');
+assert.ok(privilegeHardening.includes('from anon, public'), 'Anonymous and PUBLIC table grants must be revoked');
+assert.ok(privilegeHardening.includes('truncate, references, trigger, maintain'), 'Authenticated structural privileges must be revoked');
+assert.ok(privilegeHardening.includes('grant execute on function public.create_sale_cart') && privilegeHardening.includes('grant execute on function public.receive_purchase_cart'), 'Authenticated transactional RPC grants must be preserved');
+assert.ok(privilegeHardening.includes('from public, anon, authenticated'), 'Trigger-only functions must not be directly executable by API roles');
 assert.ok(modules.includes('não um modelo de IA generativa'), 'Dashboard must disclose deterministic insights, not generative AI');
 
 const profileJs = fs.readFileSync('business-profiles.js', 'utf8');
