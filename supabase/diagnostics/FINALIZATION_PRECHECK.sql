@@ -91,15 +91,17 @@ where trigger_schema='public'
 order by event_object_table,trigger_name;
 
 -- 7) Restrições e índices que sustentam isolamento e integridade.
-select conrelid::regclass as table_name,conname,contype,pg_get_constraintdef(oid) as definition
-from pg_constraint
-where connamespace='public'::regnamespace
-  and conrelid::regclass::text in (
-    'public.company_members','public.products','public.product_categories',
-    'public.sales','public.sale_items','public.purchase_orders',
-    'public.purchase_order_items','public.financial_entries','public.employees'
+select c.relname as table_name,con.conname,con.contype,
+       pg_get_constraintdef(con.oid) as definition
+from pg_constraint con
+join pg_class c on c.oid=con.conrelid
+join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public'
+  and c.relname in (
+    'company_members','products','product_categories','sales','sale_items',
+    'purchase_orders','purchase_order_items','financial_entries','employees'
   )
-order by table_name,conname;
+order by c.relname,con.conname;
 
 select schemaname,tablename,indexname,indexdef
 from pg_indexes
