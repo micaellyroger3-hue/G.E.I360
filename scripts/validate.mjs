@@ -72,6 +72,12 @@ assert.ok(fs.existsSync('supabase/diagnostics/FINALIZATION_PRECHECK.sql'), 'Cons
 const finalPrecheck = fs.readFileSync('supabase/diagnostics/FINALIZATION_PRECHECK.sql', 'utf8');
 assert.ok(finalPrecheck.includes('from pg_policies') && finalPrecheck.includes('information_schema.table_privileges') && finalPrecheck.includes('pg_get_functiondef'), 'Finalization precheck must inspect RLS, grants and function definitions');
 assert.ok(fs.existsSync('supabase/migrations/202611120001_api_privilege_hardening.sql'), 'Consolidated API privilege hardening migration missing');
+assert.ok(fs.existsSync('supabase/INSTALL_GEI360_ALL.sql'), 'Single-transaction Supabase installer missing');
+const installer = fs.readFileSync('supabase/INSTALL_GEI360_ALL.sql', 'utf8');
+assert.ok(installer.includes('INSTALADOR SQL CONSOLIDADO') && installer.includes('202611120001_api_privilege_hardening.sql'), 'Installer must include the final security migration');
+assert.equal((installer.match(/^begin;$/gim)||[]).length, 1, 'Installer must use one outer transaction');
+assert.equal((installer.match(/^commit;$/gim)||[]).length, 1, 'Installer must use one outer transaction');
+
 const privilegeHardening = fs.readFileSync('supabase/migrations/202611120001_api_privilege_hardening.sql', 'utf8');
 assert.ok(privilegeHardening.includes('from anon, public'), 'Anonymous and PUBLIC table grants must be revoked');
 assert.ok(privilegeHardening.includes('truncate, references, trigger, maintain'), 'Authenticated structural privileges must be revoked');
