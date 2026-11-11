@@ -143,4 +143,14 @@ assert.ok(financeProtection.includes('before update or delete on public.financia
 assert.ok(modules.includes("data-status-toggle") && modules.includes("paid_at:nextStatus==='pending'?null:new Date().toISOString()"), 'Finance status action must update payment timestamp');
 assert.ok(modules.includes("await api('/rest/v1/rpc/create_sale_cart'") && modules.includes("await api('/rest/v1/rpc/receive_purchase_cart'"), 'UI must use transactional cart RPCs');
 
+
+const employeeSecurity = fs.readFileSync('supabase/migrations/202611110001_employee_integrity.sql', 'utf8');
+assert.ok(employeeSecurity.includes('gei360_guard_employee_integrity'), 'Employee immutable ownership trigger missing');
+assert.ok(employeeSecurity.includes('new.company_id is distinct from old.company_id'), 'Employee company transfer must be blocked');
+assert.ok(employeeSecurity.includes('new.created_by is distinct from old.created_by'), 'Employee creator changes must be blocked');
+assert.ok(employeeSecurity.includes('as restrictive for all'), 'Employee membership restrictive RLS guard missing');
+assert.ok(employeeSecurity.includes('gei360_employees_insert_guard') && employeeSecurity.includes('gei360_employees_update_guard') && employeeSecurity.includes('gei360_employees_delete_guard'), 'Employee role-specific restrictive RLS guards missing');
+assert.ok(fs.existsSync('supabase/diagnostics/202611110001_employee_integrity_preflight.sql'), 'Employee security preflight diagnostic missing');
+assert.ok(fs.existsSync('docs/EMPLOYEE_SECURITY.md'), 'Employee security installation guide missing');
+
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
