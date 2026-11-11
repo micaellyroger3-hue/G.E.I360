@@ -31,7 +31,7 @@ Atualizado em 2026-11-11. Documento de trabalho para concluir a versão integrad
 | Relatórios | Indicadores operacionais/financeiros e exportação CSV |
 | PWA | Instalação no Android/desktop e shell estático offline |
 
-## Correção aplicada nesta revisão
+## Correções e entregas aplicadas nesta revisão
 
 O formulário de criação de empresa fazia um INSERT manual em `company_members`, embora o banco já possua o gatilho `handle_new_company_owner` que cria o vínculo do proprietário. Isso podia gerar uma tentativa duplicada e erro de chave única.
 
@@ -39,6 +39,14 @@ O formulário de criação de empresa fazia um INSERT manual em `company_members
 - O gatilho existente permanece responsável por criar o proprietário.
 - Adicionado teste de regressão ao validador estático.
 - Cache do service worker atualizado de `gei360-shell-v11` para `gei360-shell-v12`, para que dispositivos instalados recebam a versão nova.
+
+## Segurança: pacote consolidado preparado
+
+- Criada a migration `supabase/migrations/202611120001_api_privilege_hardening.sql`.
+- Ela revoga privilégios de tabela de `anon` e `PUBLIC` nas tabelas empresariais existentes, remove `TRUNCATE`, `REFERENCES`, `TRIGGER` e `MAINTAIN` de `authenticated`, preserva os privilégios operacionais de linha já concedidos e limita a execução das RPCs e funções de trigger.
+- Criado `supabase/diagnostics/FINALIZATION_PRECHECK.sql`, um único diagnóstico somente leitura que reúne estrutura/RLS, policies, grants, funções, triggers, constraints, índices, bucket e contagens.
+- O diagnóstico e a migration estão versionados, mas ainda não foram executados no Supabase. O resultado das duas consultas de pós-verificação da migration deve ser zero linhas.
+- A migration não apaga dados nem substitui a revisão das políticas RLS. O teste multiempresa real ainda precisa de duas contas autenticadas.
 
 ## O que ainda não deve ser anunciado como integração concluída
 
