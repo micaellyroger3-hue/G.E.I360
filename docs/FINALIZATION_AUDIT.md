@@ -43,6 +43,7 @@ O formulário de criação de empresa fazia um INSERT manual em `company_members
 ## Segurança: pacote consolidado preparado
 
 - Criada a migration `supabase/migrations/202611120001_api_privilege_hardening.sql`.
+- Criado `supabase/INSTALL_GEI360_ALL.sql`, instalador único com as dez migrations na ordem oficial, executadas em uma única transação; se uma etapa falhar, o bloco inteiro é revertido.
 - Ela revoga privilégios de tabela de `anon` e `PUBLIC` nas tabelas empresariais existentes, remove `TRUNCATE`, `REFERENCES`, `TRIGGER` e `MAINTAIN` de `authenticated`, preserva os privilégios operacionais de linha já concedidos e limita a execução das RPCs e funções de trigger.
 - Criado `supabase/diagnostics/FINALIZATION_PRECHECK.sql`, um único diagnóstico somente leitura que reúne estrutura/RLS, policies, grants, funções, triggers, constraints, índices, bucket e contagens.
 - O diagnóstico e a migration estão versionados, mas ainda não foram executados no Supabase. O resultado das duas consultas de pós-verificação da migration deve ser zero linhas.
