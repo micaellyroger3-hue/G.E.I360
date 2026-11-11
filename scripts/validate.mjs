@@ -128,7 +128,7 @@ for (const [name, sql] of [['sale', saleCartSql], ['purchase', purchaseCartSql]]
   assert.ok(sql.includes('v_product_id = any(v_seen)'), name + ' cart must reject duplicate products');
   assert.ok(sql.includes('for update'), name + ' cart must lock products during validation');
   assert.ok(sql.includes('has_company_role(p_company_id'), name + ' cart must verify company role');
-  assert.ok(/where id\\s*=\\s*v_product_id and company_id\\s*=\\s*p_company_id/i.test(sql), name + ' cart must scope products to the active company');
+  assert.ok(/where id\s*=\s*v_product_id and company_id\s*=\s*p_company_id/i.test(sql), name + ' cart must scope products to the active company');
 }
 assert.ok(saleCartSql.includes('v_product.stock_quantity < v_quantity'), 'Sale cart must prevent selling above available stock');
 assert.ok(saleCartSql.includes('v_total < 0'), 'Sale cart must reject discounts above subtotal');
