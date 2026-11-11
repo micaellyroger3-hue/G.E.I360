@@ -31,6 +31,15 @@ O G.E.I360 pode ser instalado pelo navegador compatível no Android/desktop (men
 
 O front-end utiliza a URL do projeto e a chave publicável (publishable/anon) no navegador. Nunca coloque uma chave `service_role` ou chave secreta no front-end.
 
+## Consolidação final de segurança e instalação
+Antes de liberar a versão integrada, execute uma única vez o diagnóstico somente leitura `supabase/diagnostics/FINALIZATION_PRECHECK.sql` e guarde o resultado. Ele reúne estrutura/RLS, políticas, privilégios, funções, triggers, constraints, índices, bucket privado e volumes de dados.
+
+Depois de revisar o resultado e confirmar que o projeto é o correto, aplique a migration `supabase/migrations/202611120001_api_privilege_hardening.sql`. Ela remove privilégios de tabela de `anon` e `PUBLIC`, retira privilégios estruturais desnecessários de `authenticated` e preserva as permissões de leitura/operação já usadas pelo aplicativo e pelas RPCs autenticadas. Ela não remove dados nem políticas RLS.
+
+A migration não substitui a revisão das políticas RLS nem o teste de isolamento com duas contas e duas empresas. Confira as duas consultas de pós-verificação no final do próprio arquivo; ambas devem retornar zero linhas.
+
+**Ordem de migrations:** funcionários → módulos ERP → vínculos financeiros → proteção financeira → integridade operacional → categorias → perfil empresarial → código de barras → integridade de funcionários → hardening de privilégios. Antes de aplicar migrations opcionais, rode os preflights correspondentes e corrija incompatibilidades/dados duplicados indicados.
+
 ## Publicação
 O workflow de publicação está em `.github/workflows/static.yml` e publica a branch `main` no GitHub Pages. Confira **Actions** e aguarde a execução terminar com sucesso.
 
