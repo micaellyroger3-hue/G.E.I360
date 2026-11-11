@@ -108,4 +108,39 @@ assert.ok(categorySql.includes('gei360_validate_product_category_company'), 'Cro
 assert.ok(fs.existsSync('supabase/diagnostics/202611100001_categories_preflight.sql'), 'Category preflight diagnostic missing');
 assert.ok(fs.existsSync('docs/CATEGORIES_SETUP.md'), 'Category installation guide missing');
 
+
+// Auditoria estática dos fluxos transacionais críticos (estoque, vendas, compras e financeiro).
+const stockRpc = coreSql.slice(
+  coreSql.indexOf('create or replace function public.record_stock_movement'),
+  coreSql.indexOf('-- Venda atômica')
+);
+assert.ok(stockRpc.includes("p_movement_type not in ('in','out','adjustment')"), 'Stock RPC must validate movement type');
+assert.ok(stockRpc.includes('p_quantity < 0') && stockRpc.includes("p_movement_type <> 'adjustment' and p_quantity = 0"), 'Stock RPC must validate movement quantity');
+assert.ok(stockRpc.includes('for update') && stockRpc.includes('stock_quantity < p_quantity'), 'Stock RPC must lock product and prevent negative stock');
+assert.ok(stockRpc.includes('has_company_role(p_company_id'), 'Stock RPC must verify company role');
+
+const saleCartStart = coreSql.indexOf('create or replace function public.create_sale_cart');
+const purchaseCartStart = coreSql.indexOf('create or replace function public.receive_purchase_cart');
+const saleCartSql = coreSql.slice(saleCartStart, purchaseCartStart);
+const purchaseCartSql = coreSql.slice(purchaseCartStart);
+for (const [name, sql] of [['sale', saleCartSql], ['purchase', purchaseCartSql]]) {
+  assert.ok(sql.includes("jsonb_typeof(p_items) is distinct from 'array'") && sql.includes('jsonb_array_length(p_items) = 0') || sql.includes('jsonb_array_length(p_items)=0'), name + ' cart must reject empty or invalid arrays');
+  assert.ok(sql.includes('v_product_id = any(v_seen)'), name + ' cart must reject duplicate products');
+  assert.ok(sql.includes('for update'), name + ' cart must lock products during validation');
+  assert.ok(sql.includes('has_company_role(p_company_id'), name + ' cart must verify company role');
+  assert.ok(sql.includes('company_id = p_company_id'), name + ' cart must scope products to the active company');
+}
+assert.ok(saleCartSql.includes('v_product.stock_quantity < v_quantity'), 'Sale cart must prevent selling above available stock');
+assert.ok(saleCartSql.includes('v_total < 0'), 'Sale cart must reject discounts above subtotal');
+assert.ok(saleCartSql.includes('insert into public.sale_items') && saleCartSql.includes("movement_type, quantity, note, created_by)"), 'Sale cart must persist items and stock movements atomically');
+assert.ok(purchaseCartSql.includes('v_unit_cost<0') && purchaseCartSql.includes('v_quantity<=0'), 'Purchase cart must reject invalid quantity and cost');
+assert.ok(purchaseCartSql.includes('insert into public.purchase_order_items') && purchaseCartSql.includes("movement_type,quantity,unit_cost,note,created_by"), 'Purchase cart must persist received items and stock movements atomically');
+
+const financeProtection = fs.readFileSync('supabase/migrations/202611080003_protect_linked_finance.sql', 'utf8');
+assert.ok(financeProtection.includes("new.status not in ('pending', 'paid')"), 'Linked financial entries must only allow pending or paid states');
+assert.ok(financeProtection.includes('new.amount is distinct from old.amount') && financeProtection.includes('new.source_id is distinct from old.source_id'), 'Linked financial source data must remain immutable');
+assert.ok(financeProtection.includes('before update or delete on public.financial_entries'), 'Linked financial protection trigger missing');
+assert.ok(modules.includes("data-status-toggle") && modules.includes("paid_at:nextStatus==='pending'?null:new Date().toISOString()"), 'Finance status action must update payment timestamp');
+assert.ok(modules.includes("await api('/rest/v1/rpc/create_sale_cart'") && modules.includes("await api('/rest/v1/rpc/receive_purchase_cart'"), 'UI must use transactional cart RPCs');
+
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
