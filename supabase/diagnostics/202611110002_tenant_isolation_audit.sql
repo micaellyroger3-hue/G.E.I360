@@ -68,10 +68,15 @@ select to_regclass('public.empresas') as legacy_table,
         where schemaname='public' and tablename='empresas') as policy_count;
 
 -- 7) Funções helper: quem pode executá-las.
+-- PUBLIC não é um role comum: sua permissão é lida diretamente da ACL (grantee = 0).
 select p.proname,
        has_function_privilege('anon',p.oid,'EXECUTE') as anon_can_execute,
        has_function_privilege('authenticated',p.oid,'EXECUTE') as authenticated_can_execute,
-       has_function_privilege('public',p.oid,'EXECUTE') as public_can_execute
+       coalesce((
+         select bool_or(a.privilege_type='EXECUTE')
+         from aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
+         where a.grantee=0
+       ),false) as public_can_execute
 from pg_proc p
 join pg_namespace n on n.oid=p.pronamespace
 where n.nspname='public' and p.proname in ('is_company_member','has_company_role')
