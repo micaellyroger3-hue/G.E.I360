@@ -9,6 +9,7 @@ begin;
 do $table_privileges$
 declare
   t text;
+  column_list text;
   tables_to_secure text[] := array[
     'companies','company_members','company_modules','profiles','empresas',
     'employees','customers','suppliers','products','product_categories',
@@ -20,6 +21,18 @@ begin
   foreach t in array tables_to_secure loop
     if to_regclass('public.'||t) is not null then
       execute format('revoke all privileges on table public.%I from anon, public',t);
+      -- Também remove eventuais concessões por coluna (SELECT/INSERT/UPDATE/REFERENCES),
+      -- que não devem sobreviver ao bloqueio de privilégios no nível da tabela.
+      select string_agg(quote_ident(column_name), ', ' order by ordinal_position)
+        into column_list
+      from information_schema.columns
+      where table_schema='public' and table_name=t;
+      if column_list is not null then
+        execute format(
+          'revoke select (%1$s), insert (%1$s), update (%1$s), references (%1$s) on table public.%2$I from anon, public',
+          column_list,t
+        );
+      end if;
       -- Usuários autenticados não precisam de poderes para esvaziar tabelas,
       -- criar triggers, criar referências ou executar manutenção estrutural.
       execute format(
