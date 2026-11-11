@@ -35,13 +35,14 @@ assert.ok(worker.includes('if (url.origin !== self.location.origin) return'), 'S
 assert.ok(html.includes('refreshSessionToken') && html.includes('refreshPromise'), 'Automatic session refresh missing');
 assert.ok(html.includes('/auth/v1/recover') && html.includes('handleRecoveryLink'), 'Password recovery flow missing');
 assert.ok(html.includes('window.startNewCompany') && html.includes('id=\"addCompany\"'), 'Multi-company creation and selection missing');
+assert.ok(html.includes('handle_new_company_owner') && !html.includes("api('/rest/v1/company_members',{method:'POST'"), 'Company creation must rely on the database owner trigger without duplicate membership insertion');
 assert.ok(modules.includes('payload={},oldRow'), 'Updates must not resend company_id or created_by');
 assert.ok(html.includes('id="offlineMode"') && html.includes('MODO OFFLINE'), 'Offline launch screen missing');
 assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), 'Offline event handling missing');
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v11"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v12"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
