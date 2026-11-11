@@ -36,6 +36,7 @@ Também foi feita a verificação de privilégios. Resultado confirmado: nenhuma
 
 ### Testes executados no banco
 - Helpers de associação e cargo reconheceram o proprietário ativo.
+- Teste RLS simulado com associação inativa: a empresa ficou invisível e a escrita cruzada foi negada; ainda falta homologação com duas contas reais.
 - Usuário autenticado não conseguiu inserir/alterar diretamente o saldo de estoque.
 - Usuário autenticado não conseguiu gravar diretamente os campos de origem do financeiro.
 - Fluxo de recebimento: compra, item, entrada no estoque e despesa financeira automática — aprovado.
