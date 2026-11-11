@@ -29,7 +29,7 @@ begin
       where table_schema='public' and table_name=t;
       if column_list is not null then
         execute format(
-          'revoke select (%1$s), insert (%1$s), update (%1$s), references (%1$s) on table public.%2$I from anon, public',
+          'revoke all (%1$s) on table public.%2$I from anon, public',
           column_list,t
         );
       end if;
