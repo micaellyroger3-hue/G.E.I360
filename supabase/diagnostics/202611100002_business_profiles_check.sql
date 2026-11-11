@@ -1,5 +1,5 @@
 -- G.E.I360 | Perfil empresarial e canais
--- Diagnóstico somente leitura. Não cria nem altera dados.
+-- Diagnóstico somente leitura. Funciona antes e depois da migration.
 
 select to_regclass('public.company_business_profiles') is not null as tabela_existe;
 
@@ -17,14 +17,33 @@ from pg_policies
 where schemaname='public' and tablename='company_business_profiles'
 order by policyname;
 
-select
-  has_table_privilege('anon','public.company_business_profiles','SELECT') as anon_select,
-  has_table_privilege('anon','public.company_business_profiles','INSERT') as anon_insert,
-  has_table_privilege('authenticated','public.company_business_profiles','SELECT') as authenticated_select,
-  has_table_privilege('authenticated','public.company_business_profiles','INSERT') as authenticated_insert,
-  has_table_privilege('authenticated','public.company_business_profiles','UPDATE') as authenticated_update;
+-- Privilégios e contagem são condicionais para o diagnóstico não falhar
+-- quando a tabela ainda não foi criada pela migration.
+do $diagnostic$
+declare
+  v_anon_select boolean;
+  v_anon_insert boolean;
+  v_auth_select boolean;
+  v_auth_insert boolean;
+  v_auth_update boolean;
+  v_count bigint;
+begin
+  if to_regclass('public.company_business_profiles') is null then
+    raise notice 'company_business_profiles ainda não existe; execute a migration somente após revisar os pré-requisitos.';
+    return;
+  end if;
 
-select business_type,count(*) as empresas
-from public.company_business_profiles
-group by business_type
-order by business_type;
+  select
+    has_table_privilege('anon','public.company_business_profiles','SELECT'),
+    has_table_privilege('anon','public.company_business_profiles','INSERT'),
+    has_table_privilege('authenticated','public.company_business_profiles','SELECT'),
+    has_table_privilege('authenticated','public.company_business_profiles','INSERT'),
+    has_table_privilege('authenticated','public.company_business_profiles','UPDATE')
+  into v_anon_select,v_anon_insert,v_auth_select,v_auth_insert,v_auth_update;
+
+  execute 'select count(*) from public.company_business_profiles' into v_count;
+  raise notice 'Privilégios: anon SELECT=%, anon INSERT=%, authenticated SELECT=%, INSERT=%, UPDATE=%',
+    v_anon_select,v_anon_insert,v_auth_select,v_auth_insert,v_auth_update;
+  raise notice 'Perfis empresariais cadastrados: %',v_count;
+end
+$diagnostic$;
