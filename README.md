@@ -17,10 +17,10 @@ O modo offline mantém apenas a estrutura de abertura. Login e dados empresariai
 - Compras e vendas com carrinho; integração automática com movimentações e lançamentos financeiros.
 - Contas a pagar/receber, documentos e anexos privados.
 - Painel de indicadores, relatórios e exportação CSV.
-- **Operação específica por ramo:** restaurante/lanchonete (produção, desperdício, ficha de preparo); mercado (validade, perdas, reposição); comércio (campanhas e tarefas); serviços (ordens de serviço); distribuidora/e-commerce (expedição); construção (diário de obra).
+- **Operação específica por ramo:** alimentação preparada (restaurantes, lanchonetes, padarias, pizzarias e cafeterias); mercado e alimentos (mercadinhos, supermercados, mercearias, açougues e hortifrutis); comércio (campanhas e tarefas); serviços (ordens de serviço); distribuidora/e-commerce (expedição); construção (diário de obra). Para outros ramos, os módulos gerais continuam disponíveis e o perfil genérico permite registros operacionais manuais.
 
 ## Como funciona a personalização por ramo
-Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A tela **Operação do ramo** apresenta formulários específicos para o perfil selecionado. Os registros ficam em `gei_records`, vinculados à empresa e protegidos por RLS.
+Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A lista contempla segmentos de alimentação e comércio; quando a atividade não estiver listada, pode ser usado **Outro ramo** para os módulos gerais. A tela **Operação do ramo** apresenta formulários específicos para os perfis implementados. Os registros ficam em `gei_records`, vinculados à empresa e protegidos por RLS.
 
 **Limites importantes:** os registros setoriais são lançamentos operacionais manuais. Não dão baixa automática no estoque, não calculam custo real de receita, não sincronizam pedidos com iFood/marketplaces e não substituem módulos completos de produção, logística ou fiscal. A seleção do canal iFood não é integração oficial.
 
