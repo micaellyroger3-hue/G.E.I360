@@ -123,7 +123,14 @@ $('forgotPassword').onclick=async()=>{
 function handleRecoveryLink(){
  const params=new URLSearchParams(location.hash.replace(/^#/,''));
  const accessToken=params.get('access_token');
- if(params.get('type')!=='recovery'||!accessToken)return false;
+ const refreshToken=params.get('refresh_token');
+ const linkType=params.get('type');
+ if(['invite','signup'].includes(linkType)&&accessToken&&refreshToken){
+  saveSession({access_token:accessToken,refresh_token:refreshToken,token_type:params.get('token_type')||'bearer'});
+  history.replaceState(null,'',location.pathname+location.search);
+  return false;
+ }
+ if(linkType!=='recovery'||!accessToken)return false;
  session={access_token:accessToken,refresh_token:params.get('refresh_token'),token_type:params.get('token_type')||'bearer'};
  recovering=true;signup=false;showLogin();
  $('authTitle').textContent='Defina sua nova senha';
@@ -168,4 +175,4 @@ let installPrompt=null;
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;$('offlineInstall').hidden=false});
 $('offlineInstall').onclick=async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('offlineInstall').hidden=true};
 if(!handleRecoveryLink())restoreSession();
-</script><script src="./modules.js?v=20261116-04"></script><script src="./business-profiles.js?v=20261116-02"></script><script>if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('G.E.I360 offline shell:',err)));}</script></body></html>
+</script><script src="./modules.js?v=20261116-05"></script><script src="./business-profiles.js?v=20261116-02"></script><script>if('serviceWorker' in navigator && location.protocol==='https:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('G.E.I360 offline shell:',err)));}</script></body></html>
