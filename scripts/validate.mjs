@@ -58,7 +58,7 @@ for (const file of [
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
   '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
   '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql',
-  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql','20261116085000_gei_records_role_guard.sql','20261116121000_least_privilege_cleanup.sql','20261116122000_business_activity_detail.sql','20261116121000_least_privilege_cleanup.sql'
+  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql','20261116085000_gei_records_role_guard.sql','20261116121000_least_privilege_cleanup.sql','20261116122000_business_activity_detail.sql','20261116123000_business_activity_detail_permissions.sql','20261116121000_least_privilege_cleanup.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const brazilDatesSql = fs.readFileSync('supabase/migrations/20261116083715_brazil_local_business_dates.sql', 'utf8');
@@ -126,6 +126,8 @@ assert.ok(!/access_token|refresh_token|client_secret|service_role/i.test(profile
 const profileSql = fs.readFileSync('supabase/migrations/202611100002_company_business_profiles.sql', 'utf8');
 const activityDetailSql = fs.readFileSync('supabase/migrations/20261116122000_business_activity_detail.sql', 'utf8');
 assert.ok(activityDetailSql.includes('business_activity_detail') && activityDetailSql.includes('<= 120'), 'Flexible business activity detail schema missing');
+const activityPermissionsSql = fs.readFileSync('supabase/migrations/20261116123000_business_activity_detail_permissions.sql', 'utf8');
+assert.ok(activityPermissionsSql.includes('grant insert (business_activity_detail)') && activityPermissionsSql.includes('grant update (business_activity_detail)'), 'Business activity detail column grants missing');
 assert.ok(profileSql.includes('enable row level security'), 'Business profile RLS missing');
 assert.ok(profileSql.includes('is_company_member(company_id)'), 'Business profile member read policy missing');
 assert.ok(profileSql.includes("array['owner','admin']"), 'Business profile owner/admin write guard missing');
