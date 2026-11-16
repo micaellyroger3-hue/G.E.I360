@@ -1,67 +1,67 @@
 # G.E.I360
-Plataforma de Gestão Empresarial.
+Plataforma de gestão empresarial multiempresa.
 
-## Aplicativo
-O G.E.I360 é uma aplicação web instalável (PWA) para Android e desktop. O cache offline mantém somente a estrutura estática de abertura; autenticação e dados empresariais exigem conexão com a internet.
+## Aplicativo publicado
+- **Acesso:** https://micaellyroger3-hue.github.io/G.E.I360/
+- **Formato:** PWA instalável em Android e desktop.
+- **Código publicado:** commit `c42ecd41efeec9df08d7a16bec27feed89cccd07`.
+- **Deploy:** GitHub Pages concluído com sucesso no workflow 43778817931.
+- **Validação:** workflow 43778817930 concluído com sucesso.
 
-## Módulos presentes no código integrado
+O modo offline mantém apenas a estrutura de abertura. Login e dados empresariais exigem internet.
+
+## Módulos disponíveis no código
 - Cadastro, login, renovação de sessão, recuperação de senha e logout.
-- Cadastro e seleção de empresas, com vínculo de proprietário.
-- Cadastro, edição e exclusão de funcionários (fichas; não cria login para o funcionário).
-- Perfil empresarial por ramo e canais comerciais.
-- Clientes, fornecedores, categorias e produtos.
-- SKU, código de barras, câmera em navegadores compatíveis e leitores USB/Bluetooth.
-- Estoque com entrada, saída e ajuste.
-- Compras e vendas com carrinho de vários produtos.
-- Contas a pagar/receber e lançamentos financeiros automáticos para compras/vendas.
-- Documentos e anexos privados no Supabase Storage.
-- Indicadores e exportação CSV.
+- Cadastro e seleção de empresas; perfil por ramo e canais comerciais.
+- Funcionários (fichas; cadastrar ficha não cria login de funcionário).
+- Clientes, fornecedores, categorias, produtos, SKU e código de barras.
+- Estoque, entradas, saídas e ajustes.
+- Compras e vendas com carrinho; integração automática com movimentações e lançamentos financeiros.
+- Contas a pagar/receber, documentos e anexos privados.
+- Painel de indicadores, relatórios e exportação CSV.
+- **Operação específica por ramo:** restaurante/lanchonete (produção, desperdício, ficha de preparo); mercado (validade, perdas, reposição); comércio (campanhas e tarefas); serviços (ordens de serviço); distribuidora/e-commerce (expedição); construção (diário de obra).
 
-## Estado atual do Supabase
-Projeto: `mxikqdarqgatqoecfprg` (ativo e saudável).
+## Como funciona a personalização por ramo
+Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A tela **Operação do ramo** apresenta formulários específicos para o perfil selecionado. Os registros ficam em `gei_records`, vinculados à empresa e protegidos por RLS.
 
-O banco já continha tabelas e dados antes desta revisão, mas o histórico de migrations estava vazio. Por isso, **não execute `supabase/INSTALL_GEI360_ALL.sql` neste projeto**: o antigo instalador consolidava migrations-base que não correspondem integralmente ao schema preexistente. O arquivo foi desativado como proteção contra execução acidental.
+**Limites importantes:** os registros setoriais são lançamentos operacionais manuais. Não dão baixa automática no estoque, não calculam custo real de receita, não sincronizam pedidos com iFood/marketplaces e não substituem módulos completos de produção, logística ou fiscal. A seleção do canal iFood não é integração oficial.
 
-Foram aplicadas migrations direcionadas e registradas no Supabase:
-- `company_business_profiles`
-- `integrity_hardening`
-- `product_categories`
-- `product_barcode_integrity`
-- `employee_integrity`
-- `foreign_key_indexes_rls_tuning`
-- `deduplicate_category_policies`
-- `api_privilege_hardening`
+## Supabase e segurança
+Projeto `mxikqdarqgatqoecfprg`, status ativo/saudável, PostgreSQL 17.
 
-Também foi feita a verificação de privilégios. Resultado confirmado: nenhuma concessão de tabela a `anon` nas tabelas públicas auditadas e nenhum privilégio estrutural `TRUNCATE/REFERENCES/TRIGGER/MAINTAIN` para `authenticated` nessas tabelas. Todas as 20 tabelas públicas verificadas estão com RLS habilitado. O bucket `company-documents` está privado.
+Dez migrations direcionadas estão registradas no Supabase:
+1. `company_business_profiles`
+2. `integrity_hardening`
+3. `product_categories`
+4. `product_barcode_integrity`
+5. `employee_integrity`
+6. `foreign_key_indexes_rls_tuning`
+7. `deduplicate_category_policies`
+8. `api_privilege_hardening`
+9. `sector_operations_records`
+10. `legacy_empresas_lockdown`
 
-### Testes executados no banco
-- Helpers de associação e cargo reconheceram o proprietário ativo.
-- Teste RLS simulado com associação inativa: a empresa ficou invisível e a escrita cruzada foi negada; ainda falta homologação com duas contas reais.
-- Usuário autenticado não conseguiu inserir/alterar diretamente o saldo de estoque.
-- Usuário autenticado não conseguiu gravar diretamente os campos de origem do financeiro.
-- Fluxo de recebimento: compra, item, entrada no estoque e despesa financeira automática — aprovado.
-- Fluxo de venda: venda, item, baixa no estoque e receita financeira automática — aprovado.
-- Os registros usados nesses testes foram revertidos com `ROLLBACK`; nenhum produto, compra ou venda de teste ficou salvo.
-- Não há chaves de barras duplicadas nos produtos existentes; não há FKs públicas sem índice de cobertura.
+Verificações confirmadas:
+- 20/20 tabelas públicas com RLS habilitado.
+- Nenhum grant de tabela a `anon` nas tabelas empresariais auditadas.
+- Nenhum privilégio estrutural `TRUNCATE/REFERENCES/TRIGGER/MAINTAIN` para `authenticated` nas tabelas auditadas.
+- Bucket `company-documents` privado.
+- A tabela legada `public.empresas` tem zero linhas; privilégios de `anon`, `public` e `authenticated` revogados e policy restritiva de negação total. A aplicação usa `public.companies`.
+- Teste transacional de registro setorial aprovado; teste de isolamento confirmou zero linhas visíveis para usuário sem associação. Os dados de teste foram revertidos por `ROLLBACK`.
+- Fluxos transacionais de compra/venda e proteção de estoque/financeiro aprovados em testes SQL com rollback.
 
-### Pendências reais antes de produção
-- Fazer teste de isolamento com duas contas autenticadas e duas empresas diferentes; só assim se prova que uma empresa não lê nem altera dados da outra.
-- Rever a tabela legada `empresas`: RLS está ativo e ela não possui policies; não foi apagada.
-- O Supabase Advisor ainda sinaliza funções `SECURITY DEFINER` acessíveis a `authenticated`. São RPCs e helpers operacionais previstos no app, com validação de usuário/empresa/cargo; manter revisão periódica de seus corpos e permissões.
-- Ativar a proteção de senha vazada em Authentication, conforme a configuração do Supabase.
-- Os índices recém-criados aparecem como “não utilizados” porque o banco ainda tem pouco tráfego; não significa falha.
-- O histórico de migrations do banco contém as oito migrations direcionadas acima, não a sequência-base completa do repositório. Não usar `supabase db push` nem o antigo instalador até reconciliar formalmente esse histórico com os arquivos locais.
-- A PR #5 ainda precisa de validação do GitHub Actions e revisão antes de merge para `main`. Não anunciar publicação enquanto não houver merge e deploy bem-sucedido.
+### Alertas e limites de homologação
+- O Advisor ainda sinaliza nove funções `SECURITY DEFINER` executáveis por `authenticated`. São helpers/RPCs necessários ao modelo atual; os corpos foram revisados para exigir sessão e validar empresa/cargo, com `search_path` vazio. O alerta deve continuar sob revisão.
+- Proteção de senha vazada permanece desativada no Auth (recurso não disponível no plano Free atual).
+- Ainda falta teste ponta a ponta no navegador com duas contas reais, matriz completa de papéis, upload/download de documentos entre empresas e teste de restauração de backup. Não cadastrar clientes pagantes até essa homologação.
 
-## Limitações funcionais
-- NF-e/NFC-e: organiza documentos e anexos; não emite nem transmite documentos à SEFAZ.
-- iFood: o canal pode ser selecionado no perfil, mas não há sincronização de pedidos ou catálogo.
-- IA generativa: não existe assistente generativo conectado.
-- Funcionários: cadastrar uma ficha não cria conta de acesso.
-- Offline: somente a estrutura estática de abertura fica disponível sem internet.
+## Integrações que ainda não existem
+- iFood: sem importação/sincronização de pedidos e cardápio.
+- NF-e/NFC-e: documentos e anexos; sem emissão ou transmissão à SEFAZ.
+- IA generativa: não há assistente generativo conectado.
+- Convite/login de funcionários: cadastro de ficha não cria credencial.
 
-## Publicação
-O workflow de publicação está em `.github/workflows/static.yml` e publica a branch `main` no GitHub Pages. A versão integrada continua na PR #5; aguarde Actions verde, revisão e merge antes de considerar a publicação concluída.
+## Segurança de migrations e chaves
+O banco já tinha tabelas e dados antes desta revisão, sem histórico inicial de migrations. O antigo instalador `supabase/INSTALL_GEI360_ALL.sql` está desativado para impedir execução incompatível. **Não executar o instalador antigo nem `supabase db push`** até reconciliar formalmente todo o histórico.
 
-## Segurança de chaves
-O front-end pode conter somente URL do projeto e chave publicável. Nunca exponha `service_role` ou chave secreta no navegador.
+O navegador pode conter somente URL do projeto e chave publicável. Nunca expor `service_role`, `sb_secret_` ou credenciais de terceiros no front-end.
