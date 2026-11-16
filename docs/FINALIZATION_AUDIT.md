@@ -5,9 +5,8 @@ Atualizado em 16/11/2026 após merge, deploy e hardening do Supabase.
 - Repositório: `micaellyroger3-hue/G.E.I360`.
 - PR #5 integrada na main.
 - PR #6 (operações específicas por ramo) integrada na main.
-- Commit publicado: `c42ecd41efeec9df08d7a16bec27feed89cccd07`.
-- Validação automatizada: workflow 43778817930 — sucesso.
-- GitHub Pages: workflow 43778817931 — sucesso; o job reportou sucesso na criação do deployment.
+- PRs #5, #6, #7 e #8 integradas na `main`.
+- Validação automatizada e deploy do GitHub Pages concluídos com sucesso; consultar o histórico atualizado em [GitHub Actions](https://github.com/micaellyroger3-hue/G.EI360/actions).
 - URL: https://micaellyroger3-hue.github.io/G.E.I360/
 
 ## Banco e migrations
@@ -24,6 +23,7 @@ Migrations remotas registradas:
 8. `api_privilege_hardening`
 9. `sector_operations_records`
 10. `legacy_empresas_lockdown`
+11. `revoke_unused_legacy_rpcs`
 
 O banco já possuía schema e dados antes da revisão. O antigo instalador consolidado foi desativado para impedir execução de migrations-base incompatíveis; não executar `supabase/INSTALL_GEI360_ALL.sql` nem `supabase db push` até reconciliação formal.
 
@@ -45,7 +45,7 @@ O banco já possuía schema e dados antes da revisão. O antigo instalador conso
 - Deploy de Pages concluído no commit publicado.
 
 ## Alertas restantes do Advisor
-- Nove funções `SECURITY DEFINER` executáveis por authenticated continuam sinalizadas: `create_company`, `create_sale`, `create_sale_cart`, `get_my_companies`, `has_company_role`, `is_company_member`, `receive_purchase`, `receive_purchase_cart`, `record_stock_movement`. Foram revisados os corpos: exigem `auth.uid()` e verificam associação/cargo antes de operar; `search_path` está vazio. O uso é intencional para RPCs e helpers RLS, mas requer revisão periódica.
+- Seis funções `SECURITY DEFINER` executáveis por authenticated continuam sinalizadas: `create_company`, `create_sale_cart`, `has_company_role`, `is_company_member`, `receive_purchase_cart`, `record_stock_movement`. Três RPCs antigas sem chamadas no frontend (`create_sale`, `receive_purchase`, `get_my_companies`) tiveram EXECUTE revogado. As seis restantes exigem `auth.uid()` e verificam associação/cargo; `search_path` está vazio. O uso é intencional para RPCs e helpers RLS, mas requer revisão periódica.
 - Proteção contra senha vazada desativada no Supabase Auth por limitação do plano Free.
 - Índices recém-criados marcados como não utilizados refletem pouco tráfego; não remover sem métricas reais.
 

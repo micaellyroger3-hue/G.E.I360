@@ -4,9 +4,7 @@ Plataforma de gestão empresarial multiempresa.
 ## Aplicativo publicado
 - **Acesso:** https://micaellyroger3-hue.github.io/G.E.I360/
 - **Formato:** PWA instalável em Android e desktop.
-- **Código publicado:** commit `c42ecd41efeec9df08d7a16bec27feed89cccd07`.
-- **Deploy:** GitHub Pages concluído com sucesso no workflow 43778817931.
-- **Validação:** workflow 43778817930 concluído com sucesso.
+- **Publicação:** deploy do GitHub Pages e validação automatizada confirmados; o histórico atualizado fica em [GitHub Actions](https://github.com/micaellyroger3-hue/G.E.I360/actions).
 
 O modo offline mantém apenas a estrutura de abertura. Login e dados empresariais exigem internet.
 
@@ -29,7 +27,7 @@ Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A t
 ## Supabase e segurança
 Projeto `mxikqdarqgatqoecfprg`, status ativo/saudável, PostgreSQL 17.
 
-Dez migrations direcionadas estão registradas no Supabase:
+Onze migrations direcionadas estão registradas no Supabase:
 1. `company_business_profiles`
 2. `integrity_hardening`
 3. `product_categories`
@@ -40,6 +38,7 @@ Dez migrations direcionadas estão registradas no Supabase:
 8. `api_privilege_hardening`
 9. `sector_operations_records`
 10. `legacy_empresas_lockdown`
+11. `revoke_unused_legacy_rpcs`
 
 Verificações confirmadas:
 - 20/20 tabelas públicas com RLS habilitado.
@@ -51,7 +50,7 @@ Verificações confirmadas:
 - Fluxos transacionais de compra/venda e proteção de estoque/financeiro aprovados em testes SQL com rollback.
 
 ### Alertas e limites de homologação
-- O Advisor ainda sinaliza nove funções `SECURITY DEFINER` executáveis por `authenticated`. São helpers/RPCs necessários ao modelo atual; os corpos foram revisados para exigir sessão e validar empresa/cargo, com `search_path` vazio. O alerta deve continuar sob revisão.
+- O Advisor ainda sinaliza seis funções `SECURITY DEFINER` executáveis por `authenticated`: RPCs usadas pelo app (`create_company`, `create_sale_cart`, `receive_purchase_cart`, `record_stock_movement`) e helpers de RLS (`has_company_role`, `is_company_member`). Três RPCs antigas sem chamadas no frontend (`create_sale`, `receive_purchase`, `get_my_companies`) tiveram EXECUTE revogado. As seis restantes exigem sessão e validam empresa/cargo; `search_path` está vazio. Manter revisão periódica.
 - Proteção de senha vazada permanece desativada no Auth (recurso não disponível no plano Free atual).
 - Ainda falta teste ponta a ponta no navegador com duas contas reais, matriz completa de papéis, upload/download de documentos entre empresas e teste de restauração de backup. Não cadastrar clientes pagantes até essa homologação.
 

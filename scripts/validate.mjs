@@ -54,8 +54,11 @@ for (const file of [
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
   '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
   '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql',
-  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql'
+  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
+
+const legacyRpcRevokes = fs.readFileSync('supabase/migrations/20261116001449_revoke_unused_legacy_rpcs.sql', 'utf8');
+assert.ok(legacyRpcRevokes.includes('public.create_sale') && legacyRpcRevokes.includes('public.receive_purchase') && legacyRpcRevokes.includes('public.get_my_companies') && legacyRpcRevokes.includes('revoke execute'), 'Unused legacy RPC grants must be revoked');
 
 const legacyLockdown = fs.readFileSync('supabase/migrations/20261116001106_legacy_empresas_lockdown.sql', 'utf8');
 assert.ok(legacyLockdown.includes('revoke all privileges') && legacyLockdown.includes('using (false)'), 'Legacy empresas table lockdown missing');
