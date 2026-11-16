@@ -73,7 +73,8 @@ assert.ok(legacyLockdown.includes('revoke all privileges') && legacyLockdown.inc
 const sectorOpsMigration = fs.readFileSync('supabase/migrations/20261116000938_sector_operations_records.sql', 'utf8');
 assert.ok(sectorOpsMigration.includes("'sector_ops'") && sectorOpsMigration.includes('gei_records_module_code_check'), 'Sector operations module code migration missing');
 const sectorRoleGuard = fs.readFileSync('supabase/migrations/20261116085000_gei_records_role_guard.sql', 'utf8');
-assert.ok(sectorRoleGuard.includes("ARRAY['owner','admin','manager','employee']") && sectorRoleGuard.includes('revoke update on table public.gei_records'), 'Sector records must exclude viewers from writes and remain append-only');
+const sectorRoleGuardNormalized = sectorRoleGuard.toLowerCase();
+assert.ok(sectorRoleGuardNormalized.includes("array['owner','admin','manager','employee']") && sectorRoleGuardNormalized.includes('revoke update on table public.gei_records'), 'Sector records must exclude viewers from writes and remain append-only');
 
 const coreSql = fs.readFileSync('supabase/migrations/202611080001_erp_modules.sql', 'utf8');
 assert.ok(coreSql.includes('enable row level security'), 'RLS setup missing from core migration');
