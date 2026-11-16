@@ -5,14 +5,14 @@
 (function(){
 'use strict';
 const TYPES=[
- ['restaurant','Restaurante / lanchonete'],
- ['grocery','Mercado / mercearia'],
- ['retail','Loja / comércio'],
+ ['restaurant','Alimentação preparada (restaurante, lanchonete, padaria, pizzaria, cafeteria)'],
+ ['grocery','Mercado e alimentos (mercadinho, supermercado, mercearia, açougue, hortifruti)'],
+ ['retail','Loja / comércio em geral'],
  ['services','Prestação de serviços'],
  ['distributor','Distribuidora / atacado'],
- ['ecommerce','E-commerce'],
+ ['ecommerce','E-commerce / loja virtual'],
  ['construction','Construção / obras'],
- ['other','Outro ramo']
+ ['other','Outro ramo (qualquer atividade)']
 ];
 const CHANNELS=[
  ['ifood','iFood'],
@@ -24,25 +24,29 @@ const CHANNELS=[
  ['marketplace','Outros marketplaces']
 ];
 const ROUTES={
- 'Cardápio e produtos':'products','Estoque':'products','Movimentações de estoque':'stock',
- 'Vendas e pedidos':'sales','Compras':'purchases','Fornecedores':'suppliers',
- 'Clientes':'customers','Financeiro':'finance','Documentos':'documents',
- 'Relatórios':'reports','Funcionários':'employees',
- 'Produtos e cardápio':'products','Produtos e códigos de barras':'products','Catálogo e preços':'products','Catálogo e tabela de preços':'products',
- 'Estoque e ficha de insumos':'products','Estoque e validade':'products','Estoque e depósitos':'products','Materiais e estoque':'products',
- 'Pedidos e vendas':'sales','Vendas e caixa':'sales','Compras e fornecedores':'purchases',
- 'Financeiro e relatórios':'finance','Documentos e relatórios':'documents','Clientes e fornecedores':'customers',
- 'Entregas':'sector','Estoque e ficha de insumos':'sector','Estoque e validade':'sector','Estoque e depósitos':'sector','Catálogo de serviços':'sector','Orçamentos e ordens de serviço':'sector','Agenda e equipe':'sector','Logística':'sector','Obras e projetos':'sector','Equipe':'sector','Clientes e contratos':'sector','Expedição e entregas':'sector','Canais e relatórios':'sector','Cadastros':'sector','Vendas e serviços':'sector'
+ 'Produtos e cardápio':'products','Produtos e códigos de barras':'products','Catálogo e preços':'products',
+ 'Catálogo e tabela de preços':'products','Estoque':'products','Estoque (se aplicável)':'products',
+ 'Estoque de produtos e insumos':'products','Materiais e estoque':'products',
+ 'Vendas':'sales','Vendas e caixa':'sales','Vendas e pedidos':'sales','Vendas e serviços':'sales',
+ 'Compras':'purchases','Compras e fornecedores':'purchases',
+ 'Clientes':'customers','Fornecedores':'suppliers',
+ 'Financeiro':'finance','Financeiro e relatórios':'finance',
+ 'Documentos e relatórios':'documents','Contratos e documentos':'documents','Relatórios':'reports',
+ 'Equipe (cadastros)':'employees',
+ 'Produção e fichas de preparo (registro manual)':'sector',
+ 'Controle manual de validade e perdas':'sector','Ordens de serviço (registro manual)':'sector',
+ 'Expedição (registro manual)':'sector','Separação e expedição (registro manual)':'sector',
+ 'Diário de obra (registro manual)':'sector'
 };
 const MODULES={
- restaurant:['Produtos e cardápio','Estoque e ficha de insumos','Pedidos e vendas','Compras e fornecedores','Clientes','Financeiro','Entregas','Documentos e relatórios'],
- grocery:['Produtos e códigos de barras','Estoque e validade','Compras e fornecedores','Vendas e caixa','Clientes','Financeiro','Documentos e relatórios'],
- retail:['Catálogo e preços','Estoque','Vendas e caixa','Compras e fornecedores','Clientes','Financeiro','Documentos e relatórios'],
- services:['Catálogo de serviços','Orçamentos e ordens de serviço','Agenda e equipe','Clientes','Financeiro','Documentos e relatórios'],
- distributor:['Catálogo e tabela de preços','Estoque e depósitos','Compras e fornecedores','Pedidos e vendas','Clientes','Logística','Financeiro e relatórios'],
- ecommerce:['Catálogo e preços','Estoque','Pedidos e vendas','Clientes','Expedição e entregas','Financeiro','Canais e relatórios'],
- construction:['Obras e projetos','Materiais e estoque','Compras e fornecedores','Equipe','Clientes e contratos','Financeiro','Documentos e relatórios'],
- other:['Cadastros','Estoque (se aplicável)','Vendas e serviços','Compras','Clientes e fornecedores','Financeiro','Documentos e relatórios']
+ restaurant:['Produtos e cardápio','Estoque de produtos e insumos','Produção e fichas de preparo (registro manual)','Vendas e pedidos','Compras e fornecedores','Clientes','Fornecedores','Financeiro','Entregas e integração de pedidos','Documentos e relatórios'],
+ grocery:['Produtos e códigos de barras','Estoque','Controle manual de validade e perdas','Compras e fornecedores','Vendas e caixa','Clientes','Fornecedores','Financeiro','Documentos e relatórios'],
+ retail:['Catálogo e preços','Estoque','Vendas e caixa','Compras e fornecedores','Clientes','Fornecedores','Financeiro','Documentos e relatórios'],
+ services:['Ordens de serviço (registro manual)','Catálogo de serviços','Agenda de atendimento','Equipe (cadastros)','Clientes','Financeiro','Documentos e relatórios'],
+ distributor:['Catálogo e tabela de preços','Estoque','Compras e fornecedores','Vendas e pedidos','Clientes','Fornecedores','Expedição (registro manual)','Multiestoque e logística avançada','Financeiro','Relatórios'],
+ ecommerce:['Catálogo e preços','Estoque','Vendas e pedidos','Clientes','Separação e expedição (registro manual)','Integração com marketplaces','Financeiro','Relatórios'],
+ construction:['Materiais e estoque','Compras e fornecedores','Equipe (cadastros)','Diário de obra (registro manual)','Clientes','Contratos e documentos','Financeiro','Relatórios'],
+ other:['Clientes','Fornecedores','Estoque (se aplicável)','Vendas e serviços','Compras','Financeiro','Documentos e relatórios']
 };
 const $id=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -51,7 +55,7 @@ function selectedChannels(){return CHANNELS.filter(([key])=>$id('gei_channel_'+k
 function profileMarkup(){
  const typeOptions='<option value="">Selecione o ramo...</option>'+TYPES.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
  const channelOptions=CHANNELS.map(([v,l])=>'<label style="display:flex;gap:8px;align-items:center;border:1px solid #e5eaf1;border-radius:8px;padding:9px;font-size:12px"><input type="checkbox" id="gei_channel_'+v+'" value="'+v+'"> '+l+'</label>').join('');
- return '<section class="card" id="geiBusinessProfile"><h3 style="margin:0 0 6px">Perfil inteligente da empresa</h3><p class="muted" style="margin:0 0 12px">Escolha o ramo e os canais utilizados. O G.E.I360 organiza os módulos recomendados para esse negócio.</p><div id="geiProfileCompleteness" class="notice">Cadastro incompleto: escolha o ramo e pelo menos um canal.</div><div class="field"><label for="geiBusinessType">Ramo de atividade</label><select id="geiBusinessType">'+typeOptions+'</select></div><div class="field"><label>Canais de venda e atendimento</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px">'+channelOptions+'</div></div><div id="geiProfilePreview" class="notice" style="margin-top:12px">Selecione o ramo para visualizar os módulos recomendados.</div><div id="geiIfodPanel" class="notice hidden"></div><p id="geiProfileStatus" class="muted" style="font-size:11px;margin:8px 0 0">O perfil será salvo junto com os dados da empresa.</p></section>';
+ return '<section class="card" id="geiBusinessProfile"><h3 style="margin:0 0 6px">Perfil inteligente da empresa</h3><p class="muted" style="margin:0 0 12px">Escolha o ramo e os canais utilizados. O G.E.I360 organiza os módulos recomendados para esse negócio.</p><p class="muted" style="font-size:11px;margin:0 0 12px">O núcleo de cadastros, estoque, vendas, compras, financeiro e documentos atende diferentes atividades. Se o ramo não estiver listado, escolha “Outro ramo”. Recursos específicos e integrações ainda não disponíveis aparecem como planejados.</p><div id="geiProfileCompleteness" class="notice">Cadastro incompleto: escolha o ramo e pelo menos um canal.</div><div class="field"><label for="geiBusinessType">Ramo de atividade</label><select id="geiBusinessType">'+typeOptions+'</select></div><div class="field"><label>Canais de venda e atendimento</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px">'+channelOptions+'</div></div><div id="geiProfilePreview" class="notice" style="margin-top:12px">Selecione o ramo para visualizar os módulos recomendados.</div><div id="geiIfodPanel" class="notice hidden"></div><p id="geiProfileStatus" class="muted" style="font-size:11px;margin:8px 0 0">O perfil será salvo junto com os dados da empresa.</p></section>';
 }
 function updatePreview(){
  const type=$id('geiBusinessType')?.value||'';
