@@ -37,6 +37,7 @@ assert.ok(worker.includes('if (url.origin !== self.location.origin) return'), 'S
 assert.ok(html.includes('refreshSessionToken') && html.includes('refreshPromise'), 'Automatic session refresh missing');
 assert.ok(html.includes('/auth/v1/recover') && html.includes('handleRecoveryLink'), 'Password recovery flow missing');
 assert.ok(html.includes('window.startNewCompany') && html.includes('id=\"addCompany\"'), 'Multi-company creation and selection missing');
+assert.ok(html.includes("api('/rest/v1/rpc/create_company'") && html.includes('p_name:name,p_tax_id:tax_id'), 'Company creation must use the authenticated create_company RPC');
 assert.ok(html.includes('handle_new_company_owner') && !html.includes("api('/rest/v1/company_members',{method:'POST'"), 'Company creation must rely on the database owner trigger without duplicate membership insertion');
 assert.ok(modules.includes('payload={},oldRow'), 'Updates must not resend company_id or created_by');
 assert.ok(html.includes('id="offlineMode"') && html.includes('MODO OFFLINE'), 'Offline launch screen missing');
