@@ -1,22 +1,28 @@
-# Proteção do cadastro de funcionários — G.E.I360
+# Cadastro e convite seguro de funcionários — G.E.I360
 
-## O que esta atualização faz
-- Impede trocar a empresa de origem de um funcionário por edição direta na API.
-- Impede substituir o usuário que criou o cadastro.
-- Atualiza `updated_at` em alterações futuras.
-- Acrescenta políticas RLS restritivas para que políticas permissivas antigas não ampliem o acesso entre empresas.
-- Mantém leitura para membros da empresa, inclusão/edição para owner/admin/manager e exclusão para owner/admin.
+## Ficha de funcionário
+- A tabela `employees` mantém os dados de RH vinculados a `company_id`.
+- A migration `employee_integrity` está aplicada: impede alterar a empresa de origem e o autor original do cadastro.
+- A ficha continua separada da conta de autenticação; cadastrar uma ficha não cria login automaticamente.
 
-## O que não faz
-- Não cria contas de acesso para funcionários.
-- Não envia convites nem define senhas.
-- Não altera os registros existentes.
-- Não é uma prova de teste funcional real entre duas contas e duas empresas.
+## Convite de acesso
+- Edge Function: `invite-company-member`.
+- Estado no Supabase: **ACTIVE**, versão 3, com `verify_jwt=true`.
+- A interface apresenta **Convidar acesso** nas fichas que possuem e-mail, somente para owner/admin.
+- O convite exige confirmação explícita na tela e cria vínculo na empresa com papel inicial `employee`.
+- O backend valida o JWT, confirma que o usuário atual é membro ativo da empresa e exige papel owner ou admin. Managers, employees e viewers não podem chamar o fluxo.
+- Para um e-mail sem conta, usa `auth.admin.inviteUserByEmail`; o e-mail de convite é enviado somente quando o usuário confirma o envio na interface.
+- Para uma conta já existente e com e-mail confirmado, cria o vínculo sem enviar outro convite. Conta já vinculada é recusada; conta existente sem e-mail confirmado não é vinculada.
+- O convite é vinculado a `company_members` e fica ativo para que a pessoa possa acessar a empresa depois de aceitar o link e autenticar-se.
+- O link de convite retorna ao aplicativo publicado. O app reconhece o tipo `invite`, pede que a pessoa defina sua senha e depois permite entrar normalmente.
 
-## Instalação segura
-1. Execute primeiro `supabase/diagnostics/202611110001_employee_integrity_preflight.sql` no SQL Editor do Supabase.
-2. Confira o resultado e faça backup antes de qualquer alteração de produção.
-3. Só depois de revisar o diagnóstico, aplique `supabase/migrations/202611110001_employee_integrity.sql`.
-4. Rode novamente o diagnóstico e confira as políticas e o trigger.
+## Segurança
+- A função exige JWT válido e valida a associação e o papel no contexto do próprio usuário antes de usar privilégios administrativos.
+- A chave `SUPABASE_SERVICE_ROLE_KEY` é lida somente do ambiente da Edge Function. Nenhuma chave administrativa é enviada ao navegador ou armazenada no repositório.
+- O papel atribuído por este fluxo é sempre `employee`; a função não permite criar owners ou admins.
+- A função não altera fichas de outros funcionários nem dados operacionais da empresa.
 
-Esta migração ainda não foi aplicada ao projeto Supabase.
+## Validação e limites
+- A Edge Function foi implantada e está ativa. A validação automatizada do repositório verifica o código, as permissões e a presença do fluxo no frontend.
+- Nenhum convite de e-mail real foi enviado durante a implementação. A entrega do e-mail depende da configuração de SMTP e da lista de URLs de redirecionamento permitidas no Supabase Auth.
+- A homologação final de envio/aceite deve ser feita com um endereço de e-mail de teste sob controle do proprietário. Não usar e-mails de terceiros sem autorização.
