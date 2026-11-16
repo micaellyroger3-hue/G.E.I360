@@ -44,7 +44,7 @@ assert.ok(html.includes('refreshSessionToken') && html.includes('refreshPromise'
 assert.ok(html.includes('/auth/v1/recover') && html.includes('handleRecoveryLink'), 'Password recovery flow missing');
 assert.ok(html.includes('window.startNewCompany') && html.includes('id=\"addCompany\"'), 'Multi-company creation and selection missing');
 assert.ok(html.includes("const canManageCompanies=['owner','admin'].includes(companyRole)") && html.includes("Somente o proprietário ou administrador pode adicionar outra empresa."), 'Company creation UI must restrict additional companies to owner/admin');
-const companyCreationGuard = fs.readFileSync('supabase/migrations/20261116125000_guard_company_creation_by_role.sql', 'utf8');
+const companyCreationGuard = fs.readFileSync('supabase/migrations/20261116125032_guard_company_creation_by_role.sql', 'utf8');
 assert.ok(companyCreationGuard.includes('pg_advisory_xact_lock') && companyCreationGuard.includes("role IN ('owner', 'admin')"), 'Company creation RPC must serialize attempts and require owner/admin for existing members');
 assert.ok(companyCreationGuard.includes('DROP POLICY IF EXISTS users_can_create_companies') && companyCreationGuard.includes('REVOKE INSERT ON TABLE public.companies FROM authenticated'), 'Direct company INSERT bypass must be removed');
 assert.ok(html.includes("api('/rest/v1/rpc/create_company'") && html.includes('p_name:name,p_tax_id:tax_id'), 'Company creation must use the authenticated create_company RPC');
@@ -64,7 +64,7 @@ for (const file of [
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
   '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
   '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql',
-  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql','20261116085000_gei_records_role_guard.sql','20261116121000_least_privilege_cleanup.sql','20261116122000_business_activity_detail.sql','20261116123000_business_activity_detail_permissions.sql','20261116121000_least_privilege_cleanup.sql','20261116125000_guard_company_creation_by_role.sql'
+  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql','20261116085000_gei_records_role_guard.sql','20261116121000_least_privilege_cleanup.sql','20261116122000_business_activity_detail.sql','20261116123000_business_activity_detail_permissions.sql','20261116121000_least_privilege_cleanup.sql','20261116125032_guard_company_creation_by_role.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const brazilDatesSql = fs.readFileSync('supabase/migrations/20261116083715_brazil_local_business_dates.sql', 'utf8');
