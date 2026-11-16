@@ -8,6 +8,7 @@ const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const worker = fs.readFileSync('sw.js', 'utf8');
 
 new Function(modules);
+new Function(profiles);
 const inlineScripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
   .map(match => match[1]).filter(source => source.trim());
 assert.ok(inlineScripts.length > 0, 'index.html must contain application scripts');
