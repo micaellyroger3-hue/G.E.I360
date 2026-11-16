@@ -31,7 +31,8 @@ const ROUTES={
  'Produtos e cardápio':'products','Produtos e códigos de barras':'products','Catálogo e preços':'products','Catálogo e tabela de preços':'products',
  'Estoque e ficha de insumos':'products','Estoque e validade':'products','Estoque e depósitos':'products','Materiais e estoque':'products',
  'Pedidos e vendas':'sales','Vendas e caixa':'sales','Compras e fornecedores':'purchases',
- 'Financeiro e relatórios':'finance','Documentos e relatórios':'documents','Clientes e fornecedores':'customers',\n 'Entregas':'sector','Estoque e ficha de insumos':'sector','Estoque e validade':'sector','Estoque e depósitos':'sector','Catálogo de serviços':'sector','Orçamentos e ordens de serviço':'sector','Agenda e equipe':'sector','Logística':'sector','Obras e projetos':'sector','Equipe':'sector','Clientes e contratos':'sector','Expedição e entregas':'sector','Canais e relatórios':'sector','Cadastros':'sector','Vendas e serviços':'sector'
+ 'Financeiro e relatórios':'finance','Documentos e relatórios':'documents','Clientes e fornecedores':'customers',
+ 'Entregas':'sector','Estoque e ficha de insumos':'sector','Estoque e validade':'sector','Estoque e depósitos':'sector','Catálogo de serviços':'sector','Orçamentos e ordens de serviço':'sector','Agenda e equipe':'sector','Logística':'sector','Obras e projetos':'sector','Equipe':'sector','Clientes e contratos':'sector','Expedição e entregas':'sector','Canais e relatórios':'sector','Cadastros':'sector','Vendas e serviços':'sector'
 };
 const MODULES={
  restaurant:['Produtos e cardápio','Estoque e ficha de insumos','Pedidos e vendas','Compras e fornecedores','Clientes','Financeiro','Entregas','Documentos e relatórios'],
