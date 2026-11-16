@@ -216,6 +216,6 @@ assert.ok(modules.includes('const GEI_SECTOR_OPS') && modules.includes('erpRende
 assert.ok(modules.includes("module_code:'sector_ops'") && modules.includes("gei_records?select=id,record_type,payload"), 'Sector operations must persist and read company-scoped records');
 assert.ok(modules.includes("readOnly:companyRole==='viewer'"), 'Sector operations must be read-only for non-managers');
 assert.ok(html.includes('data-page="sector"'), 'Sector operations navigation missing');
-assert.ok(profiles.includes("'Entregas':'sector'") && profiles.includes("'Estoque e validade':'sector'"), 'Sector profile shortcuts must open operational area');
+assert.ok(profiles.includes("'Produção e fichas de preparo (registro manual)':'sector'") && profiles.includes("'Controle manual de validade e perdas':'sector'"), 'Implemented sector profile shortcuts must open operational area');
 
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
