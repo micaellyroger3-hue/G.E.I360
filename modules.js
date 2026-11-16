@@ -319,6 +319,7 @@ function geiAddNavButton(nav, page) {
 function geiRenderModuleNavigation() {
   const nav = document.querySelector('.nav');
   if (!nav || !geiModuleCatalog.length) return;
+  const activePage = nav.querySelector('[data-page].active')?.dataset.page || 'home';
   nav.replaceChildren();
   if (geiModuleEnabled('dashboard')) geiAddNavButton(nav,'home');
   if (geiModuleEnabled('servicos') || geiModuleEnabled('industria')) geiAddNavButton(nav,'sector');
@@ -334,6 +335,7 @@ function geiRenderModuleNavigation() {
   }
   nav.querySelectorAll('[data-page]').forEach(button => {
     button.onclick = () => setPage(button.dataset.page);
+    button.classList.toggle('active',button.dataset.page===activePage);
   });
 }
 async function geiRefreshModuleNavigation() {
