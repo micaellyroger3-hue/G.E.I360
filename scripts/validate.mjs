@@ -58,7 +58,7 @@ for (const file of [
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
   '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
   '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql',
-  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql'
+  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql','20261116085000_gei_records_role_guard.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const brazilDatesSql = fs.readFileSync('supabase/migrations/20261116083715_brazil_local_business_dates.sql', 'utf8');
@@ -72,6 +72,8 @@ assert.ok(legacyLockdown.includes('revoke all privileges') && legacyLockdown.inc
 
 const sectorOpsMigration = fs.readFileSync('supabase/migrations/20261116000938_sector_operations_records.sql', 'utf8');
 assert.ok(sectorOpsMigration.includes("'sector_ops'") && sectorOpsMigration.includes('gei_records_module_code_check'), 'Sector operations module code migration missing');
+const sectorRoleGuard = fs.readFileSync('supabase/migrations/20261116085000_gei_records_role_guard.sql', 'utf8');
+assert.ok(sectorRoleGuard.includes("ARRAY['owner','admin','manager','employee']") && sectorRoleGuard.includes('revoke update on table public.gei_records'), 'Sector records must exclude viewers from writes and remain append-only');
 
 const coreSql = fs.readFileSync('supabase/migrations/202611080001_erp_modules.sql', 'utf8');
 assert.ok(coreSql.includes('enable row level security'), 'RLS setup missing from core migration');
