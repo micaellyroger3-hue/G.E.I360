@@ -349,6 +349,7 @@ async function geiRefreshModuleNavigation() {
 }
 async function geiRenderCompanyModuleSettings() {
   const host = $('view');
+  document.getElementById('geiModuleSettings')?.remove();
   if (!host || !companyId || !['owner','admin'].includes(companyRole)) return;
   try {
     await geiLoadModuleAccess();
@@ -404,6 +405,7 @@ document.addEventListener('click', async event => {
   if (!companyId || !['owner','admin'].includes(companyRole)) return;
   const code = button.dataset.moduleToggle;
   const next = button.dataset.enabled !== 'true';
+  const currentPage = document.querySelector('.nav button.active')?.dataset.page || 'home';
   button.disabled = true;
   try {
     const current = geiCompanyModuleRows.find(row => row.module_code === code);
@@ -414,7 +416,7 @@ document.addEventListener('click', async event => {
     }
     await geiRefreshModuleNavigation();
     await geiRenderCompanyModuleSettings();
-    if (!geiPageIsEnabled(document.querySelector('.nav button.active')?.dataset.page || 'home')) await setPage('home');
+    if (!geiPageIsEnabled(currentPage)) await setPage('home');
   } catch (error) {
     alert('Não foi possível atualizar o módulo: ' + (error.message || 'erro desconhecido'));
     button.disabled = false;
