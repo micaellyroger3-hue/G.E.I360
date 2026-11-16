@@ -59,6 +59,12 @@ O banco já possuía schema e dados antes da revisão. O antigo instalador conso
 - Os registros são manuais e não alteram automaticamente estoque/financeiro.
 - iFood sem integração oficial; NF-e/NFC-e sem emissão SEFAZ; IA generativa não conectada; ficha de funcionário não cria usuário de login.
 
+## Achados adicionais da revisão de 16/11/2026
+- A aplicação passou a exibir datas de vendas e vencimentos financeiros vinculados usando a data local derivada de `created_at`, evitando o deslocamento de dia causado por `CURRENT_DATE` em sessão UTC.
+- **Pendência de banco:** `sales.sale_date` e `financial_entries.due_date` ainda têm defaults `CURRENT_DATE`, e os gatilhos de vendas/compras ainda gravam `current_date`. Uma migration direcionada deve mudar esses valores para o fuso da empresa antes de depender dos campos crus em integrações externas. Nenhuma linha histórica foi alterada.
+- O perfil empresarial passou a identificar exemplos de segmentos de alimentação e comércio e a opção genérica **Outro ramo**. O núcleo geral atende atividades diferentes; os fluxos setoriais continuam manuais e recursos não implementados devem permanecer como planejados.
+- O cadastro de perfil empresarial está vazio na empresa de teste porque o ramo e os canais ainda não foram salvos; isso é esperado e não é falha de RLS.
+
 ## Homologação ainda necessária antes de vender acesso
 1. Testar no navegador duas contas reais em empresas distintas.
 2. Testar matriz owner/admin/manager/employee/viewer em todas as telas e documentos.

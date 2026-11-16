@@ -18,6 +18,7 @@ for (const feature of [
   'erpRenderDashboard','erpRenderStock','erpRenderSales','erpRenderPurchases',
   'erpRenderReports','erpUploadDocument','create_sale_cart','receive_purchase_cart','Inteligência de gestão','overdueTotal'
 ]) assert.ok(modules.includes(feature) || html.includes(feature), 'Missing feature: ' + feature);
+assert.ok(modules.includes('erpSaleLocalDate') && modules.includes('erpSaleMonthKey') && modules.includes('erpEffectiveDueDate'), 'Brazilian local date handling missing');
 assert.ok(modules.includes('A receber') && modules.includes('A pagar') && modules.includes('Vencido'), 'Expanded financial report missing');
 assert.ok(modules.includes('pageSize=500') && modules.includes('offset=\'+offset') && modules.includes('created_at.desc,id.desc'), 'Company data pagination missing');
 
@@ -45,7 +46,7 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v13"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v14"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
@@ -98,13 +99,16 @@ assert.ok(modules.includes('não um modelo de IA generativa'), 'Dashboard must d
 
 const profileJs = fs.readFileSync('business-profiles.js', 'utf8');
 new Function(profileJs);
-assert.ok(html.includes('business-profiles.js?v=20261115-01'), 'Business profile script not loaded');
-assert.ok(worker.includes('./business-profiles.js?v=20261115-01'), 'Business profile script missing from offline shell');
-assert.ok(worker.includes('gei360-shell-v13'), 'Offline shell cache version missing');
+assert.ok(html.includes('business-profiles.js?v=20261116-01'), 'Business profile script not loaded');
+assert.ok(worker.includes('./business-profiles.js?v=20261116-01'), 'Business profile script missing from offline shell');
+assert.ok(worker.includes('gei360-shell-v14'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
 assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
 assert.ok(profileJs.includes('business_type') && profileJs.includes('sales_channels'), 'Business profile persistence fields missing');
+assert.ok(profileJs.includes('Outro ramo (qualquer atividade)'), 'Generic business profile option missing');
+assert.ok(profileJs.includes("'Estoque (se aplicável)':'products'"), 'Generic profile must link to the available stock module');
+assert.ok(profileJs.includes('Produção e fichas de preparo (registro manual)') && profileJs.includes('Controle manual de validade e perdas'), 'Sector recommendations must match implemented manual workflows');
 assert.ok(!/access_token|refresh_token|client_secret|service_role/i.test(profileJs), 'Third-party secrets must not be stored in browser profile code');
 const profileSql = fs.readFileSync('supabase/migrations/202611100002_company_business_profiles.sql', 'utf8');
 assert.ok(profileSql.includes('enable row level security'), 'Business profile RLS missing');
@@ -212,6 +216,6 @@ assert.ok(modules.includes('const GEI_SECTOR_OPS') && modules.includes('erpRende
 assert.ok(modules.includes("module_code:'sector_ops'") && modules.includes("gei_records?select=id,record_type,payload"), 'Sector operations must persist and read company-scoped records');
 assert.ok(modules.includes("readOnly:companyRole==='viewer'"), 'Sector operations must be read-only for non-managers');
 assert.ok(html.includes('data-page="sector"'), 'Sector operations navigation missing');
-assert.ok(profiles.includes("'Entregas':'sector'") && profiles.includes("'Estoque e validade':'sector'"), 'Sector profile shortcuts must open operational area');
+assert.ok(profiles.includes("'Produção e fichas de preparo (registro manual)':'sector'") && profiles.includes("'Controle manual de validade e perdas':'sector'"), 'Implemented sector profile shortcuts must open operational area');
 
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
