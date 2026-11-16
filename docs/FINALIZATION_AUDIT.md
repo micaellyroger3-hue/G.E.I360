@@ -94,3 +94,11 @@ A aplicação está publicada e a validação automatizada passou. Isso não equ
 - O fluxo valida a sessão e exige associação ativa com papel owner/admin; o papel concedido é sempre employee.
 - A interface adiciona **Convidar acesso** às fichas com e-mail. A pessoa aceita o convite, define a senha no app e acessa a empresa.
 - Nenhum e-mail real foi disparado durante a implementação; a homologação do SMTP/redirect com e-mail de teste ainda depende do proprietário.
+
+
+## Backups e proteção de senha — verificação documental atualizada
+- A documentação oficial do Supabase informa que backups automáticos diários estão incluídos nos planos Pro, Team e Enterprise; no plano Free, recomenda exportação manual via Supabase CLI (`db dump`) e cópia externa.
+- Os backups do banco não incluem objetos armazenados via Storage API. O bucket privado `company-documents` precisa de exportação separada dos arquivos.
+- A restauração de um backup no projeto de produção causa indisponibilidade durante o processo. A primeira restauração de ensaio deve ocorrer em projeto separado; não restaurar produção sem autorização explícita.
+- O Advisor continua indicando a proteção contra senhas vazadas desativada. A documentação oficial informa que esse recurso exige Pro ou superior; a ativação depende do plano e da configuração no Dashboard.
+- A API de listagem de projetos não expôs o plano contratado, portanto o plano atual não foi presumido nesta auditoria.
