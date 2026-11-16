@@ -94,7 +94,7 @@ $('authForm').onsubmit=async e=>{
    history.replaceState(null,'',location.pathname+location.search);
    $('toggleAuth').classList.remove('hidden');$('forgotPassword').classList.remove('hidden');
    $('authTitle').textContent='Acesse sua plataforma';$('authSubmit').textContent='Entrar';
-   $('password').value='';$('toggleAuth').textContent='Criar uma conta';
+   $('password').value='';$('email').readOnly=false;$('toggleAuth').textContent='Criar uma conta';
    message($('authMessage'),'Senha atualizada. Entre com sua nova senha.','ok');
    return;
   }
@@ -125,7 +125,20 @@ function handleRecoveryLink(){
  const accessToken=params.get('access_token');
  const refreshToken=params.get('refresh_token');
  const linkType=params.get('type');
- if(['invite','signup'].includes(linkType)&&accessToken&&refreshToken){
+ if(linkType==='invite'&&accessToken&&refreshToken){
+  saveSession({access_token:accessToken,refresh_token:refreshToken,token_type:params.get('token_type')||'bearer'});
+  recovering=true;signup=false;showLogin();
+  $('email').value=params.get('email')||'';
+  $('email').readOnly=!!params.get('email');
+  $('authTitle').textContent='Defina sua senha';
+  $('authSubmit').textContent='Salvar senha';
+  $('password').value='';$('password').autocomplete='new-password';
+  $('toggleAuth').classList.add('hidden');$('forgotPassword').classList.add('hidden');
+  $('authMessage').innerHTML='<div class="notice">Convite aceito. Crie sua senha para acessar a empresa.</div>';
+  history.replaceState(null,'',location.pathname+location.search);
+  return true;
+ }
+ if(linkType==='signup'&&accessToken&&refreshToken){
   saveSession({access_token:accessToken,refresh_token:refreshToken,token_type:params.get('token_type')||'bearer'});
   history.replaceState(null,'',location.pathname+location.search);
   return false;
