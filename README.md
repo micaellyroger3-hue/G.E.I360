@@ -70,7 +70,7 @@ Verificações confirmadas:
 - iFood: sem importação/sincronização de pedidos e cardápio.
 - NF-e/NFC-e: documentos e anexos; sem emissão ou transmissão à SEFAZ.
 - IA generativa: não há assistente generativo conectado.
-- Convites de funcionários: Edge Function segura ativa; a ficha não cria login automaticamente. Owner/admin envia convite a partir de uma ficha com e-mail. A pessoa aceita o link e define a senha no aplicativo.
+- Convites de funcionários: Edge Function segura ativa com `@supabase/server`; a ficha não cria login automaticamente. Owner/admin envia convite a partir de uma ficha com e-mail. A pessoa aceita o link e define a senha no aplicativo.
 
 ## Segurança de migrations e chaves
 O banco já tinha tabelas e dados antes desta revisão, sem histórico inicial de migrations. O antigo instalador `supabase/INSTALL_GEI360_ALL.sql` está desativado para impedir execução incompatível. **Não executar o instalador antigo nem `supabase db push`** até reconciliar formalmente todo o histórico.
