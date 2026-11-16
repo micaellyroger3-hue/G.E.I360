@@ -7,10 +7,10 @@
 
 ## Convite de acesso
 - Edge Function: `invite-company-member`.
-- Estado no Supabase: **ACTIVE**, versão 4, com `verify_jwt=true`.
+- Estado no Supabase: **ACTIVE**, versão 4, com `verify_jwt=false` no gateway e autenticação obrigatória pelo middleware `@supabase/server@1.9.2` em modo `auth: user`.
 - A interface apresenta **Convidar acesso** nas fichas que possuem e-mail, somente para owner/admin.
 - O convite exige confirmação explícita na tela e cria vínculo na empresa com papel inicial `employee`.
-- O backend valida o JWT, confirma que o usuário atual é membro ativo da empresa e exige papel owner ou admin. Managers, employees e viewers não podem chamar o fluxo.
+- O middleware `@supabase/server@1.9.2` valida o JWT via JWKS; a função confirma que o usuário atual é membro ativo da empresa e exige papel owner ou admin. Managers, employees e viewers não podem chamar o fluxo.
 - Para um e-mail sem conta, usa `auth.admin.inviteUserByEmail`; o e-mail de convite é enviado somente quando o usuário confirma o envio na interface.
 - Para uma conta já existente e com e-mail confirmado, cria o vínculo sem enviar outro convite. Conta já vinculada é recusada; conta existente sem e-mail confirmado não é vinculada.
 - O convite é vinculado a `company_members` e fica ativo para que a pessoa possa acessar a empresa depois de aceitar o link e autenticar-se.
