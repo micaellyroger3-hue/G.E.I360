@@ -55,7 +55,7 @@ function selectedChannels(){return CHANNELS.filter(([key])=>$id('gei_channel_'+k
 function profileMarkup(){
  const typeOptions='<option value="">Selecione o ramo...</option>'+TYPES.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
  const channelOptions=CHANNELS.map(([v,l])=>'<label style="display:flex;gap:8px;align-items:center;border:1px solid #e5eaf1;border-radius:8px;padding:9px;font-size:12px"><input type="checkbox" id="gei_channel_'+v+'" value="'+v+'"> '+l+'</label>').join('');
- return '<section class="card" id="geiBusinessProfile"><h3 style="margin:0 0 6px">Perfil inteligente da empresa</h3><p class="muted" style="margin:0 0 12px">Escolha o ramo e os canais utilizados. O G.E.I360 organiza os módulos recomendados para esse negócio.</p><p class="muted" style="font-size:11px;margin:0 0 12px">O núcleo de cadastros, estoque, vendas, compras, financeiro e documentos atende diferentes atividades. Se o ramo não estiver listado, escolha “Outro ramo”. Recursos específicos e integrações ainda não disponíveis aparecem como planejados.</p><div id="geiProfileCompleteness" class="notice">Cadastro incompleto: escolha o ramo e pelo menos um canal.</div><div class="field"><label for="geiBusinessType">Ramo de atividade</label><select id="geiBusinessType">'+typeOptions+'</select></div><div class="field"><label>Canais de venda e atendimento</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px">'+channelOptions+'</div></div><div id="geiProfilePreview" class="notice" style="margin-top:12px">Selecione o ramo para visualizar os módulos recomendados.</div><div id="geiIfodPanel" class="notice hidden"></div><p id="geiProfileStatus" class="muted" style="font-size:11px;margin:8px 0 0">O perfil será salvo junto com os dados da empresa.</p></section>';
+ return '<section class="card" id="geiBusinessProfile"><h3 style="margin:0 0 6px">Perfil inteligente da empresa</h3><p class="muted" style="margin:0 0 12px">Escolha o ramo e os canais utilizados. O G.E.I360 organiza os módulos recomendados para esse negócio.</p><p class="muted" style="font-size:11px;margin:0 0 12px">O núcleo de cadastros, estoque, vendas, compras, financeiro e documentos atende diferentes atividades. Se o ramo não estiver listado, escolha “Outro ramo”. Recursos específicos e integrações ainda não disponíveis aparecem como planejados.</p><div id="geiProfileCompleteness" class="notice">Cadastro incompleto: escolha o ramo e pelo menos um canal.</div><div class="field"><label for="geiBusinessType">Ramo de atividade</label><select id="geiBusinessType">'+typeOptions+'</select></div><div class="field"><label for="geiActivityDetail">Atividade específica (opcional)</label><input id="geiActivityDetail" maxlength="120" placeholder="Ex.: lanchonete, padaria, açougue, hortifruti, cafeteria..."></div><div class="field"><label>Canais de venda e atendimento</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px">'+channelOptions+'</div></div><div id="geiProfilePreview" class="notice" style="margin-top:12px">Selecione o ramo para visualizar os módulos recomendados.</div><div id="geiIfodPanel" class="notice hidden"></div><p id="geiProfileStatus" class="muted" style="font-size:11px;margin:8px 0 0">O perfil será salvo junto com os dados da empresa.</p></section>';
 }
 function updatePreview(){
  const type=$id('geiBusinessType')?.value||'';
@@ -80,7 +80,7 @@ async function loadProfile(){
  currentProfile=null;
  if(!companyId)return;
  try{
-  const rows=await api('/rest/v1/company_business_profiles?select=company_id,business_type,sales_channels,created_by,updated_at&company_id=eq.'+encodeURIComponent(companyId)+'&limit=1');
+  const rows=await api('/rest/v1/company_business_profiles?select=company_id,business_type,business_activity_detail,sales_channels,created_by,updated_at&company_id=eq.'+encodeURIComponent(companyId)+'&limit=1');
   currentProfile=rows?.[0]||null;
  }catch(e){
   const status=$id('geiProfileStatus');
@@ -94,10 +94,11 @@ async function saveProfile(){
  const businessType=$id('geiBusinessType')?.value||'';
  const channels=selectedChannels();
  if(!businessType||!channels.length){if(status)status.textContent='Empresa salva. Perfil incompleto: escolha o ramo e marque pelo menos um canal.';return}
- const payload={company_id:companyId,business_type:businessType,sales_channels:channels};
+ const activityDetail=$id('geiActivityDetail')?.value.trim()||null;
+ const payload={company_id:companyId,business_type:businessType,business_activity_detail:activityDetail,sales_channels:channels};
  try{
   if(currentProfile){
-   await api('/rest/v1/company_business_profiles?company_id=eq.'+encodeURIComponent(companyId),{method:'PATCH',body:{business_type:payload.business_type,sales_channels:payload.sales_channels}});
+   await api('/rest/v1/company_business_profiles?company_id=eq.'+encodeURIComponent(companyId),{method:'PATCH',body:{business_type:payload.business_type,business_activity_detail:payload.business_activity_detail,sales_channels:payload.sales_channels}});
   }else{
    await api('/rest/v1/company_business_profiles',{method:'POST',body:{...payload,created_by:session.user.id}});
   }
@@ -112,6 +113,7 @@ function attachProfile(){
  if(!form||!$id('geiBusinessProfile'))return;
  const type=$id('geiBusinessType');
  type.value=currentProfile?.business_type||'';
+ const activity=$id('geiActivityDetail');if(activity)activity.value=currentProfile?.business_activity_detail||'';
  for(const [key] of CHANNELS){const el=$id('gei_channel_'+key);if(el)el.checked=(currentProfile?.sales_channels||[]).includes(key)}
  type.onchange=updatePreview;
  const companyName=$id('companyName');if(companyName)companyName.addEventListener('input',updatePreview);
