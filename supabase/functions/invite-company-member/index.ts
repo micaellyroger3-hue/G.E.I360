@@ -27,9 +27,10 @@ Deno.serve(async (req: Request) => {
 
     const url = Deno.env.get("SUPABASE_URL");
     const publishableRaw = Deno.env.get("SUPABASE_PUBLISHABLE_KEYS");
-    const secretRaw = Deno.env.get("SUPABASE_SECRET_KEYS");
     const publishable = publishableRaw ? JSON.parse(publishableRaw).default : Deno.env.get("SUPABASE_ANON_KEY");
-    const secret = secretRaw ? JSON.parse(secretRaw).default : Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    // A chave legada service_role é JWT e permanece disponível no runtime hosted.
+    // Mantê-la somente no servidor evita enviar sb_secret_ como Bearer JWT.
+    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!url || !publishable || !secret) {
       return json({ error: "Configuração segura do serviço indisponível." }, 500);
     }
