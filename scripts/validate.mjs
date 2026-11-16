@@ -49,7 +49,7 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v15"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v16"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
@@ -58,7 +58,7 @@ for (const file of [
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
   '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
   '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql',
-  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql','20261116085000_gei_records_role_guard.sql','20261116121000_least_privilege_cleanup.sql'
+  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql','20261116085000_gei_records_role_guard.sql','20261116121000_least_privilege_cleanup.sql','20261116122000_business_activity_detail.sql','20261116121000_least_privilege_cleanup.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const brazilDatesSql = fs.readFileSync('supabase/migrations/20261116083715_brazil_local_business_dates.sql', 'utf8');
@@ -112,18 +112,20 @@ assert.ok(modules.includes('não um modelo de IA generativa'), 'Dashboard must d
 
 const profileJs = fs.readFileSync('business-profiles.js', 'utf8');
 new Function(profileJs);
-assert.ok(html.includes('business-profiles.js?v=20261116-01'), 'Business profile script not loaded');
+assert.ok(html.includes('business-profiles.js?v=20261116-02'), 'Business profile script not loaded');
 assert.ok(worker.includes('./business-profiles.js?v=20261116-01'), 'Business profile script missing from offline shell');
 assert.ok(worker.includes('gei360-shell-v15'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
 assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
-assert.ok(profileJs.includes('business_type') && profileJs.includes('sales_channels'), 'Business profile persistence fields missing');
+assert.ok(profileJs.includes('business_type') && profileJs.includes('business_activity_detail') && profileJs.includes('sales_channels'), 'Business profile persistence fields missing');
 assert.ok(profileJs.includes('Outro ramo (qualquer atividade)'), 'Generic business profile option missing');
 assert.ok(profileJs.includes("'Estoque (se aplicável)':'products'"), 'Generic profile must link to the available stock module');
 assert.ok(profileJs.includes('Produção e fichas de preparo (registro manual)') && profileJs.includes('Controle manual de validade e perdas'), 'Sector recommendations must match implemented manual workflows');
 assert.ok(!/access_token|refresh_token|client_secret|service_role/i.test(profileJs), 'Third-party secrets must not be stored in browser profile code');
 const profileSql = fs.readFileSync('supabase/migrations/202611100002_company_business_profiles.sql', 'utf8');
+const activityDetailSql = fs.readFileSync('supabase/migrations/20261116122000_business_activity_detail.sql', 'utf8');
+assert.ok(activityDetailSql.includes('business_activity_detail') && activityDetailSql.includes('<= 120'), 'Flexible business activity detail schema missing');
 assert.ok(profileSql.includes('enable row level security'), 'Business profile RLS missing');
 assert.ok(profileSql.includes('is_company_member(company_id)'), 'Business profile member read policy missing');
 assert.ok(profileSql.includes("array['owner','admin']"), 'Business profile owner/admin write guard missing');
