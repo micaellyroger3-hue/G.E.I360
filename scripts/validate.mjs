@@ -3,10 +3,12 @@ import assert from 'node:assert/strict';
 
 const html = fs.readFileSync('index.html', 'utf8');
 const modules = fs.readFileSync('modules.js', 'utf8');
+const profiles = fs.readFileSync('business-profiles.js', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const worker = fs.readFileSync('sw.js', 'utf8');
 
 new Function(modules);
+new Function(profiles);
 const inlineScripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
   .map(match => match[1]).filter(source => source.trim());
 assert.ok(inlineScripts.length > 0, 'index.html must contain application scripts');
@@ -42,7 +44,7 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v12"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v13"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
@@ -51,8 +53,11 @@ for (const file of [
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
   '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
   '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql',
-  '202611110001_employee_integrity.sql'
+  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
+
+const sectorOpsMigration = fs.readFileSync('supabase/migrations/20261116000938_sector_operations_records.sql', 'utf8');
+assert.ok(sectorOpsMigration.includes("'sector_ops'") && sectorOpsMigration.includes('gei_records_module_code_check'), 'Sector operations module code migration missing');
 
 const coreSql = fs.readFileSync('supabase/migrations/202611080001_erp_modules.sql', 'utf8');
 assert.ok(coreSql.includes('enable row level security'), 'RLS setup missing from core migration');
@@ -86,9 +91,9 @@ assert.ok(modules.includes('não um modelo de IA generativa'), 'Dashboard must d
 
 const profileJs = fs.readFileSync('business-profiles.js', 'utf8');
 new Function(profileJs);
-assert.ok(html.includes('business-profiles.js?v=20261110-01'), 'Business profile script not loaded');
-assert.ok(worker.includes('./business-profiles.js?v=20261110-01'), 'Business profile script missing from offline shell');
-assert.ok(worker.includes('gei360-shell-v12'), 'Offline shell cache version missing');
+assert.ok(html.includes('business-profiles.js?v=20261115-01'), 'Business profile script not loaded');
+assert.ok(worker.includes('./business-profiles.js?v=20261115-01'), 'Business profile script missing from offline shell');
+assert.ok(worker.includes('gei360-shell-v13'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
 assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
@@ -193,5 +198,13 @@ const barcodePreflight = fs.readFileSync('supabase/diagnostics/202611100003_barc
 assert.ok(barcodePreflight.includes("to_regclass('public.products')") && barcodePreflight.includes('return;'), 'Barcode preflight must safely handle a missing table');
 assert.ok(tenantAudit.includes('aclexplode') && tenantAudit.includes('a.grantee=0'), 'Tenant audit must inspect PUBLIC function grants through ACL, not a pseudo-role');
 assert.ok(!tenantAudit.includes("has_function_privilege('public'"), 'Tenant audit must not treat PUBLIC as a normal database role');
+
+
+// Operação contextual por setor usa registros multiempresa com RLS existente.
+assert.ok(modules.includes('const GEI_SECTOR_OPS') && modules.includes('erpRenderSectorOperations'), 'Sector-specific operational area missing');
+assert.ok(modules.includes("module_code:'sector_ops'") && modules.includes("gei_records?select=id,record_type,payload"), 'Sector operations must persist and read company-scoped records');
+assert.ok(modules.includes("readOnly:companyRole==='viewer'"), 'Sector operations must be read-only for non-managers');
+assert.ok(html.includes('data-page="sector"'), 'Sector operations navigation missing');
+assert.ok(profiles.includes("'Entregas':'sector'") && profiles.includes("'Estoque e validade':'sector'"), 'Sector profile shortcuts must open operational area');
 
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
