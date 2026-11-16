@@ -412,7 +412,7 @@ document.addEventListener('click', async event => {
   try {
     const current = geiCompanyModuleRows.find(row => row.module_code === code);
     if (current) {
-      await api('/rest/v1/company_modules?id=eq.' + current.id,{method:'PATCH',body:{is_enabled:next,updated_at:new Date().toISOString()}});
+      await api('/rest/v1/company_modules?id=eq.' + current.id,{method:'PATCH',body:{is_enabled:next,enabled_by:session.user.id,updated_at:new Date().toISOString(),...(next?{enabled_at:new Date().toISOString()}:{})}});
     } else {
       await api('/rest/v1/company_modules',{method:'POST',body:{company_id:companyId,module_code:code,is_enabled:next,enabled_by:session.user.id}});
     }
