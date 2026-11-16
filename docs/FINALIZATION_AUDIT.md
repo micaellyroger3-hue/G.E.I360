@@ -101,4 +101,12 @@ A aplicação está publicada e a validação automatizada passou. Isso não equ
 - Os backups do banco não incluem objetos armazenados via Storage API. O bucket privado `company-documents` precisa de exportação separada dos arquivos.
 - A restauração de um backup no projeto de produção causa indisponibilidade durante o processo. A primeira restauração de ensaio deve ocorrer em projeto separado; não restaurar produção sem autorização explícita.
 - O Advisor continua indicando a proteção contra senhas vazadas desativada. A documentação oficial confirma que esse recurso exige Pro ou superior; no plano Free atual, não pode ser ativado sem upgrade.
-- A API de listagem de projetos não expôs o plano contratado, portanto o plano atual não foi presumido nesta auditoria.
+- O plano Free foi confirmado diretamente nos detalhes da organização NEXORA; nenhuma alteração de plano ou cobrança foi realizada.
+
+
+## Revisão final das funções SECURITY DEFINER — 16/11/2026
+- Foram inspecionadas as seis funções sinalizadas pelo Security Advisor: `create_company`, `create_sale_cart`, `has_company_role`, `is_company_member`, `receive_purchase_cart` e `record_stock_movement`.
+- As seis usam `search_path` vazio e qualificam explicitamente objetos do schema `public`/`auth`.
+- `PUBLIC` e `anon` não têm EXECUTE. `authenticated` tem EXECUTE nas funções necessárias aos fluxos autenticados e às políticas RLS.
+- As RPCs operacionais validam `auth.uid()` e papel ativo owner/admin/manager antes de gravar. As funções auxiliares verificam associação ativa à empresa.
+- Os avisos do Advisor sobre execução por `authenticated` são esperados para estes fluxos. Não revogar EXECUTE em bloco: isso quebraria vendas, compras, estoque e políticas de isolamento.
