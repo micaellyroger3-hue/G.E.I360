@@ -248,6 +248,6 @@ assert.ok(worker.includes('modules.js?v=20261116-05') && worker.includes('gei360
 
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
 assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunction.includes('company_members'), 'Secure employee invitation function missing');
-assert.ok(inviteFunction.includes('SUPABASE_SECRET_KEYS') && inviteFunction.includes('getUser(token)'), 'Invitation function must use server-side secret and verify the caller');
+assert.ok(inviteFunction.includes('SUPABASE_SERVICE_ROLE_KEY') && inviteFunction.includes('getUser(token)'), 'Invitation function must use server-side secret and verify the caller');
 assert.ok(inviteFunction.includes('includes(membership.role)') && inviteFunction.includes('owner') && inviteFunction.includes('admin'), 'Only company owners/admins may invite employees');
 assert.ok(!html.includes('SUPABASE_SECRET_KEYS') && !html.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Server-side secrets must never be shipped to the browser');
