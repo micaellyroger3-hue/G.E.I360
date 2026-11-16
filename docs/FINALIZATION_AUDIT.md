@@ -62,7 +62,7 @@ O banco já possuía schema e dados antes da revisão. O antigo instalador conso
 - Distribuidora/e-commerce: expedição e separação.
 - Construção: diário de obra.
 - Os registros são manuais e não alteram automaticamente estoque/financeiro.
-- iFood sem integração oficial; NF-e/NFC-e sem emissão SEFAZ; IA generativa não conectada; ficha de funcionário não cria usuário de login.
+- iFood sem integração oficial; NF-e/NFC-e sem emissão SEFAZ; IA generativa não conectada. O convite/login de funcionários foi implementado em Edge Function; a ficha continua separada da conta de acesso.
 
 ## Achados adicionais da revisão de 16/11/2026
 - A aplicação passou a exibir datas de vendas e vencimentos financeiros vinculados usando a data local derivada de `created_at`, evitando o deslocamento de dia causado por `CURRENT_DATE` em sessão UTC.
@@ -87,3 +87,10 @@ A aplicação está publicada e a validação automatizada passou. Isso não equ
 - A navegação dinâmica não substitui RLS. As tabelas continuam protegidas pelas políticas de associação e papel.
 - O menu só apresenta áreas implementadas no frontend. PDV, multi-filial e auditoria permanecem fora do menu até implementação.
 - Código, validação automatizada e publicação do Pages foram concluídos no commit `28b6cf875db98402163d93e55afb01bd2812a995`. A conferência visual final em Android ainda depende do aparelho do usuário.
+
+
+## Atualização de 16/11/2026 — convite seguro de funcionários
+- Edge Function `invite-company-member` implantada no Supabase e ativa (versão 3, JWT obrigatório).
+- O fluxo valida a sessão e exige associação ativa com papel owner/admin; o papel concedido é sempre employee.
+- A interface adiciona **Convidar acesso** às fichas com e-mail. A pessoa aceita o convite, define a senha no app e acessa a empresa.
+- Nenhum e-mail real foi disparado durante a implementação; a homologação do SMTP/redirect com e-mail de teste ainda depende do proprietário.
