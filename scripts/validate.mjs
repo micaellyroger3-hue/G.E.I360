@@ -19,6 +19,9 @@ for (const feature of [
   'erpRenderReports','erpUploadDocument','create_sale_cart','receive_purchase_cart','Inteligência de gestão','overdueTotal'
 ]) assert.ok(modules.includes(feature) || html.includes(feature), 'Missing feature: ' + feature);
 assert.ok(modules.includes('erpSaleLocalDate') && modules.includes('erpSaleMonthKey') && modules.includes('erpEffectiveDueDate'), 'Brazilian local date handling missing');
+assert.ok(modules.includes('erpBrazilDateFromDate') && modules.includes("timeZone:'America/Sao_Paulo'"), 'Explicit Brazil timezone handling missing');
+assert.ok(modules.includes('erpEffectiveDueDate(r)<erpToday()') && modules.includes('erpEffectiveDueDate(e)<today'), 'Overdue indicators must use Brazil local due dates');
+assert.ok(!/due_date<now\\.toISOString\\(\\)\\.slice\\(0,10\\)/.test(modules), 'UTC date comparisons must not be used for overdue calculations');
 assert.ok(modules.includes('A receber') && modules.includes('A pagar') && modules.includes('Vencido'), 'Expanded financial report missing');
 assert.ok(modules.includes('pageSize=500') && modules.includes('offset=\'+offset') && modules.includes('created_at.desc,id.desc'), 'Company data pagination missing');
 
@@ -55,8 +58,11 @@ for (const file of [
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
   '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
   '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql',
-  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql'
+  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
+
+const brazilDatesSql = fs.readFileSync('supabase/migrations/20261116083715_brazil_local_business_dates.sql', 'utf8');
+assert.ok(brazilDatesSql.includes("America/Sao_Paulo") && brazilDatesSql.includes('create_sale_financial_entry') && brazilDatesSql.includes('create_purchase_financial_entry'), 'Brazil local date migration must cover sales and purchase finance triggers');
 
 const legacyRpcRevokes = fs.readFileSync('supabase/migrations/20261116001449_revoke_unused_legacy_rpcs.sql', 'utf8');
 assert.ok(legacyRpcRevokes.includes('public.create_sale') && legacyRpcRevokes.includes('public.receive_purchase') && legacyRpcRevokes.includes('public.get_my_companies') && legacyRpcRevokes.includes('revoke execute'), 'Unused legacy RPC grants must be revoked');
