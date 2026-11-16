@@ -21,7 +21,7 @@ for (const feature of [
 assert.ok(modules.includes('erpSaleLocalDate') && modules.includes('erpSaleMonthKey') && modules.includes('erpEffectiveDueDate'), 'Brazilian local date handling missing');
 assert.ok(modules.includes('erpBrazilDateFromDate') && modules.includes("timeZone:'America/Sao_Paulo'"), 'Explicit Brazil timezone handling missing');
 assert.ok(modules.includes('erpEffectiveDueDate(r)<erpToday()') && modules.includes('erpEffectiveDueDate(e)<today'), 'Overdue indicators must use Brazil local due dates');
-assert.ok(!/due_date<now\\.toISOString\\(\\)\\.slice\\(0,10\\)/.test(modules), 'UTC date comparisons must not be used for overdue calculations');
+assert.ok(!/due_date<now\.toISOString\(\)\.slice\(0,10\)/.test(modules), 'UTC date comparisons must not be used for overdue calculations');
 assert.ok(modules.includes('A receber') && modules.includes('A pagar') && modules.includes('Vencido'), 'Expanded financial report missing');
 assert.ok(modules.includes('pageSize=500') && modules.includes('offset=\'+offset') && modules.includes('created_at.desc,id.desc'), 'Company data pagination missing');
 
