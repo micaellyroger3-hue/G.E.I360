@@ -6,7 +6,6 @@ A empresa define o ramo em **Minha empresa** e acessa **Operação do ramo**. Os
 |---|---|
 | Alimentação preparada (restaurantes, lanchonetes, padarias, pizzarias e cafeterias) | Desperdício, produção e ficha de preparo (registros manuais) |
 | Mercado e alimentos (mercadinhos, supermercados, mercearias, açougues e hortifrutis) | Validade, perdas/avarias e necessidade de reposição (registros manuais) |
-
 | Loja / comércio | Campanhas/promos e tarefas comerciais |
 | Prestação de serviços | Ordens de serviço |
 | Distribuidora / atacado | Expedição e entrega |
