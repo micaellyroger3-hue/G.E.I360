@@ -249,3 +249,174 @@ window.addEventListener('unhandledrejection', function(event) {
       (event.reason?.message || String(event.reason || 'erro desconhecido')));
   }
 });
+
+
+// Catálogo dinâmico de módulos por empresa.
+// A navegação é uma conveniência de interface; RLS e políticas do banco
+// continuam sendo a barreira real de autorização.
+const GEI_MODULE_PAGES = {
+  dashboard: ['home'],
+  cadastros: ['suppliers','customers','categories'],
+  produtos_servicos: ['products'],
+  estoque: ['stock'],
+  compras: ['purchases'],
+  vendas: ['sales'],
+  financeiro: ['finance'],
+  rh: ['employees'],
+  fiscal: ['documents'],
+  relatorios: ['reports']
+};
+const GEI_MODULE_LABELS = {
+  home:'Visão geral', sector:'Operação do ramo', company:'Minha empresa',
+  employees:'Funcionários', products:'Estoque', stock:'Movimentações',
+  suppliers:'Fornecedores', customers:'Clientes', categories:'Categorias',
+  sales:'Vendas', purchases:'Compras', finance:'Financeiro',
+  documents:'Documentos', reports:'Relatórios'
+};
+let geiModuleCatalog = [];
+let geiCompanyModuleRows = [];
+let geiModuleAccess = {};
+let geiModuleLoadError = '';
+
+function geiModuleEnabled(code) {
+  const item = geiModuleCatalog.find(x => x.code === code);
+  if (!item || !item.is_available) return false;
+  const assigned = geiCompanyModuleRows.find(x => x.module_code === code);
+  return assigned ? assigned.is_enabled === true : item.is_available === true;
+}
+async function geiLoadModuleAccess() {
+  if (!companyId) return;
+  const [catalog, assignments] = await Promise.all([
+    api('/rest/v1/gei_module_catalog?select=code,name,description,category,is_core,is_available,display_order&is_available=eq.true&order=display_order.asc,code.asc'),
+    api('/rest/v1/company_modules?select=id,module_code,is_enabled&company_id=eq.' + companyId)
+  ]);
+  if (!Array.isArray(catalog) || !Array.isArray(assignments)) throw Error('Catálogo de módulos indisponível.');
+  geiModuleCatalog = catalog;
+  geiCompanyModuleRows = assignments;
+  geiModuleAccess = {};
+  for (const item of catalog) geiModuleAccess[item.code] = geiModuleEnabled(item.code);
+  geiModuleLoadError = '';
+}
+function geiPageIsEnabled(page) {
+  if (page === 'company') return true;
+  if (page === 'sector') return geiModuleEnabled('servicos') || geiModuleEnabled('industria');
+  const pairs = {
+    home:'dashboard', employees:'rh', products:'produtos_servicos',
+    stock:'estoque', suppliers:'cadastros', customers:'cadastros',
+    categories:'cadastros', sales:'vendas', purchases:'compras',
+    finance:'financeiro', documents:'fiscal', reports:'relatorios'
+  };
+  const code = pairs[page];
+  return !code || geiModuleEnabled(code);
+}
+function geiAddNavButton(nav, page) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.dataset.page = page;
+  button.textContent = GEI_MODULE_LABELS[page] || page;
+  nav.appendChild(button);
+}
+function geiRenderModuleNavigation() {
+  const nav = document.querySelector('.nav');
+  if (!nav || !geiModuleCatalog.length) return;
+  nav.replaceChildren();
+  if (geiModuleEnabled('dashboard')) geiAddNavButton(nav,'home');
+  if (geiModuleEnabled('servicos') || geiModuleEnabled('industria')) geiAddNavButton(nav,'sector');
+  geiAddNavButton(nav,'company');
+  const order = [
+    ['rh','employees'],['produtos_servicos','products'],['estoque','stock'],
+    ['cadastros','suppliers'],['cadastros','customers'],['cadastros','categories'],
+    ['vendas','sales'],['compras','purchases'],['financeiro','finance'],
+    ['fiscal','documents'],['relatorios','reports']
+  ];
+  for (const [code,page] of order) {
+    if (geiModuleEnabled(code)) geiAddNavButton(nav,page);
+  }
+  nav.querySelectorAll('[data-page]').forEach(button => {
+    button.onclick = () => setPage(button.dataset.page);
+  });
+}
+async function geiRefreshModuleNavigation() {
+  if (!companyId) return;
+  try {
+    await geiLoadModuleAccess();
+    geiRenderModuleNavigation();
+  } catch (error) {
+    geiModuleLoadError = error.message || 'Falha ao carregar módulos.';
+    console.warn('G.E.I360 catálogo:', geiModuleLoadError);
+    // Mantém a navegação atual em caso de falha de leitura, sem bloquear a operação.
+  }
+}
+async function geiRenderCompanyModuleSettings() {
+  const host = $('view');
+  if (!host || !companyId || !['owner','admin'].includes(companyRole)) return;
+  try {
+    await geiLoadModuleAccess();
+    const supported = geiModuleCatalog.filter(item =>
+      Object.prototype.hasOwnProperty.call(GEI_MODULE_PAGES,item.code) ||
+      ['servicos','industria'].includes(item.code)
+    );
+    const rows = supported.map(item => {
+      const enabled = geiModuleEnabled(item.code);
+      const locked = item.is_core === true;
+      return '<div class="gei-module-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #e5eaf1">' +
+        '<div><b>' + esc(item.name) + '</b><div class="muted" style="font-size:12px">' + esc(item.description || '') + '</div></div>' +
+        (locked ? '<span class="muted">Essencial</span>' :
+          '<button type="button" class="' + (enabled ? 'alt' : '') + ' small" data-module-toggle="' + esc(item.code) + '" data-enabled="' + (enabled?'true':'false') + '">' + (enabled?'Ativado':'Desativado') + '</button>') +
+        '</div>';
+    }).join('');
+    const card = document.createElement('section');
+    card.className = 'card';
+    card.id = 'geiModuleSettings';
+    card.innerHTML = '<div class="head"><div><b>Módulos da empresa</b><div class="muted" style="font-size:12px">Ative ou desative áreas disponíveis para esta empresa.</div></div></div>' +
+      rows + '<p class="muted" style="font-size:11px;margin:12px 0 0">Módulos ainda não implementados não aparecem aqui. As permissões de dados continuam protegidas no banco.</p>';
+    $('view').appendChild(card);
+  } catch (error) {
+    const note = document.createElement('div');
+    note.className = 'notice';
+    note.textContent = 'Não foi possível carregar a configuração de módulos: ' + (error.message || 'erro desconhecido');
+    host.appendChild(note);
+  }
+}
+const geiOriginalCompanyRender = renderCompany;
+renderCompany = async function() {
+  await geiOriginalCompanyRender();
+  await geiRenderCompanyModuleSettings();
+};
+const geiOriginalRenderWithModules = render;
+render = async function() {
+  await geiOriginalRenderWithModules();
+  await geiRefreshModuleNavigation();
+};
+const geiOriginalSetPageWithModules = setPage;
+setPage = async function(page) {
+  if (geiModuleCatalog.length && !geiPageIsEnabled(page)) {
+    erpStopBarcode();
+    erpPageShell('Módulo desativado','Esta área não está habilitada para a empresa selecionada.','<div class="notice">Peça ao proprietário ou administrador para ativar este módulo em Minha empresa.</div>');
+    document.querySelectorAll('[data-page]').forEach(button => button.classList.toggle('active',button.dataset.page===page));
+    return;
+  }
+  return geiOriginalSetPageWithModules(page);
+};
+document.addEventListener('click', async event => {
+  const button = event.target.closest('[data-module-toggle]');
+  if (!button) return;
+  if (!companyId || !['owner','admin'].includes(companyRole)) return;
+  const code = button.dataset.moduleToggle;
+  const next = button.dataset.enabled !== 'true';
+  button.disabled = true;
+  try {
+    const current = geiCompanyModuleRows.find(row => row.module_code === code);
+    if (current) {
+      await api('/rest/v1/company_modules?id=eq.' + current.id,{method:'PATCH',body:{is_enabled:next,updated_at:new Date().toISOString()}});
+    } else {
+      await api('/rest/v1/company_modules',{method:'POST',body:{company_id:companyId,module_code:code,is_enabled:next,enabled_by:session.user.id}});
+    }
+    await geiRefreshModuleNavigation();
+    await geiRenderCompanyModuleSettings();
+    if (!geiPageIsEnabled(document.querySelector('.nav button.active')?.dataset.page || 'home')) await setPage('home');
+  } catch (error) {
+    alert('Não foi possível atualizar o módulo: ' + (error.message || 'erro desconhecido'));
+    button.disabled = false;
+  }
+});
