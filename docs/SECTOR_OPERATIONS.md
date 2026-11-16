@@ -4,8 +4,9 @@ A empresa define o ramo em **Minha empresa** e acessa **Operação do ramo**. Os
 
 | Ramo | Registros disponíveis |
 |---|---|
-| Restaurante / lanchonete | Desperdício, produção e ficha de preparo |
-| Mercado / mercearia | Validade, perdas/avarias e necessidade de reposição |
+| Alimentação preparada (restaurantes, lanchonetes, padarias, pizzarias e cafeterias) | Desperdício, produção e ficha de preparo (registros manuais) |
+| Mercado e alimentos (mercadinhos, supermercados, mercearias, açougues e hortifrutis) | Validade, perdas/avarias e necessidade de reposição (registros manuais) |
+
 | Loja / comércio | Campanhas/promos e tarefas comerciais |
 | Prestação de serviços | Ordens de serviço |
 | Distribuidora / atacado | Expedição e entrega |
@@ -13,6 +14,10 @@ A empresa define o ramo em **Minha empresa** e acessa **Operação do ramo**. Os
 | Construção / obras | Diário de obra e etapas |
 
 ## Persistência e isolamento
+O núcleo geral do G.E.I360 (cadastros, estoque, vendas, compras, clientes, fornecedores, financeiro e documentos) pode ser usado por diferentes atividades. Quando o ramo não estiver na lista, selecione **Outro ramo** para usar os módulos gerais e os registros operacionais genéricos.
+
+Os registros setoriais são manuais e não significam automação completa. Os módulos recomendados só abrem telas existentes; itens sem tela correspondente permanecem identificados como planejados.
+
 Os registros são armazenados em `public.gei_records`, com:
 - `company_id` da empresa selecionada;
 - `module_code = 'sector_ops'`;
