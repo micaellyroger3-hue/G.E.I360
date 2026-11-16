@@ -24,6 +24,11 @@ Migrations remotas registradas:
 9. `sector_operations_records`
 10. `legacy_empresas_lockdown`
 11. `revoke_unused_legacy_rpcs`
+12. `brazil_local_business_dates`
+13. `gei_records_role_guard`
+14. `least_privilege_cleanup`
+15. `business_activity_detail`
+16. `business_activity_detail_permissions`
 
 O banco já possuía schema e dados antes da revisão. O antigo instalador consolidado foi desativado para impedir execução de migrations-base incompatíveis; não executar `supabase/INSTALL_GEI360_ALL.sql` nem `supabase db push` até reconciliação formal.
 
