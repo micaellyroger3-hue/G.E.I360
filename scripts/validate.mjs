@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 const html = fs.readFileSync('index.html', 'utf8');
 const modules = fs.readFileSync('modules.js', 'utf8');
+const profiles = fs.readFileSync('business-profiles.js', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const worker = fs.readFileSync('sw.js', 'utf8');
 
@@ -42,7 +43,7 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v12"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v13"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
@@ -199,7 +200,7 @@ assert.ok(!tenantAudit.includes("has_function_privilege('public'"), 'Tenant audi
 assert.ok(modules.includes('const GEI_SECTOR_OPS') && modules.includes('erpRenderSectorOperations'), 'Sector-specific operational area missing');
 assert.ok(modules.includes("module_code:'sector_ops'") && modules.includes("gei_records?select=id,record_type,payload"), 'Sector operations must persist and read company-scoped records');
 assert.ok(modules.includes("readOnly:!['owner','admin','manager'].includes(companyRole)"), 'Sector operations must be read-only for non-managers');
-assert.ok(index.includes('data-page="sector"'), 'Sector operations navigation missing');
+assert.ok(html.includes('data-page="sector"'), 'Sector operations navigation missing');
 assert.ok(profiles.includes("'Entregas':'sector'") && profiles.includes("'Estoque e validade':'sector'"), 'Sector profile shortcuts must open operational area');
 
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
