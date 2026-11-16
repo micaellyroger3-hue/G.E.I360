@@ -11,7 +11,7 @@ O modo offline mantém apenas a estrutura de abertura. Login e dados empresariai
 ## Módulos disponíveis no código
 - Cadastro, login, renovação de sessão, recuperação de senha e logout.
 - Cadastro e seleção de empresas; perfil por ramo e canais comerciais.
-- Funcionários (fichas; cadastrar ficha não cria login de funcionário).
+- Funcionários: fichas da equipe e convite de acesso por e-mail (owner/admin), com vínculo à empresa e perfil inicial employee.
 - Clientes, fornecedores, categorias, produtos, SKU e código de barras.
 - Estoque, entradas, saídas e ajustes.
 - Compras e vendas com carrinho; integração automática com movimentações e lançamentos financeiros.
@@ -70,7 +70,7 @@ Verificações confirmadas:
 - iFood: sem importação/sincronização de pedidos e cardápio.
 - NF-e/NFC-e: documentos e anexos; sem emissão ou transmissão à SEFAZ.
 - IA generativa: não há assistente generativo conectado.
-- Convite/login de funcionários: cadastro de ficha não cria credencial.
+- Convites de funcionários: Edge Function segura ativa; a ficha não cria login automaticamente. Owner/admin envia convite a partir de uma ficha com e-mail. A pessoa aceita o link e define a senha no aplicativo.
 
 ## Segurança de migrations e chaves
 O banco já tinha tabelas e dados antes desta revisão, sem histórico inicial de migrations. O antigo instalador `supabase/INSTALL_GEI360_ALL.sql` está desativado para impedir execução incompatível. **Não executar o instalador antigo nem `supabase db push`** até reconciliar formalmente todo o histórico.
