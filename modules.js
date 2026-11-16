@@ -128,8 +128,83 @@ async function erpRenderDashboard(){
 }
 
 
+
+/* Operações específicas por ramo: registros append-only em gei_records.
+ * Não simula integração externa nem altera automaticamente estoque/financeiro.
+ */
+const GEI_SECTOR_OPS = {
+ restaurant:{title:'Operação · Restaurante e lanchonete',desc:'Controle diário de produção, desperdício e fichas de preparo.',records:[
+  {type:'waste',label:'Desperdício',fields:[['item','Produto / insumo','text',true],['quantity','Quantidade descartada','number',true],['unit','Unidade','text',true],['reason','Motivo','text',true],['estimated_cost','Custo estimado (R$)','number'],['occurred_on','Data','date',true]]},
+  {type:'production',label:'Produção',fields:[['item','Produto preparado','text',true],['quantity','Quantidade produzida','number',true],['unit','Unidade','text',true],['responsible','Responsável','text'],['occurred_on','Data','date',true],['notes','Observações','text']]},
+  {type:'recipe',label:'Ficha de preparo',fields:[['item','Prato / lanche','text',true],['yield','Rendimento (porções)','number',true],['ingredients','Ingredientes e quantidades','textarea',true],['estimated_cost','Custo total estimado (R$)','number'],['notes','Modo de preparo / observações','textarea']]}
+ ]},
+ grocery:{title:'Operação · Mercado e mercearia',desc:'Acompanhamento de validade, perdas e reposição.',records:[
+  {type:'expiry',label:'Controle de validade',fields:[['item','Produto','text',true],['quantity','Quantidade','number',true],['unit','Unidade','text',true],['expires_on','Validade','date',true],['action','Ação planejada','select',true,['Monitorar','Promocionar','Retirar da venda']],['notes','Observações','text']]},
+  {type:'loss',label:'Perda / avaria',fields:[['item','Produto','text',true],['quantity','Quantidade perdida','number',true],['unit','Unidade','text',true],['reason','Motivo','text',true],['estimated_cost','Custo estimado (R$)','number'],['occurred_on','Data','date',true]]},
+  {type:'replenishment',label:'Necessidade de reposição',fields:[['item','Produto','text',true],['quantity','Quantidade necessária','number',true],['unit','Unidade','text',true],['supplier','Fornecedor sugerido','text'],['notes','Observações','text']]}
+ ]},
+ retail:{title:'Operação · Loja e comércio',desc:'Acompanhamento de campanhas, preços e tarefas comerciais.',records:[
+  {type:'promotion',label:'Campanha / promoção',fields:[['item','Produto / campanha','text',true],['old_price','Preço anterior (R$)','number'],['new_price','Preço promocional (R$)','number',true],['starts_on','Início','date'],['ends_on','Fim','date'],['notes','Condições','text']]},
+  {type:'task',label:'Tarefa comercial',fields:[['item','Tarefa','text',true],['responsible','Responsável','text'],['due_on','Prazo','date'],['status','Situação','select',true,['Pendente','Em andamento','Concluída']],['notes','Detalhes','textarea']]}
+ ]},
+ services:{title:'Operação · Prestação de serviços',desc:'Ordens de serviço, agenda e acompanhamento de clientes.',records:[
+  {type:'work_order',label:'Ordem de serviço',fields:[['item','Serviço solicitado','text',true],['customer','Cliente','text',true],['responsible','Responsável','text'],['due_on','Prazo','date'],['status','Situação','select',true,['Orçamento','Agendado','Em execução','Concluído','Cancelado']],['amount','Valor combinado (R$)','number'],['notes','Detalhes','textarea']]}
+ ]},
+ distributor:{title:'Operação · Distribuidora e atacado',desc:'Separação, expedição e entregas.',records:[
+  {type:'dispatch',label:'Expedição / entrega',fields:[['item','Pedido / cliente','text',true],['quantity','Volumes','number'],['responsible','Responsável','text'],['due_on','Data prevista','date'],['status','Situação','select',true,['A separar','Separado','Saiu para entrega','Entregue','Ocorrência']],['notes','Observações','textarea']]}
+ ]},
+ ecommerce:{title:'Operação · E-commerce',desc:'Separação, embalagem e expedição de pedidos.',records:[
+  {type:'fulfillment',label:'Separação de pedido',fields:[['item','Número do pedido','text',true],['customer','Cliente','text'],['responsible','Separado por','text'],['due_on','Prazo de envio','date'],['status','Situação','select',true,['A separar','Separado','Embalado','Enviado','Ocorrência']],['notes','Observações','textarea']]}
+ ]},
+ construction:{title:'Operação · Obras e construção',desc:'Diário de obra, etapas e materiais.',records:[
+  {type:'site_diary',label:'Diário de obra',fields:[['item','Obra / projeto','text',true],['stage','Etapa executada','text',true],['responsible','Responsável','text'],['quantity','Quantidade / medição','number'],['occurred_on','Data','date',true],['materials','Materiais utilizados','textarea'],['notes','Ocorrências / observações','textarea']]}
+ ]},
+ other:{title:'Operação · Registros da empresa',desc:'Registros operacionais organizados para o seu negócio.',records:[
+  {type:'task',label:'Registro operacional',fields:[['item','Assunto','text',true],['responsible','Responsável','text'],['due_on','Prazo','date'],['status','Situação','select',true,['Pendente','Em andamento','Concluída']],['notes','Detalhes','textarea']]}
+ ]}
+};
+async function erpRenderSectorOperations(options={}){
+ const readOnly=!!options.readOnly;
+ try{
+  const profiles=await api('/rest/v1/company_business_profiles?select=business_type&company_id=eq.'+encodeURIComponent(companyId)+'&limit=1');
+  const type=profiles?.[0]?.business_type||'other';
+  const config=GEI_SECTOR_OPS[type]||GEI_SECTOR_OPS.other;
+  const records=await api('/rest/v1/gei_records?select=id,record_type,payload,created_at&company_id=eq.'+encodeURIComponent(companyId)+'&module_code=eq.sector_ops&order=created_at.desc&limit=100');
+  const formOptions=config.records.map((r,i)=>'<option value="'+i+'">'+esc(r.label)+'</option>').join('');
+  const body='<section class="card"><div class="head"><div><b>'+esc(config.title)+'</b><p class="muted">'+esc(config.desc)+'</p></div><span class="gei-panel-tag">'+esc(type.toUpperCase())+'</span></div>'+
+   (readOnly?'<div class="notice">Seu perfil tem acesso de consulta. Peça ao administrador para registrar novas operações.</div>':'<form id="sectorOpsForm"><div class="field"><label>Tipo de registro</label><select id="sectorOpsType">'+formOptions+'</select></div><div id="sectorOpsFields"></div><button id="sectorOpsSave">Salvar registro</button></form>')+
+   '</section><section class="card"><div class="head"><div><b>Histórico operacional</b><p class="muted">Últimos 100 registros desta empresa.</p></div><span class="gei-count">'+records.length+'</span></div><div id="sectorOpsHistory"></div></section>';
+  erpPageShell(config.title,config.desc,body);
+  const renderFields=()=>{
+   const selected=config.records[Number($('sectorOpsType')?.value||0)]||config.records[0];
+   $('sectorOpsFields').innerHTML=selected.fields.map(([key,label,kind,required,choices])=>{
+    const req=required?'required':'';
+    if(kind==='textarea')return '<div class="field"><label>'+esc(label)+'</label><textarea name="'+key+'" '+req+' rows="3" style="width:100%;padding:10px;border:1px solid #dce3ec;border-radius:8px"></textarea></div>';
+    if(kind==='select')return '<div class="field"><label>'+esc(label)+'</label><select name="'+key+'" '+req+'>'+choices.map(v=>'<option value="'+esc(v)+'">'+esc(v)+'</option>').join('')+'</select></div>';
+    return '<div class="field"><label>'+esc(label)+'</label><input name="'+key+'" type="'+kind+'" '+req+' '+(kind==='number'?'min="0" step="0.001"':'')+'></div>';
+   }).join('');
+  };
+  if(!readOnly){renderFields();$('sectorOpsType').onchange=renderFields;$('sectorOpsForm').onsubmit=async event=>{
+   event.preventDefault();const selected=config.records[Number($('sectorOpsType').value)||0];const formData=new FormData(event.currentTarget);const payload={};
+   for(const [key,label,kind] of selected.fields){const value=formData.get(key);payload[key]=kind==='number'?(value===''?null:Number(value)):(String(value||'').trim()||null)}
+   $('sectorOpsSave').disabled=true;
+   try{
+    await api('/rest/v1/gei_records',{method:'POST',body:{company_id:companyId,module_code:'sector_ops',record_type:selected.type,payload,created_by:session.user.id}});
+    await erpRenderSectorOperations(options);
+   }catch(error){message($('view'),'Não foi possível salvar o registro: '+error.message)}
+   finally{const button=$('sectorOpsSave');if(button)button.disabled=false}
+  }}
+  const history=$('sectorOpsHistory');
+  history.innerHTML=records.length?'<div class="tablewrap"><table><thead><tr><th>Tipo</th><th>Resumo</th><th>Data de registro</th></tr></thead><tbody>'+records.map(record=>{
+   const definition=config.records.find(item=>item.type===record.record_type);
+   const summary=Object.entries(record.payload||{}).filter(([,value])=>value!==null&&value!=='').slice(0,4).map(([key,value])=>'<div><b>'+esc(key.replaceAll('_',' '))+':</b> '+esc(value)+'</div>').join('');
+   return '<tr><td>'+esc(definition?.label||record.record_type)+'</td><td>'+summary+'</td><td>'+new Date(record.created_at).toLocaleString('pt-BR')+'</td></tr>';
+  }).join('')+'</tbody></table></div>':'<div class="empty">Nenhum registro operacional foi lançado ainda.</div>';
+ }catch(error){erpPageShell('Operação do ramo','Módulos operacionais específicos','<div class="err">Não foi possível abrir esta área: '+esc(error.message)+'</div>')}
+}
+
 const erpSetPage= setPage;
-setPage=async function(page){erpStopBarcode();document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));const titles={home:'Visão geral',company:'Minha empresa',employees:'Funcionários',products:'Estoque',stock:'Movimentações',suppliers:'Fornecedores',customers:'Clientes',sales:'Vendas',purchases:'Compras',finance:'Financeiro',documents:'Documentos',reports:'Relatórios',categories:'Categorias'};$('pageTitle').textContent=titles[page]||'G.E.I360';if(page==='home'){return erpRenderDashboard()}if(['company','employees'].includes(page)){return erpSetPage(page)}if(!companyId){return erpPageShell('Empresa necessária','Cadastre ou selecione uma empresa antes de usar os módulos.','<div class="notice">Acesse Minha empresa e conclua o cadastro.</div>')}if(!['owner','admin','manager'].includes(companyRole)){if(ERP[page])return erpRenderCrud(page,{readOnly:true});if(page==='stock')return erpRenderStock({readOnly:true});if(page==='sales')return erpRenderSales({readOnly:true});if(page==='purchases')return erpRenderPurchases({readOnly:true});if(page==='reports')return erpRenderReports();}if(ERP[page])return erpRenderCrud(page);if(page==='stock')return erpRenderStock();if(page==='sales')return erpRenderSales();if(page==='purchases')return erpRenderPurchases();if(page==='reports')return erpRenderReports()};
+setPage=async function(page){erpStopBarcode();document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));const titles={home:'Visão geral',company:'Minha empresa',employees:'Funcionários',products:'Estoque',stock:'Movimentações',suppliers:'Fornecedores',customers:'Clientes',sales:'Vendas',purchases:'Compras',finance:'Financeiro',documents:'Documentos',reports:'Relatórios',categories:'Categorias',sector:'Operação do ramo'};$('pageTitle').textContent=titles[page]||'G.E.I360';if(page==='home'){return erpRenderDashboard()}if(page==='sector'){return erpRenderSectorOperations({readOnly:!['owner','admin','manager'].includes(companyRole)})}if(['company','employees'].includes(page)){return erpSetPage(page)}if(!companyId){return erpPageShell('Empresa necessária','Cadastre ou selecione uma empresa antes de usar os módulos.','<div class="notice">Acesse Minha empresa e conclua o cadastro.</div>')}if(!['owner','admin','manager'].includes(companyRole)){if(ERP[page])return erpRenderCrud(page,{readOnly:true});if(page==='stock')return erpRenderStock({readOnly:true});if(page==='sales')return erpRenderSales({readOnly:true});if(page==='purchases')return erpRenderPurchases({readOnly:true});if(page==='reports')return erpRenderReports();}if(ERP[page])return erpRenderCrud(page);if(page==='stock')return erpRenderStock();if(page==='sales')return erpRenderSales();if(page==='purchases')return erpRenderPurchases();if(page==='reports')return erpRenderReports()};
 
 
 // Proteções de interação: mantém os controles principais funcionais mesmo após
