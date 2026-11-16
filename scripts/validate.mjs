@@ -251,3 +251,6 @@ assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunct
 assert.ok(inviteFunction.includes('SUPABASE_SERVICE_ROLE_KEY') && inviteFunction.includes('getUser(token)'), 'Invitation function must use server-side secret and verify the caller');
 assert.ok(inviteFunction.includes('includes(membership.role)') && inviteFunction.includes('owner') && inviteFunction.includes('admin'), 'Only company owners/admins may invite employees');
 assert.ok(!html.includes('SUPABASE_SECRET_KEYS') && !html.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Server-side secrets must never be shipped to the browser');
+
+assert.ok(html.includes("linkType==='invite'") && html.includes("api('/auth/v1/user'") && html.includes('Defina sua senha'), 'Invited employees must set a password before using the app');
+assert.ok(inviteFunction.includes('APP_ORIGIN = "https://micaellyroger3-hue.github.io"') && inviteFunction.includes('redirectTo: APP_REDIRECT'), 'Invitation function must restrict browser origin and redirect to the deployed app');
