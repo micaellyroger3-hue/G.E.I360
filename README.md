@@ -27,7 +27,7 @@ Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A l
 ## Supabase e segurança
 Projeto `mxikqdarqgatqoecfprg`, status ativo/saudável, PostgreSQL 17.
 
-Quatorze migrations direcionadas estão registradas no Supabase:
+Quinze migrations direcionadas estão registradas no Supabase:
 1. `company_business_profiles`
 2. `integrity_hardening`
 3. `product_categories`
@@ -42,6 +42,7 @@ Quatorze migrations direcionadas estão registradas no Supabase:
 12. `brazil_local_business_dates`
 13. `gei_records_role_guard`
 14. `least_privilege_cleanup`
+15. `business_activity_detail`
 
 Verificações confirmadas:
 - 20/20 tabelas públicas com RLS habilitado.
@@ -62,7 +63,7 @@ Verificações confirmadas:
 
 ## Limites funcionais que ainda precisam de implementação
 - O catálogo `gei_module_catalog` e as atribuições `company_modules` ainda não controlam o menu nem o acesso aos módulos; a navegação atual é fixa no frontend e as permissões principais são por papel.
-- O perfil empresarial usa tipos predefinidos (alimentação preparada, mercado/alimentos e outros segmentos), sem campo livre para detalhar uma subatividade específica.
+- O perfil empresarial usa tipos predefinidos (alimentação preparada, mercado/alimentos e outros segmentos), com campo livre para detalhar a subatividade específica (por exemplo, lanchonete, padaria, açougue, hortifruti ou cafeteria).
 
 ## Integrações que ainda não existem
 - iFood: sem importação/sincronização de pedidos e cardápio.
