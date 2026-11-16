@@ -236,3 +236,11 @@ assert.ok(html.includes('data-page="sector"'), 'Sector operations navigation mis
 assert.ok(profiles.includes("'Produção e fichas de preparo (registro manual)':'sector'") && profiles.includes("'Controle manual de validade e perdas':'sector'"), 'Implemented sector profile shortcuts must open operational area');
 
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
+
+
+assert.ok(modules.includes('GEI_MODULE_PAGES'), 'Dynamic module page map missing');
+assert.ok(modules.includes('geiLoadModuleAccess') && modules.includes('geiRenderModuleNavigation'), 'Dynamic module catalog loading/navigation missing');
+assert.ok(modules.includes('geiRenderCompanyModuleSettings') && modules.includes('company_modules'), 'Company module controls missing');
+assert.ok(modules.includes('geiPageIsEnabled'), 'Disabled modules must be blocked in navigation routing');
+assert.ok(html.includes('modules.js?v=20261116-03'), 'Dynamic module asset cache version missing');
+assert.ok(worker.includes('modules.js?v=20261116-03') && worker.includes('gei360-shell-v17'), 'Service worker cache must match dynamic module release');
