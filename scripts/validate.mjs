@@ -199,7 +199,7 @@ assert.ok(!tenantAudit.includes("has_function_privilege('public'"), 'Tenant audi
 // Operação contextual por setor usa registros multiempresa com RLS existente.
 assert.ok(modules.includes('const GEI_SECTOR_OPS') && modules.includes('erpRenderSectorOperations'), 'Sector-specific operational area missing');
 assert.ok(modules.includes("module_code:'sector_ops'") && modules.includes("gei_records?select=id,record_type,payload"), 'Sector operations must persist and read company-scoped records');
-assert.ok(modules.includes("readOnly:!['owner','admin','manager'].includes(companyRole)"), 'Sector operations must be read-only for non-managers');
+assert.ok(modules.includes("readOnly:companyRole==='viewer'"), 'Sector operations must be read-only for non-managers');
 assert.ok(html.includes('data-page="sector"'), 'Sector operations navigation missing');
 assert.ok(profiles.includes("'Entregas':'sector'") && profiles.includes("'Estoque e validade':'sector'"), 'Sector profile shortcuts must open operational area');
 
