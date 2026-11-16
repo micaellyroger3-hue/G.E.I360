@@ -61,7 +61,7 @@ O banco já possuía schema e dados antes da revisão. O antigo instalador conso
 
 ## Achados adicionais da revisão de 16/11/2026
 - A aplicação passou a exibir datas de vendas e vencimentos financeiros vinculados usando a data local derivada de `created_at`, evitando o deslocamento de dia causado por `CURRENT_DATE` em sessão UTC.
-- **Pendência de banco:** `sales.sale_date` e `financial_entries.due_date` ainda têm defaults `CURRENT_DATE`, e os gatilhos de vendas/compras ainda gravam `current_date`. Uma migration direcionada deve mudar esses valores para o fuso da empresa antes de depender dos campos crus em integrações externas. Nenhuma linha histórica foi alterada.
+- A migration `brazil_local_business_dates` corrigiu os defaults de `sales.sale_date` e `financial_entries.due_date` para `America/Sao_Paulo` e alinhou os gatilhos de venda/compra às datas locais. Nenhuma linha histórica foi alterada.
 - O perfil empresarial passou a identificar exemplos de segmentos de alimentação e comércio e a opção genérica **Outro ramo**. O núcleo geral atende atividades diferentes; os fluxos setoriais continuam manuais e recursos não implementados devem permanecer como planejados.
 - O cadastro de perfil empresarial está vazio na empresa de teste porque o ramo e os canais ainda não foram salvos; isso é esperado e não é falha de RLS.
 
@@ -73,3 +73,12 @@ O banco já possuía schema e dados antes da revisão. O antigo instalador conso
 5. Fazer smoke test em Android e desktop com sessão real.
 
 A aplicação está publicada e a validação automatizada passou. Isso não equivale a homologação comercial completa; manter o acesso em beta até concluir os testes reais acima.
+
+
+## Atualização de 16/11/2026 — catálogo dinâmico
+- O menu consulta `gei_module_catalog` e `company_modules` por empresa.
+- Proprietários e administradores podem ativar/desativar módulos disponíveis em **Minha empresa**; módulos essenciais permanecem bloqueados para desativação.
+- Para módulos sem linha em `company_modules`, o padrão é `is_available` do catálogo. Isso preserva o acesso inicial às áreas existentes sem criar atribuições automaticamente.
+- A navegação dinâmica não substitui RLS. As tabelas continuam protegidas pelas políticas de associação e papel.
+- O menu só apresenta áreas implementadas no frontend. PDV, multi-filial e auditoria permanecem fora do menu até implementação.
+- Código, validação automatizada e publicação do Pages foram concluídos no commit `28b6cf875db98402163d93e55afb01bd2812a995`. A conferência visual final em Android ainda depende do aparelho do usuário.
