@@ -27,7 +27,7 @@ Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A l
 ## Supabase e segurança
 Projeto `mxikqdarqgatqoecfprg`, status ativo/saudável, PostgreSQL 17.
 
-Doze migrations direcionadas estão registradas no Supabase:
+Treze migrations direcionadas estão registradas no Supabase:
 1. `company_business_profiles`
 2. `integrity_hardening`
 3. `product_categories`
@@ -40,6 +40,7 @@ Doze migrations direcionadas estão registradas no Supabase:
 10. `legacy_empresas_lockdown`
 11. `revoke_unused_legacy_rpcs`
 12. `brazil_local_business_dates`
+13. `gei_records_role_guard`
 
 Verificações confirmadas:
 - 20/20 tabelas públicas com RLS habilitado.
@@ -49,6 +50,7 @@ Verificações confirmadas:
 - A tabela legada `public.empresas` tem zero linhas; privilégios de `anon`, `public` e `authenticated` revogados e policy restritiva de negação total. A aplicação usa `public.companies`.
 - Testes SQL transacionais aprovados para criação de empresa e vínculo owner, venda, compra, entrada/saída/ajuste de estoque, geração de contas, proteção contra estoque insuficiente e imutabilidade de lançamentos vinculados; todos os registros de teste foram revertidos por `ROLLBACK`.
 - Matriz parcial de papéis testada: owner e manager autorizados para vendas; employee e viewer bloqueados; usuário sem vínculo não visualiza dados empresariais.
+- Registros de operação setorial: employee pode inserir; viewer não pode gravar; atualização direta bloqueada para manter histórico append-only.
 - Datas de vendas e financeiro usam `America/Sao_Paulo`; indicadores de vencimento e relatórios também comparam datas no fuso de Brasília.
 
 ### Alertas e limites de homologação
