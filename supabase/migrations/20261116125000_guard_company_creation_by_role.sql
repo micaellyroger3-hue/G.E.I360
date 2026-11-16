@@ -63,3 +63,9 @@ $function$;
 -- Keep the RPC callable by signed-in users only; authorization is enforced above.
 REVOKE ALL ON FUNCTION public.create_company(text, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.create_company(text, text) TO authenticated, service_role;
+
+-- Company creation must go through the guarded SECURITY DEFINER RPC.
+-- Direct INSERT plus the self-owner membership policy would otherwise
+-- let any authenticated employee create a company and become its owner.
+DROP POLICY IF EXISTS users_can_create_companies ON public.companies;
+REVOKE INSERT ON TABLE public.companies FROM authenticated;
