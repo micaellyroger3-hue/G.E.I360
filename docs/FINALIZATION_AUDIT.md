@@ -90,7 +90,7 @@ A aplicação está publicada e a validação automatizada passou. Isso não equ
 
 
 ## Atualização de 16/11/2026 — convite seguro de funcionários
-- Edge Function `invite-company-member` implantada no Supabase e ativa (versão 3, JWT obrigatório).
+- Edge Function `invite-company-member` implantada no Supabase e ativa (versão 4). O middleware `@supabase/server@1.9.2` valida o JWT via JWKS e fornece contexto de usuário e cliente administrativo; `verify_jwt=false` é intencional no gateway para usar a validação do middleware.
 - O fluxo valida a sessão e exige associação ativa com papel owner/admin; o papel concedido é sempre employee.
 - A interface adiciona **Convidar acesso** às fichas com e-mail. A pessoa aceita o convite, define a senha no app e acessa a empresa.
 - Nenhum e-mail real foi disparado durante a implementação; a homologação do SMTP/redirect com e-mail de teste ainda depende do proprietário.
