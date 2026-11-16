@@ -63,7 +63,7 @@ Verificações confirmadas:
 - Ainda falta teste ponta a ponta no navegador com duas contas reais, matriz completa de papéis, upload/download de documentos entre empresas e teste de restauração de backup. Não cadastrar clientes pagantes até essa homologação.
 
 ## Limites funcionais que ainda precisam de implementação
-- O catálogo `gei_module_catalog` e as atribuições `company_modules` ainda não controlam o menu nem o acesso aos módulos; a navegação atual é fixa no frontend e as permissões principais são por papel.
+- O menu agora é montado dinamicamente pelo catálogo `gei_module_catalog` e pelas atribuições `company_modules`. Proprietários e administradores podem ativar/desativar os módulos disponíveis em **Minha empresa**. A ausência de atribuição individual mantém o padrão `is_available` do catálogo; módulos ainda não implementados não são apresentados. Isso organiza a interface, mas não substitui RLS e políticas do banco.
 - O perfil empresarial usa tipos predefinidos (alimentação preparada, mercado/alimentos e outros segmentos), com campo livre para detalhar a subatividade específica (por exemplo, lanchonete, padaria, açougue, hortifruti ou cafeteria).
 
 ## Integrações que ainda não existem
@@ -76,3 +76,4 @@ Verificações confirmadas:
 O banco já tinha tabelas e dados antes desta revisão, sem histórico inicial de migrations. O antigo instalador `supabase/INSTALL_GEI360_ALL.sql` está desativado para impedir execução incompatível. **Não executar o instalador antigo nem `supabase db push`** até reconciliar formalmente todo o histórico.
 
 O navegador pode conter somente URL do projeto e chave publicável. Nunca expor `service_role`, `sb_secret_` ou credenciais de terceiros no front-end.
+- A navegação dinâmica e os controles do catálogo foram publicados com validação automatizada e cache PWA `gei360-shell-v17`; ainda requerem conferência visual no aparelho do usuário.
