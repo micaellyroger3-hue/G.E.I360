@@ -27,7 +27,7 @@ Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A l
 ## Supabase e segurança
 Projeto `mxikqdarqgatqoecfprg`, status ativo/saudável, PostgreSQL 17.
 
-Onze migrations direcionadas estão registradas no Supabase:
+Doze migrations direcionadas estão registradas no Supabase:
 1. `company_business_profiles`
 2. `integrity_hardening`
 3. `product_categories`
@@ -39,6 +39,7 @@ Onze migrations direcionadas estão registradas no Supabase:
 9. `sector_operations_records`
 10. `legacy_empresas_lockdown`
 11. `revoke_unused_legacy_rpcs`
+12. `brazil_local_business_dates`
 
 Verificações confirmadas:
 - 20/20 tabelas públicas com RLS habilitado.
@@ -46,13 +47,18 @@ Verificações confirmadas:
 - Nenhum privilégio estrutural `TRUNCATE/REFERENCES/TRIGGER/MAINTAIN` para `authenticated` nas tabelas auditadas.
 - Bucket `company-documents` privado.
 - A tabela legada `public.empresas` tem zero linhas; privilégios de `anon`, `public` e `authenticated` revogados e policy restritiva de negação total. A aplicação usa `public.companies`.
-- Teste transacional de registro setorial aprovado; teste de isolamento confirmou zero linhas visíveis para usuário sem associação. Os dados de teste foram revertidos por `ROLLBACK`.
-- Fluxos transacionais de compra/venda e proteção de estoque/financeiro aprovados em testes SQL com rollback.
+- Testes SQL transacionais aprovados para criação de empresa e vínculo owner, venda, compra, entrada/saída/ajuste de estoque, geração de contas, proteção contra estoque insuficiente e imutabilidade de lançamentos vinculados; todos os registros de teste foram revertidos por `ROLLBACK`.
+- Matriz parcial de papéis testada: owner e manager autorizados para vendas; employee e viewer bloqueados; usuário sem vínculo não visualiza dados empresariais.
+- Datas de vendas e financeiro usam `America/Sao_Paulo`; indicadores de vencimento e relatórios também comparam datas no fuso de Brasília.
 
 ### Alertas e limites de homologação
 - O Advisor ainda sinaliza seis funções `SECURITY DEFINER` executáveis por `authenticated`: RPCs usadas pelo app (`create_company`, `create_sale_cart`, `receive_purchase_cart`, `record_stock_movement`) e helpers de RLS (`has_company_role`, `is_company_member`). Três RPCs antigas sem chamadas no frontend (`create_sale`, `receive_purchase`, `get_my_companies`) tiveram EXECUTE revogado. As seis restantes exigem sessão e validam empresa/cargo; `search_path` está vazio. Manter revisão periódica.
 - Proteção de senha vazada permanece desativada no Auth (recurso não disponível no plano Free atual).
 - Ainda falta teste ponta a ponta no navegador com duas contas reais, matriz completa de papéis, upload/download de documentos entre empresas e teste de restauração de backup. Não cadastrar clientes pagantes até essa homologação.
+
+## Limites funcionais que ainda precisam de implementação
+- O catálogo `gei_module_catalog` e as atribuições `company_modules` ainda não controlam o menu nem o acesso aos módulos; a navegação atual é fixa no frontend e as permissões principais são por papel.
+- O perfil empresarial usa tipos predefinidos (alimentação preparada, mercado/alimentos e outros segmentos), sem campo livre para detalhar uma subatividade específica.
 
 ## Integrações que ainda não existem
 - iFood: sem importação/sincronização de pedidos e cardápio.
