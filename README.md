@@ -27,7 +27,7 @@ Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A l
 ## Supabase e segurança
 Projeto `mxikqdarqgatqoecfprg`, status ativo/saudável, PostgreSQL 17.
 
-Treze migrations direcionadas estão registradas no Supabase:
+Quatorze migrations direcionadas estão registradas no Supabase:
 1. `company_business_profiles`
 2. `integrity_hardening`
 3. `product_categories`
@@ -41,11 +41,13 @@ Treze migrations direcionadas estão registradas no Supabase:
 11. `revoke_unused_legacy_rpcs`
 12. `brazil_local_business_dates`
 13. `gei_records_role_guard`
+14. `least_privilege_cleanup`
 
 Verificações confirmadas:
 - 20/20 tabelas públicas com RLS habilitado.
 - Nenhum grant de tabela a `anon` nas tabelas empresariais auditadas.
 - Nenhum privilégio estrutural `TRUNCATE/REFERENCES/TRIGGER/MAINTAIN` para `authenticated` nas tabelas auditadas.
+- Catálogo de módulos somente leitura pela API; exclusões de empresa/membros e criação/exclusão direta de perfis revogadas do cliente.
 - Bucket `company-documents` privado.
 - A tabela legada `public.empresas` tem zero linhas; privilégios de `anon`, `public` e `authenticated` revogados e policy restritiva de negação total. A aplicação usa `public.companies`.
 - Testes SQL transacionais aprovados para criação de empresa e vínculo owner, venda, compra, entrada/saída/ajuste de estoque, geração de contas, proteção contra estoque insuficiente e imutabilidade de lançamentos vinculados; todos os registros de teste foram revertidos por `ROLLBACK`.
