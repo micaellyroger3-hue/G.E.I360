@@ -6,6 +6,7 @@ const modules = fs.readFileSync('modules.js', 'utf8');
 const profiles = fs.readFileSync('business-profiles.js', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const worker = fs.readFileSync('sw.js', 'utf8');
+const inviteFunction = fs.readFileSync('supabase/functions/invite-company-member/index.ts', 'utf8');
 
 new Function(modules);
 new Function(profiles);
@@ -244,3 +245,9 @@ assert.ok(modules.includes('geiRenderCompanyModuleSettings') && modules.includes
 assert.ok(modules.includes('geiPageIsEnabled'), 'Disabled modules must be blocked in navigation routing');
 assert.ok(html.includes('modules.js?v=20261116-03'), 'Dynamic module asset cache version missing');
 assert.ok(worker.includes('modules.js?v=20261116-03') && worker.includes('gei360-shell-v17'), 'Service worker cache must match dynamic module release');
+
+assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
+assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunction.includes('company_members'), 'Secure employee invitation function missing');
+assert.ok(inviteFunction.includes('SUPABASE_SECRET_KEYS') && inviteFunction.includes('getUser(token)'), 'Invitation function must use server-side secret and verify the caller');
+assert.ok(inviteFunction.includes('includes(membership.role)') && inviteFunction.includes('owner') && inviteFunction.includes('admin'), 'Only company owners/admins may invite employees');
+assert.ok(!html.includes('SUPABASE_SECRET_KEYS') && !html.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Server-side secrets must never be shipped to the browser');
