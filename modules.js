@@ -424,3 +424,53 @@ document.addEventListener('click', async event => {
     button.disabled = false;
   }
 });
+
+
+// Ação de convite vinculada à ficha existente do funcionário.
+const geiBaseDrawEmployees = drawEmployees;
+drawEmployees = function() {
+  geiBaseDrawEmployees();
+  if (!['owner','admin'].includes(companyRole)) return;
+  for (const employee of employees) {
+    if (!employee.email) continue;
+    const edit = document.querySelector('[data-employee-edit="' + employee.id + '"]');
+    const actions = edit?.parentElement;
+    if (!actions || actions.querySelector('[data-employee-invite="' + employee.id + '"]')) continue;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'alt small';
+    button.dataset.employeeInvite = employee.id;
+    button.textContent = 'Convidar acesso';
+    actions.appendChild(button);
+  }
+};
+document.addEventListener('click', async event => {
+  const button = event.target.closest('[data-employee-invite]');
+  if (!button) return;
+  if (!['owner','admin'].includes(companyRole)) {
+    alert('Somente proprietário ou administrador pode convidar funcionários.');
+    return;
+  }
+  const employee = employees.find(item => item.id === button.dataset.employeeInvite);
+  if (!employee?.email) {
+    alert('Cadastre um e-mail na ficha do funcionário antes de convidar.');
+    return;
+  }
+  if (!confirm('Enviar convite de acesso para ' + employee.full_name + ' (' + employee.email + ') como funcionário desta empresa?')) return;
+  button.disabled = true;
+  try {
+    const result = await api('/functions/v1/invite-company-member', {
+      method: 'POST',
+      body: { company_id: companyId, email: employee.email, full_name: employee.full_name }
+    });
+    alert(result.invitation_sent
+      ? 'Convite enviado para ' + employee.email + '. A pessoa deverá aceitar o e-mail e entrar no G.E.I360.'
+      : 'A conta existente foi vinculada à empresa. A pessoa já pode entrar com seu e-mail e senha.');
+    await renderEmployees();
+  } catch (error) {
+    let detail = error.message;
+    try { detail = JSON.parse(detail).error || detail; } catch (_) {}
+    alert('Não foi possível convidar: ' + detail);
+    button.disabled = false;
+  }
+});
