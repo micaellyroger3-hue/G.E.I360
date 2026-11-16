@@ -126,7 +126,7 @@ assert.ok(!/access_token|refresh_token|client_secret|service_role/i.test(profile
 const profileSql = fs.readFileSync('supabase/migrations/202611100002_company_business_profiles.sql', 'utf8');
 const activityDetailSql = fs.readFileSync('supabase/migrations/20261116122000_business_activity_detail.sql', 'utf8');
 assert.ok(activityDetailSql.includes('business_activity_detail') && activityDetailSql.includes('<= 120'), 'Flexible business activity detail schema missing');
-const activityPermissionsSql = fs.readFileSync('supabase/migrations/20261116123000_business_activity_detail_permissions.sql', 'utf8');
+const activityPermissionsSql = fs.readFileSync('supabase/migrations/20261116123000_business_activity_detail_permissions.sql', 'utf8').toLowerCase();
 assert.ok(activityPermissionsSql.includes('grant insert (business_activity_detail)') && activityPermissionsSql.includes('grant update (business_activity_detail)'), 'Business activity detail column grants missing');
 assert.ok(profileSql.includes('enable row level security'), 'Business profile RLS missing');
 assert.ok(profileSql.includes('is_company_member(company_id)'), 'Business profile member read policy missing');
