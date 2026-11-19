@@ -118,8 +118,8 @@ function summaryH(){
  const sessions=sessionsH();
  const rules=dataH.rules||{},daily=new Map();
  for(const s of sessions){
-  const key=s.employee_id+'|'+s.day,old=daily.get(key)||{employee_id:s.employee_id,day:s.day,actual:0,night:0,open:false,holiday:false,sunday:false,planned:0,late:0,early:0};
-  old.actual+=s.actual;old.night+=workNightMinutesH(s);old.open=old.open||s.open;
+  const key=s.employee_id+'|'+s.day,old=daily.get(key)||{employee_id:s.employee_id,day:s.day,actual:0,night:0,open:false,holiday:false,sunday:false,planned:0,late:0,early:0,breakTaken:0,breakDeficit:0};
+  old.actual+=s.actual;old.night+=workNightMinutesH(s);old.open=old.open||s.open;const breakTaken=s.breaks.reduce((sum,b)=>sum+(new Date(b[1])-new Date(b[0]))/60000,0);old.breakTaken+=breakTaken;if(s.end&&s.breaks.length){const elapsed=(new Date(s.end)-new Date(s.start))/60000,required=elapsed>360?Number(rules.break_minimum_minutes||60):elapsed>240?15:0;old.breakDeficit+=Math.max(0,required-breakTaken)}
   const dt=new Date(s.day+'T12:00:00-03:00');old.sunday=dt.getDay()===0;
   old.holiday=dataH.holidays.some(h=>h.holiday_date===s.day&&h.is_paid!==false);
   const sch=scheduleForH(s.employee_id,s.day),dayException=dataH.scheduleExceptions.find(x=>x.employee_id===s.employee_id&&x.exception_date===s.day);
@@ -139,11 +139,20 @@ function summaryH(){
   const tolerance=Number(rules.daily_tolerance_minutes??10);
   const dailyLimit=rules.overtime_daily_threshold_minutes==null?(d.planned>0?d.planned:null):Number(rules.overtime_daily_threshold_minutes);let overtime=dailyLimit==null?0:Math.max(0,d.actual-dailyLimit);
   if(overtime<=tolerance)overtime=0;
-  const nightHours=d.night/(rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5));
-  const nightValue=nightHours*base*Number(rules.night_additional_percent??20)/100;
-  const daySchedule=scheduleForH(d.employee_id,d.day),dayException=dataH.scheduleExceptions.find(x=>x.employee_id===d.employee_id&&x.exception_date===d.day),scheduledSunday=baseExpectedH(daySchedule,d.day)&&dayException?.exception_type!=='extra_rest',premium=(daySchedule?.schedule_type!=='12x36'&&(d.holiday||(d.sunday&&!scheduledSunday)))?Math.max(0,d.actual)*base/60*(Number(rules.sunday_holiday_multiplier||2)-1):0;
-  const overtimeValue=overtime/60*base*(Number(rules.overtime_multiplier||1.5)-1);
-  return {...d,name:emp?.full_name||'Funcionário',base,overtime,nightHours,nightValue,premium,overtimeValue,estimatedAdditional:nightValue+premium+overtimeValue};
+  const nightDivisor=rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5),nightHours=d.night/nightDivisor;
+  const daySchedule=scheduleForH(d.employee_id,d.day),dayException=dataH.scheduleExceptions.find(x=>x.employee_id===d.employee_id&&x.exception_date===d.day);
+  const dayDate=new Date(d.day+'T12:00:00-03:00'),weekMonday=new Date(dayDate);weekMonday.setDate(dayDate.getDate()-((dayDate.getDay()+6)%7));const weekSunday=new Date(weekMonday);weekSunday.setDate(weekMonday.getDate()+6);
+  const hasCompRest=dataH.scheduleExceptions.some(x=>x.employee_id===d.employee_id&&x.exception_type==='extra_rest'&&x.exception_date>d.day&&x.exception_date>=weekMonday.toISOString().slice(0,10)&&x.exception_date<=weekSunday.toISOString().slice(0,10));
+  const scheduledSunday=baseExpectedH(daySchedule,d.day)&&dayException?.exception_type!=='extra_rest';
+  const specialDay=daySchedule?.schedule_type!=='12x36'&&(d.holiday||(d.sunday&&!scheduledSunday))&&!hasCompRest;
+  const specialMultiplier=Number(rules.sunday_holiday_multiplier||2),overtimeMultiplier=Number(rules.overtime_multiplier||1.5);
+  const overtimeNightMinutes=Math.min(overtime,d.night),regularNightMinutes=Math.max(0,d.night-overtimeNightMinutes),regularMinutes=Math.max(0,d.actual-overtime);
+  const nightValue=regularNightMinutes/nightDivisor*base*Number(rules.night_additional_percent??20)/100;
+  const overtimeValue=overtime/60*base*(specialDay?specialMultiplier:overtimeMultiplier);
+  const overtimeNightValue=overtimeNightMinutes/60*base*Number(rules.night_additional_percent??20)/100*(specialDay?specialMultiplier:overtimeMultiplier);
+  const premium=specialDay?regularMinutes/60*base*(specialMultiplier-1):0;
+  const breakIndemnity=d.breakDeficit/60*base*1.5;
+  return {...d,name:emp?.full_name||'Funcionário',base,overtime,nightHours,nightValue,premium,overtimeValue,overtimeNightValue,breakIndemnity,estimatedAdditional:nightValue+premium+overtimeValue+overtimeNightValue+breakIndemnity};
  });
  const weeks=new Map();
  for(const row of rows){
