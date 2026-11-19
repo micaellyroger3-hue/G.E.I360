@@ -33,6 +33,39 @@ function scheduleLabel(s){
  return names[s.schedule_type]||s.schedule_type;
 }
 function cycleStatus(s){if(s.schedule_type!=='12x36'||!s.cycle_anchor_date)return '—';const a=new Date(s.cycle_anchor_date+'T12:00:00Z'),b=new Date(todaySP()+'T12:00:00Z');const days=Math.round((b-a)/86400000);return ((days%2)+2)%2===0?'Trabalho hoje':'Folga hoje';}
+
+function dateSP(v){return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(v));}
+function minutesSP(v){const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(v));return Number(parts.find(x=>x.type==='hour')?.value||0)*60+Number(parts.find(x=>x.type==='minute')?.value||0);}
+function fmtHours(n){const sign=n<0?'-':'';n=Math.abs(Math.round(n));return sign+Math.floor(n/60)+'h '+String(n%60).padStart(2,'0')+'min';}
+function buildSessions(){
+ const sorted=[...punches].filter(p=>canManage()||p.employee_id===ownEmployee?.id).sort((a,b)=>new Date(a.punched_at)-new Date(b.punched_at));
+ const open=new Map(),done=[];
+ for(const p of sorted){
+  let s=open.get(p.employee_id);
+  if(p.punch_type==='entrada'){if(s)done.push({...s,open:true});open.set(p.employee_id,{employee_id:p.employee_id,start:p.punched_at,breaks:0,breakStart:null});continue;}
+  if(!s)continue;
+  if(p.punch_type==='inicio_intervalo'){s.breakStart=p.punched_at;continue;}
+  if(p.punch_type==='fim_intervalo'&&s.breakStart){s.breaks+=Math.max(0,(new Date(p.punched_at)-new Date(s.breakStart))/60000);s.breakStart=null;continue;}
+  if(p.punch_type==='saida'){
+   const total=Math.max(0,(new Date(p.punched_at)-new Date(s.start))/60000);
+   const actual=Math.max(0,total-s.breaks);
+   const day=dateSP(s.start);
+   const sch=schedules.find(x=>x.employee_id===p.employee_id&&x.effective_from<=day&&(!x.effective_to||x.effective_to>=day));
+   let planned=null,late=0,early=0;
+   if(sch?.shift_start&&sch?.shift_end){
+    const a=Number(sch.shift_start.slice(0,2))*60+Number(sch.shift_start.slice(3,5));
+    const b=Number(sch.shift_end.slice(0,2))*60+Number(sch.shift_end.slice(3,5));
+    planned=((b-a+1440)%1440)-Number(sch.break_minutes||0);
+    late=Math.max(0,minutesSP(s.start)-a);
+    early=Math.max(0,planned-actual);
+   }
+   done.push({...s,end:p.punched_at,actual,planned,late,early,employee_id:p.employee_id,day});
+   open.delete(p.employee_id);
+  }
+ }
+ for(const s of open.values()){const day=dateSP(s.start);done.push({...s,open:true,day,actual:Math.max(0,(Date.now()-new Date(s.start))/60000-s.breaks),planned:null,late:0,early:0});}
+ return done.sort((a,b)=>String(b.day).localeCompare(String(a.day)));
+}
 function render(){
  const host=el('view');if(!host)return;
  if(!companyId){host.innerHTML='<div class="notice">Selecione uma empresa para acessar Jornada e Ponto.</div>';return;}
@@ -61,6 +94,7 @@ function render(){
  '<label class="wide">Observações<textarea name="notes" rows="2" maxlength="1000" placeholder="Ex.: turno noturno, escala alternada, acordo aplicável"></textarea></label>'+
  '<div class="wide notice">12x36: informe a data-base em que começa um dia de trabalho, além do horário de início e fim do turno. Trabalho por hora: informe o valor/hora e a jornada combinada. O sistema guarda a configuração; o enquadramento contratual e os intervalos legais devem ser validados com o DP/contador.</div><button type="submit" '+(!rows.length?'disabled':'')+'>Salvar escala</button></form></div>':'')+
  '<div class="gei-hr-panel"><h3>Escala cadastrada</h3><div class="tablewrap"><table><thead><tr><th>Funcionário</th><th>Jornada</th><th>Vigência</th><th>Horário</th><th>Intervalo</th><th>Valor/hora</th><th>Escala de hoje</th></tr></thead><tbody>'+(schedules.map(s=>'<tr><td>'+escTime(rows.find(e=>e.id===s.employee_id)?.full_name||'Funcionário')+'</td><td>'+scheduleLabel(s)+'</td><td>'+s.effective_from+(s.effective_to?' a '+s.effective_to:' em diante')+'</td><td>'+(s.shift_start||'—')+'–'+(s.shift_end||'—')+'</td><td>'+s.break_minutes+' min</td><td>'+(s.hourly_rate==null?'—':Number(s.hourly_rate).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}))+'</td></tr>').join('')||'<tr><td colspan="6">Nenhuma escala configurada.</td></tr>')+'</tbody></table></div></div>'+
+ '<div class="gei-hr-panel"><div class="gei-hr-panel-head"><div><h3>Resumo de jornadas</h3><p>Horas calculadas a partir das marcações. Diferenças são estimativas gerenciais.</p></div></div><div class="tablewrap"><table><thead><tr><th>Funcionário</th><th>Dia da jornada</th><th>Horas realizadas</th><th>Previstas</th><th>Saldo estimado</th><th>Atraso</th><th>Saída antecipada</th><th>Situação</th></tr></thead><tbody>'+(buildSessions().map(s=>{const delta=s.planned==null?null:s.actual-s.planned;return '<tr><td>'+escTime(rows.find(e=>e.id===s.employee_id)?.full_name||'Funcionário')+'</td><td>'+s.day.split('-').reverse().join('/')+'</td><td>'+fmtHours(s.actual)+'</td><td>'+(s.planned==null?'—':fmtHours(s.planned))+'</td><td>'+(delta==null?'—':(delta>=0?'+':'')+fmtHours(delta))+'</td><td>'+fmtHours(s.late)+'</td><td>'+fmtHours(s.early)+'</td><td>'+(s.open?'Jornada aberta':'Concluída')+'</td></tr>'}).join('')||'<tr><td colspan="8">Ainda não há jornadas completas para calcular.</td></tr>')+'</tbody></table></div><p class="gei-hr-muted">Horas extras, adicional noturno, feriados, tolerâncias, banco de horas e regras de convenção coletiva exigem parametrização e validação do DP. Este resumo não fecha folha nem substitui espelho legal.</p></div>'+
  '<div class="gei-hr-panel"><div class="gei-hr-panel-head"><div><h3>Histórico de marcações</h3><p>Registros originais preservados; correções precisam de justificativa e aprovação.</p></div><button type="button" class="alt small" id="geiTimeRefresh">Atualizar</button></div><div class="tablewrap"><table><thead><tr><th>Funcionário</th><th>Data e hora</th><th>Marcação</th><th>Origem</th></tr></thead><tbody>'+(punches.filter(p=>managed||p.employee_id===ownEmployee?.id).map(p=>'<tr><td>'+escTime(rows.find(e=>e.id===p.employee_id)?.full_name||'Funcionário')+'</td><td>'+localStamp(p.punched_at)+'</td><td>'+p.punch_type.replaceAll('_',' ')+'</td><td>'+(p.source==='app_funcionario'?'Aplicativo do funcionário':'Registro do gestor')+'</td></tr>').join('')||'<tr><td colspan="4">Nenhuma marcação registrada.</td></tr>')+'</tbody></table></div></div></section>';
  const personSelect=el('geiTimePerson');if(personSelect)personSelect.onchange=()=>{selectedEmployee=personSelect.value;render()};
  const refresh=el('geiTimeRefresh');if(refresh)refresh.onclick=async()=>{await load();render()};
