@@ -126,7 +126,7 @@ const profileJs = fs.readFileSync('business-profiles.js', 'utf8');
 new Function(profileJs);
 assert.ok(html.includes('business-profiles.js?v=20261116-02'), 'Business profile script not loaded');
 assert.ok(worker.includes('./business-profiles.js?v=20261116-02'), 'Business profile script missing from offline shell');
-assert.ok(html.includes('hr.js?v=20261119-06'), 'HR module script not loaded');
+assert.ok(html.includes('hr.js?v=20261119-07'), 'HR module script not loaded');
 assert.ok(html.includes('hr-time.js?v=20261119-03') && html.includes('hr-time-compliance.js?v=20261119-09'), 'HR time and calculation modules must be loaded');
 assert.ok(worker.includes('./hr-time.js?v=20261119-03') && worker.includes('./hr-time-compliance.js?v=20261119-09'), 'HR time modules must be cached by the PWA');
 assert.ok(modules.includes("['rh','timepayroll']") && modules.includes("timepayroll:'rh'"), 'Monthly HR calculation must be available through the RH module');
