@@ -151,7 +151,7 @@ function summaryH(sessions=sessionsH()){
   const weekSunday=new Date(weekMonday);weekSunday.setDate(weekMonday.getDate()+6);
   const hasCompRest=dataH.scheduleExceptions.some(x=>x.employee_id===d.employee_id&&x.exception_type==='extra_rest'&&x.exception_date>d.day&&x.exception_date>=weekMonday.toISOString().slice(0,10)&&x.exception_date<=weekSunday.toISOString().slice(0,10));
   const scheduledSunday=baseExpectedH(daySchedule,d.day)&&dayException?.exception_type!=='extra_rest';
-  const specialDay=daySchedule?.schedule_type!=='12x36'&&(d.holiday||(d.sunday&&!scheduledSunday))&&!hasCompRest;
+  const restDayWorked=dayException?.exception_type==='extra_work'&&!baseExpectedH(daySchedule,d.day);const specialDay=daySchedule?.schedule_type!=='12x36'&&(d.holiday||(d.sunday&&!scheduledSunday)||restDayWorked)&&!hasCompRest;
   return {...d,name:emp?.full_name||'Funcionário',base,overtime,nightHours:d.night/nightDivisor,overtimeNightMinutes:Math.min(overtime,d.night),specialDay};
  });
  const weeks=new Map();
