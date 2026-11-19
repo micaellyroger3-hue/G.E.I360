@@ -52,9 +52,9 @@ function restComplianceH(employeeId,sessions){
  if(monthSchedules.some(s=>s.schedule_type==='12x36'))return {special:true,rest:0,target:0,maxWork:0,minRest7:null};
  if(monthSchedules.every(s=>['por_hora','variavel'].includes(s.schedule_type)))return null;
  let rest=0,work=0,consecutive=0,maxWork=0,minRest7=7;
- const begin=new Date(start+'T12:00:00-03:00');begin.setDate(begin.getDate()-6);
- const window=[];
- for(let i=0;i<days+6;i++){
+ const begin=new Date(monthPick+'-01T12:00:00-03:00');begin.setDate(begin.getDate()-6);const legalStart=new Date('2026-12-16T12:00:00-03:00');if(begin<legalStart)begin.setTime(legalStart.getTime());
+ const loopDays=Math.round((new Date(end+'T12:00:00-03:00')-begin)/86400000)+1,window=[];
+ for(let i=0;i<loopDays;i++){
   const dt=new Date(begin);dt.setDate(begin.getDate()+i);const d=dt.toISOString().slice(0,10);
   const worked=expectedH(scheduleForH(employeeId,d),d,employeeId)||(sessions||[]).some(s=>s.employee_id===employeeId&&s.day===d&&s.actual>0);
   if(worked){consecutive++;if(d>=start){work++;maxWork=Math.max(maxWork,consecutive)}}else{consecutive=0;if(d>=start)rest++}
