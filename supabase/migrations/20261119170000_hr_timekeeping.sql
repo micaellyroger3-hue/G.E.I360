@@ -144,7 +144,7 @@ declare
 begin
   select lower(u.email) into v_email
   from auth.users u
-  where u.id = (select auth.uid());
+  where u.id = (select auth.uid()) and u.email_confirmed_at is not null;
 
   if v_email is null then
     raise exception 'Não foi possível identificar o e-mail confirmado da conta.';
