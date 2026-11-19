@@ -2,6 +2,7 @@
 Plataforma de gestão empresarial multiempresa.
 
 ## Aplicativo publicado
+- **Apresentação para mercadinhos:** [Conheça o G.E.I360 e o projeto-piloto](https://micaellyroger3-hue.github.io/G.E.I360/apresentacao-mercadinhos.html).
 - **Acesso:** https://micaellyroger3-hue.github.io/G.E.I360/
 - **Formato:** PWA instalável em Android e desktop.
 - **Publicação:** deploy do GitHub Pages e validação automatizada confirmados; o histórico atualizado fica em [GitHub Actions](https://github.com/micaellyroger3-hue/G.E.I360/actions).
@@ -90,7 +91,7 @@ Verificações confirmadas:
 O banco já tinha tabelas e dados antes desta revisão, sem histórico inicial de migrations. O antigo instalador `supabase/INSTALL_GEI360_ALL.sql` está desativado para impedir execução incompatível. **Não executar o instalador antigo nem `supabase db push`** até reconciliar formalmente todo o histórico.
 
 O navegador pode conter somente URL do projeto e chave publicável. Nunca expor `service_role`, `sb_secret_` ou credenciais de terceiros no front-end.
-- A navegação dinâmica e os controles do catálogo foram publicados com validação automatizada e cache PWA `gei360-shell-v26`; ainda requerem conferência visual no aparelho do usuário.
+- A navegação dinâmica e os controles do catálogo foram publicados com validação automatizada e cache PWA `gei360-shell-v37`; ainda requerem conferência visual no aparelho do usuário.
 
 
 ### RH — apuração de jornada
