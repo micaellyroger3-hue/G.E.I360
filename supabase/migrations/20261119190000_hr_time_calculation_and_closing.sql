@@ -23,7 +23,7 @@ create table if not exists public.hr_time_rules (
   break_minimum_minutes integer not null default 60 check (break_minimum_minutes between 0 and 720),
   timezone text not null default 'America/Sao_Paulo',
   notes text,
-  created_by uuid not null default auth.uid(),
+  created_by uuid not null default auth.uid() references auth.users(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (bank_validity_months is null or (bank_agreement_type='individual' and bank_validity_months between 1 and 6) or (bank_agreement_type='collective' and bank_validity_months between 1 and 12))
@@ -56,8 +56,8 @@ create table if not exists public.hr_time_occurrences (
   employee_note text,
   manager_note text,
   evidence_reference text,
-  requested_by uuid not null default auth.uid(),
-  reviewed_by uuid,
+  requested_by uuid not null default auth.uid() references auth.users(id),
+  reviewed_by uuid references auth.users(id),
   reviewed_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -76,7 +76,7 @@ create table if not exists public.hr_time_bank_entries (
   multiplier numeric(6,3) not null default 1 check (multiplier between 0.1 and 5),
   description text not null check (length(trim(description)) between 3 and 500),
   expires_on date,
-  approved_by uuid not null default auth.uid(),
+  approved_by uuid not null default auth.uid() references auth.users(id),
   created_at timestamptz not null default now(),
   foreign key(company_id,employee_id) references public.employees(company_id,id) on delete cascade
 );
@@ -88,9 +88,9 @@ create table if not exists public.hr_time_periods (
   period_month date not null check (extract(day from period_month)=1),
   status text not null default 'open' check (status in ('open','closed','reopened')),
   summary jsonb not null default '{}'::jsonb,
-  closed_by uuid,
+  closed_by uuid references auth.users(id),
   closed_at timestamptz,
-  reopened_by uuid,
+  reopened_by uuid references auth.users(id),
   reopened_at timestamptz,
   reopen_reason text,
   created_at timestamptz not null default now(),
@@ -100,10 +100,17 @@ create table if not exists public.hr_time_periods (
 );
 
 create index if not exists hr_holidays_company_date_idx on public.hr_holidays(company_id,holiday_date);
+create index if not exists hr_holidays_created_by_idx on public.hr_holidays(created_by);
+create index if not exists hr_time_rules_created_by_idx on public.hr_time_rules(created_by);
 create index if not exists hr_occurrences_company_date_idx on public.hr_time_occurrences(company_id,occurrence_date,employee_id);
 create index if not exists hr_occurrences_employee_status_idx on public.hr_time_occurrences(employee_id,status,occurrence_date);
+create index if not exists hr_occurrences_requested_by_idx on public.hr_time_occurrences(requested_by);
+create index if not exists hr_occurrences_reviewed_by_idx on public.hr_time_occurrences(reviewed_by);
 create index if not exists hr_bank_employee_date_idx on public.hr_time_bank_entries(company_id,employee_id,effective_date);
+create index if not exists hr_bank_approved_by_idx on public.hr_time_bank_entries(approved_by);
 create index if not exists hr_periods_company_month_idx on public.hr_time_periods(company_id,period_month);
+create index if not exists hr_periods_closed_by_idx on public.hr_time_periods(closed_by);
+create index if not exists hr_periods_reopened_by_idx on public.hr_time_periods(reopened_by);
 create unique index if not exists hr_bank_source_once_uidx on public.hr_time_bank_entries(company_id,employee_id,source_type,source_id) where source_id is not null;
 
 alter table public.hr_time_rules enable row level security;
