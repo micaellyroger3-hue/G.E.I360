@@ -67,7 +67,7 @@ create table if not exists public.hr_time_occurrences (
   company_id uuid not null references public.companies(id) on delete cascade,
   employee_id uuid not null,
   occurrence_date date not null,
-  occurrence_type text not null check (occurrence_type in ('absence','missing_entry','missing_exit','missing_break_start','missing_break_end','late_arrival','early_departure','justified_absence','medical_leave','vacation','day_off_worked','other')),
+  occurrence_type text not null check (occurrence_type in ('absence','missing_entry','missing_exit','missing_break_start','missing_break_end','late_arrival','early_departure','interjornada_short','justified_absence','medical_leave','vacation','day_off_worked','other')),
   status text not null default 'pending' check (status in ('pending','justified','unjustified','approved','rejected','cancelled')),
   minutes integer check (minutes between 0 and 1440),
   reason text not null check (length(trim(reason)) between 3 and 1000),
