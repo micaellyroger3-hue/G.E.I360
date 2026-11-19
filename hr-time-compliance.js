@@ -149,7 +149,7 @@ function summaryH(sessions=sessionsH()){
   const daySchedule=scheduleForH(d.employee_id,d.day),dayException=dataH.scheduleExceptions.find(x=>x.employee_id===d.employee_id&&x.exception_date===d.day);
   const dayDate=new Date(d.day+'T12:00:00-03:00'),weekMonday=new Date(dayDate);weekMonday.setDate(dayDate.getDate()-((dayDate.getDay()+6)%7));
   const weekSunday=new Date(weekMonday);weekSunday.setDate(weekMonday.getDate()+6);
-  const hasCompRest=dataH.scheduleExceptions.some(x=>x.employee_id===d.employee_id&&x.exception_type==='extra_rest'&&x.exception_date>d.day&&x.exception_date>=weekMonday.toISOString().slice(0,10)&&x.exception_date<=weekSunday.toISOString().slice(0,10));
+  const hasCompRest=dataH.scheduleExceptions.some(x=>x.employee_id===d.employee_id&&x.exception_type==='extra_rest'&&x.exception_date!==d.day&&x.exception_date>=weekMonday.toISOString().slice(0,10)&&x.exception_date<=weekSunday.toISOString().slice(0,10));
   const scheduledSunday=baseExpectedH(daySchedule,d.day)&&dayException?.exception_type!=='extra_rest';
   const restDayWorked=dayException?.exception_type==='extra_work'&&!baseExpectedH(daySchedule,d.day);const specialDay=daySchedule?.schedule_type!=='12x36'&&(d.holiday||(d.sunday&&!scheduledSunday)||restDayWorked)&&!hasCompRest;
   return {...d,name:emp?.full_name||'Funcionário',base,overtime,nightHours:d.night/nightDivisor,overtimeNightMinutes:Math.min(overtime,d.night),specialDay};
@@ -235,7 +235,7 @@ function renderH(){
   const completed=monthSessions.filter(s=>s.employee_id===e.id&&!s.open&&s.end).sort((a,b)=>new Date(a.start)-new Date(b.start));
   for(let n=1;n<completed.length;n++){
    const previous=completed[n-1],next=completed[n],gap=(new Date(next.start)-new Date(previous.end))/60000,sch=scheduleForH(e.id,previous.day)||scheduleForH(e.id,next.day),required=sch?.schedule_type==='12x36'?2160:660;
-   if(next.day.slice(0,7)===monthPick&&gap>=0&&gap<required&&!dataH.occurrences.some(o=>o.employee_id===e.id&&o.occurrence_date===next.day&&o.occurrence_type==='interjornada_short'))missing.push({employee:e,date:next.day,kind:'interjornada_short',minutes:Math.round(required-gap)});
+   if(next.day.slice(0,7)===monthPick&&gap<required&&!dataH.occurrences.some(o=>o.employee_id===e.id&&o.occurrence_date===next.day&&o.occurrence_type==='interjornada_short'))missing.push({employee:e,date:next.day,kind:'interjornada_short',minutes:Math.min(1440,Math.max(0,Math.round(required-gap)))});
   }
  }
  host.innerHTML='<section class="gei-hr-panel"><div class="head"><div><h1>Apuração e fechamento de jornada</h1><span class="muted">Cálculo mensal, adicionais, ausências, banco de horas e conferência</span></div></div>'+
