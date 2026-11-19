@@ -76,6 +76,7 @@ function bankLotsH(employeeId){
  for(const entry of entries){
   const amount=Number(entry.minutes)*Number(entry.multiplier||1);
   if(entry.entry_type==='credit'){lots.push({id:entry.id,remaining:amount,multiplier:Number(entry.multiplier||1),expires_on:entry.expires_on});continue}
+  if(entry.entry_type==='expiry'&&entry.source_id){const lot=lots.find(x=>x.id===entry.source_id);if(lot)lot.remaining=Math.max(0,lot.remaining-amount);continue}
   let debit=amount;
   for(const lot of lots){if(debit<=0)break;const used=Math.min(lot.remaining,debit);lot.remaining-=used;debit-=used}
  }
