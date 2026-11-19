@@ -61,7 +61,7 @@ function restComplianceH(employeeId,sessions){
   window.push(!worked);
   if(d>=start&&window.length>=7){const restInWindow=window.slice(-7).filter(Boolean).length;minRest7=Math.min(minRest7,restInWindow)}
  }
- const target=Math.ceil(days*2/7);
+ const target=Math.floor(days*2/7);
  return {special:false,rest,work,target,maxWork,minRest7,compliant:rest>=target&&minRest7>=2&&maxWork<=5};
 }
 function sessionsH(){
