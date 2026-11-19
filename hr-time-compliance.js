@@ -131,6 +131,7 @@ function summaryH(){
   w.actual+=row.actual;w.dailyOt+=row.overtime;w.items.push(row);weeks.set(key,w);
  }
  for(const w of weeks.values()){
+  if(w.items.some(row=>scheduleForH(row.employee_id,row.day)?.schedule_type==='12x36'))continue;
   const empComp=dataH.comp.find(x=>x.employee_id===w.items[0].employee_id)||{};
   const limit=Number(rules.overtime_weekly_threshold_minutes??(Number(empComp.weekly_hours||0)*60||rules.weekly_standard_minutes||2640));
   const extra=Math.max(0,w.actual-limit-w.dailyOt);
