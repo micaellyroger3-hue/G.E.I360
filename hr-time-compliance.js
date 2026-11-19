@@ -13,7 +13,8 @@ const minsH=n=>{n=Math.round(Number(n)||0);return (n<0?'-':'')+Math.floor(Math.a
 const dateLabelH=d=>d?new Date(d+'T12:00:00-03:00').toLocaleDateString('pt-BR'):'—';
 const adminH=()=>['owner','admin'].includes(companyRole);
 let dataH={employees:[],schedules:[],punches:[],comp:[],rules:null,holidays:[],occurrences:[],bank:[],periods:[]},monthPick=monthH();
-const apiH=(table,query='')=>api('/rest/v1/'+table+'?'+query);\nasync function apiAllH(table,query=''){const all=[],size=500;let offset=0;while(true){const rows=await apiH(table,query+(query?'&':'')+'limit='+size+'&offset='+offset);if(!Array.isArray(rows))throw Error('Resposta inválida ao consultar '+table+'.');all.push(...rows);if(rows.length<size)break;offset+=size}return all}
+const apiH=(table,query='')=>api('/rest/v1/'+table+'?'+query);
+async function apiAllH(table,query=''){const all=[],size=500;let offset=0;while(true){const rows=await apiH(table,query+(query?'&':'')+'limit='+size+'&offset='+offset);if(!Array.isArray(rows))throw Error('Resposta inválida ao consultar '+table+'.');all.push(...rows);if(rows.length<size)break;offset+=size}return all}
 function zonedPartsH(value){
  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(value));
  const get=t=>parts.find(x=>x.type===t)?.value||'00';
