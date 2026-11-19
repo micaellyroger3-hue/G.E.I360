@@ -49,14 +49,20 @@ function restComplianceH(employeeId,sessions){
  const days=Math.max(0,Math.round((new Date(end+'T12:00:00-03:00')-new Date(start+'T12:00:00-03:00'))/86400000)+1);
  const monthSchedules=dataH.schedules.filter(s=>s.employee_id===employeeId&&s.effective_from<=end&&(!s.effective_to||s.effective_to>=start));
  if(!monthSchedules.length)return null;
- if(monthSchedules.some(s=>s.schedule_type==='12x36'))return {special:true,rest:0,target:0,maxWork:0};
+ if(monthSchedules.some(s=>s.schedule_type==='12x36'))return {special:true,rest:0,target:0,maxWork:0,minRest7:null};
  if(monthSchedules.every(s=>['por_hora','variavel'].includes(s.schedule_type)))return null;
- let rest=0,work=0,consecutive=0,maxWork=0;
+ let rest=0,work=0,consecutive=0,maxWork=0,minRest7=7;
  const begin=new Date(start+'T12:00:00-03:00');begin.setDate(begin.getDate()-6);
- for(let i=0;i<days+6;i++){const dt=new Date(begin);dt.setDate(begin.getDate()+i);const d=dt.toISOString().slice(0,10);if(d<start) {if(expectedH(scheduleForH(employeeId,d),d,employeeId)||(sessions||[]).some(s=>s.employee_id===employeeId&&s.day===d&&s.actual>0))consecutive++;else consecutive=0;continue}
-  if(expectedH(scheduleForH(employeeId,d),d,employeeId)||(sessions||[]).some(s=>s.employee_id===employeeId&&s.day===d&&s.actual>0)){work++;consecutive++;maxWork=Math.max(maxWork,consecutive)}else{rest++;consecutive=0}
+ const window=[];
+ for(let i=0;i<days+6;i++){
+  const dt=new Date(begin);dt.setDate(begin.getDate()+i);const d=dt.toISOString().slice(0,10);
+  const worked=expectedH(scheduleForH(employeeId,d),d,employeeId)||(sessions||[]).some(s=>s.employee_id===employeeId&&s.day===d&&s.actual>0);
+  if(worked){consecutive++;if(d>=start){work++;maxWork=Math.max(maxWork,consecutive)}}else{consecutive=0;if(d>=start)rest++}
+  window.push(!worked);
+  if(d>=start&&window.length>=7){const restInWindow=window.slice(-7).filter(Boolean).length;minRest7=Math.min(minRest7,restInWindow)}
  }
- return {special:false,rest,target:Math.ceil(days*2/7),maxWork,compliant:rest>=Math.ceil(days*2/7)&&maxWork<=6};
+ const target=Math.ceil(days*2/7);
+ return {special:false,rest,work,target,maxWork,minRest7,compliant:rest>=target&&minRest7>=2&&maxWork<=5};
 }
 function sessionsH(){
  const sorted=[...dataH.punches].sort((a,b)=>new Date(a.punched_at)-new Date(b.punched_at));
