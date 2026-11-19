@@ -140,45 +140,59 @@ function summaryH(sessions=sessionsH()){
   daily.set(key,old);
  }
  const rows=[...daily.values()].map(d=>{
-  const emp=dataH.employees.find(e=>e.id===d.employee_id),comp=dataH.comp.find(c=>c.employee_id===d.employee_id)||{};
-  const legalWeekly=statutoryWeeklyCapH(d.day)/60,contractWeekly=Number(comp.weekly_hours||rules.weekly_standard_minutes/60||legalWeekly),companyWeekly=Number(rules.weekly_standard_minutes||legalWeekly*60)/60,effectiveWeekly=Math.min(contractWeekly,legalWeekly,companyWeekly),divisor=Number(comp.monthly_hour_divisor||effectiveWeekly*5);const base=comp.remuneration_basis==='hourly'?Number(comp.hourly_rate||0):Number(comp.salary_base||0)/Math.max(1,divisor);
-  const tolerance=Number(rules.daily_tolerance_minutes??10);
-  const dailyLimit=rules.overtime_daily_threshold_minutes==null?(d.planned>0?d.planned:null):Number(rules.overtime_daily_threshold_minutes);let overtime=dailyLimit==null?0:Math.max(0,d.actual-dailyLimit);
-  if(overtime<=tolerance)overtime=0;
-  const nightDivisor=rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5),nightHours=d.night/nightDivisor;
+  const emp=dataH.employees.find(e=>e.id===d.employee_id),comp=dataH.comp.find(x=>x.employee_id===d.employee_id)||{};
+  const legalWeekly=statutoryWeeklyCapH(d.day)/60,contractWeekly=Number(comp.weekly_hours||rules.weekly_standard_minutes/60||legalWeekly),companyWeekly=Number(rules.weekly_standard_minutes||legalWeekly*60)/60,effectiveWeekly=Math.min(contractWeekly,legalWeekly,companyWeekly),divisor=Number(comp.monthly_hour_divisor||effectiveWeekly*5);
+  const base=comp.remuneration_basis==='hourly'?Number(comp.hourly_rate||0):Number(comp.salary_base||0)/Math.max(1,divisor);
+  const tolerance=Number(rules.daily_tolerance_minutes??10),dailyLimit=rules.overtime_daily_threshold_minutes==null?(d.planned>0?d.planned:null):Number(rules.overtime_daily_threshold_minutes);
+  let overtime=dailyLimit==null?0:Math.max(0,d.actual-dailyLimit);if(overtime<=tolerance)overtime=0;
+  const nightDivisor=rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5);
   const daySchedule=scheduleForH(d.employee_id,d.day),dayException=dataH.scheduleExceptions.find(x=>x.employee_id===d.employee_id&&x.exception_date===d.day);
-  const dayDate=new Date(d.day+'T12:00:00-03:00'),weekMonday=new Date(dayDate);weekMonday.setDate(dayDate.getDate()-((dayDate.getDay()+6)%7));const weekSunday=new Date(weekMonday);weekSunday.setDate(weekMonday.getDate()+6);
+  const dayDate=new Date(d.day+'T12:00:00-03:00'),weekMonday=new Date(dayDate);weekMonday.setDate(dayDate.getDate()-((dayDate.getDay()+6)%7));
+  const weekSunday=new Date(weekMonday);weekSunday.setDate(weekMonday.getDate()+6);
   const hasCompRest=dataH.scheduleExceptions.some(x=>x.employee_id===d.employee_id&&x.exception_type==='extra_rest'&&x.exception_date>d.day&&x.exception_date>=weekMonday.toISOString().slice(0,10)&&x.exception_date<=weekSunday.toISOString().slice(0,10));
   const scheduledSunday=baseExpectedH(daySchedule,d.day)&&dayException?.exception_type!=='extra_rest';
   const specialDay=daySchedule?.schedule_type!=='12x36'&&(d.holiday||(d.sunday&&!scheduledSunday))&&!hasCompRest;
-  const specialMultiplier=Number(rules.sunday_holiday_multiplier||2),overtimeMultiplier=Number(rules.overtime_multiplier||1.5);
-  const overtimeNightMinutes=Math.min(overtime,d.night),regularNightMinutes=Math.max(0,d.night-overtimeNightMinutes),regularMinutes=Math.max(0,d.actual-overtime);
-  const nightValue=regularNightMinutes/nightDivisor*base*Number(rules.night_additional_percent??20)/100;
-  const payMultiplier=specialDay?specialMultiplier:overtimeMultiplier,overtimeDayMinutes=Math.max(0,overtime-overtimeNightMinutes);
-  const overtimeValue=(overtimeDayMinutes/60+overtimeNightMinutes/nightDivisor)*base*payMultiplier;
-  const overtimeNightValue=overtimeNightMinutes/nightDivisor*base*Number(rules.night_additional_percent??20)/100*payMultiplier;
-  const premium=specialDay?regularMinutes/60*base*(specialMultiplier-1):0;
-  const breakIndemnity=d.breakDeficit/60*base*1.5;
-  return {...d,name:emp?.full_name||'Funcionário',base,overtime,nightHours,nightValue,premium,overtimeValue,overtimeNightValue,breakIndemnity,specialDay,estimatedAdditional:nightValue+premium+overtimeValue+overtimeNightValue+breakIndemnity};
+  return {...d,name:emp?.full_name||'Funcionário',base,overtime,nightHours:d.night/nightDivisor,overtimeNightMinutes:Math.min(overtime,d.night),specialDay};
  });
  const weeks=new Map();
  for(const row of rows){
-  const dt=new Date(row.day+'T12:00:00-03:00'),monday=new Date(dt);
-  monday.setDate(dt.getDate()-((dt.getDay()+6)%7));
-  const key=row.employee_id+'|'+monday.toISOString().slice(0,10);
-  const w=weeks.get(key)||{actual:0,dailyOt:0,items:[]};
+  const dt=new Date(row.day+'T12:00:00-03:00'),weekStart=new Date(dt);
+  weekStart.setDate(dt.getDate()-((dt.getDay()+6)%7));
+  const key=row.employee_id+'|'+weekStart.toISOString().slice(0,10);
+  const w=weeks.get(key)||{actual:0,dailyOt:0,items:[],weekStart};
   w.actual+=row.actual;w.dailyOt+=row.overtime;w.items.push(row);weeks.set(key,w);
  }
  for(const w of weeks.values()){
   if(w.items.some(row=>scheduleForH(row.employee_id,row.day)?.schedule_type==='12x36'))continue;
   const empComp=dataH.comp.find(x=>x.employee_id===w.items[0].employee_id)||{};
-  const weekEnd=new Date(monday);weekEnd.setDate(weekEnd.getDate()+6);const cap=statutoryWeeklyCapH(weekEnd.toISOString().slice(0,10)),contractLimit=Number(empComp.weekly_hours||rules.weekly_standard_minutes/60||cap/60)*60,limit=Math.min(cap,contractLimit,Number(rules.weekly_standard_minutes||cap));
-  const extra=Math.max(0,w.actual-limit-w.dailyOt);
+  const weekEnd=new Date(w.weekStart);weekEnd.setDate(weekEnd.getDate()+6);
+  const cap=statutoryWeeklyCapH(weekEnd.toISOString().slice(0,10));
+  const contractLimit=Number(empComp.weekly_hours||rules.weekly_standard_minutes/60||cap/60)*60;
+  const companyLimit=Number(rules.weekly_standard_minutes||cap);
+  const limit=Math.min(cap,contractLimit,companyLimit),extra=Math.max(0,w.actual-limit-w.dailyOt);
   if(extra>0){
-   w.items.sort((a,b)=>a.day.localeCompare(b.day));
-   const target=w.items[w.items.length-1],value=extra/60*target.base*(Number(rules.overtime_multiplier||1.5)-1);
-   target.overtime+=extra;target.overtimeValue+=value;target.estimatedAdditional+=value;
+   w.items.sort((a,b)=>b.day.localeCompare(a.day));
+   let remaining=extra;
+   for(const row of w.items){
+    if(remaining<=0)break;
+    const allocation=Math.min(remaining,Math.max(0,row.actual-row.overtime));
+    if(allocation<=0)continue;
+    const nightAllocation=Math.min(allocation,Math.max(0,row.night-row.overtimeNightMinutes));
+    row.overtime+=allocation;row.overtimeNightMinutes+=nightAllocation;remaining-=allocation;
+   }
   }
+ }
+ const nightPercent=Number(rules.night_additional_percent??20),specialMultiplier=Number(rules.sunday_holiday_multiplier||2),overtimeMultiplier=Number(rules.overtime_multiplier||1.5);
+ for(const row of rows){
+  const overtimeNight=Math.min(row.overtime,Number(row.overtimeNightMinutes||0)),overtimeDay=Math.max(0,row.overtime-overtimeNight);
+  const regularNight=Math.max(0,row.night-overtimeNight),regularMinutes=Math.max(0,row.actual-row.overtime),payMultiplier=row.specialDay?specialMultiplier:overtimeMultiplier;
+  row.nightHours=row.night/(rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5));
+  row.nightValue=regularNight/(rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5))*row.base*nightPercent/100;
+  row.overtimeValue=(overtimeDay/60+overtimeNight/(rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5)))*row.base*payMultiplier;
+  row.overtimeNightValue=overtimeNight/(rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5))*row.base*nightPercent/100*payMultiplier;
+  row.premium=row.specialDay?regularMinutes/60*row.base*(specialMultiplier-1):0;
+  row.breakIndemnity=Number(row.breakDeficit||0)/60*row.base*1.5;
+  row.estimatedAdditional=row.nightValue+row.premium+row.overtimeValue+row.overtimeNightValue+row.breakIndemnity;
  }
  return rows.filter(r=>r.day.slice(0,7)===monthPick);
 }
