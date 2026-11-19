@@ -292,6 +292,9 @@ assert.ok(modules.includes('geiPageIsEnabled'), 'Disabled modules must be blocke
 assert.ok(html.includes('modules.js?v=20261119-02') && html.includes('hr-time-compliance.js?v=20261119-07'), 'Dynamic module and HR calculation asset cache versions missing');
 assert.ok(html.includes('hr.js?v=20261119-05') && worker.includes('hr.js?v=20261119-05'), 'HR tax settings asset cache version missing');
 assert.ok(hr.includes('fap_factor') && hr.includes('anexo_iv_revenue_share') && hr.includes('third_party_confirmed'), 'Verified FAP and mixed Simples tax parameters missing');
+assert.ok(hr.includes('hrRateSettings(c)') && hr.includes('anexo_iv_share'), 'Employee-level Anexo IV payroll allocation missing');
+const hrEmployeeShareMigration = fs.readFileSync('supabase/migrations/20261119165904_hr_employee_anexo_iv_share.sql', 'utf8');
+assert.ok(hrEmployeeShareMigration.includes('anexo_iv_share'), 'Employee-level Anexo IV share migration missing');
 assert.ok(hr.includes("apprentice?2:rates.fgts"), 'Apprentice FGTS rate must be 2 percent');
 assert.ok(hrTimeCompliance.includes('s.actual=Math.max(0,elapsed-recorded)'), 'Unmarked or suppressed breaks must not be deducted from actual worked time');
 assert.ok(hrTimeCompliance.includes('transitionDailyCap') && hrTimeCompliance.includes('ordinaryDailyCap') && hrTimeCompliance.includes('finalDailyCap') && hrTimeCompliance.includes('504'), 'Daily limits across EC 141 transition are missing');
