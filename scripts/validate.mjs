@@ -142,7 +142,7 @@ assert.ok(hrTimeCompliance.includes('hr_schedule_exceptions') && hrTimeComplianc
 assert.ok(!hrTimeCompliance.includes('minRest7'), 'Do not impose a fixed rolling seven-day rest rule after the STF interim decision');
 
 assert.ok(html.includes('hr-time-compliance.js?v=20261119-09') && worker.includes('hr-time-compliance.js?v=20261119-09'), 'HR calculation asset must be loaded and cached');
-assert.ok(worker.includes('./hr.js?v=20261119-06') && worker.includes('hr-time-compliance.js?v=20261119-09'), 'HR modules missing from offline shell');
+assert.ok(worker.includes('./hr.js?v=20261119-07') && worker.includes('hr-time-compliance.js?v=20261119-09'), 'HR modules missing from offline shell');
 assert.ok(hr.includes('employee_compensation') && hr.includes('hr_company_settings') && hr.includes('hr_events'), 'HR data modules missing');
 assert.ok(hr.includes('gei_post_hr_monthly_cost') && hr.includes('Lançar custo estimado'), 'HR finance posting flow missing');
 assert.ok(hr.includes('FGTS') && hr.includes('INSS patronal') && hr.includes('Provisões'), 'HR cost breakdown missing');
