@@ -138,8 +138,10 @@ assert.ok(hrTimeCompliance.includes('Cadastrar feriados nacionais fixos') && hrT
 assert.ok(hrTimeCompliance.includes('workNightMinutesH') && hrTimeCompliance.includes('night_reduced_hour') && hrTimeCompliance.includes('night_extension') && hrTimeCompliance.includes('const weeks') && hrTimeCompliance.includes('minsH(late)'), 'Night and weekly overtime calculations missing');
 assert.ok(hrTimeCompliance.includes('statutoryWeeklyCapH') && hrTimeCompliance.includes('restComplianceH') && hrTimeCompliance.includes('hr_schedule_exceptions') && hrTimeCompliance.includes('interjornada_short'), 'EC 141 weekly caps, rest-day calendar and inter-shift compliance missing');
 assert.ok(hrTimeCompliance.includes('monthly_hour_divisor') && hrTimeCompliance.includes('breakIndemnity') && hrTimeCompliance.includes('overtimeNightValue'), 'Hourly divisor and detailed pay calculations missing');
+assert.ok(hrTimeCompliance.includes('hr_schedule_exceptions') && hrTimeCompliance.includes('statutoryWeeklyCapH') && hrTimeCompliance.includes('restComplianceH') && hrTimeCompliance.includes('interjornada_short'), 'EC 141 weekly/rest compliance and schedule exceptions missing');
+assert.ok(hrTimeCalcSql.includes('hr_schedule_exceptions') && hrTimeCalcSql.includes('monthly_hour_divisor') && hrTimeCalcSql.includes('night_extension') && hrTimeCalcSql.includes('hr_guard_closed_time_period'), 'HR compliance migration must protect schedules and closed periods');
 assert.ok(html.includes('hr-time-compliance.js?v=20261119-03') && worker.includes('hr-time-compliance.js?v=20261119-03'), 'HR calculation asset must be loaded and cached');
-assert.ok(worker.includes('./hr.js?v=20261119-04'), 'HR module missing from offline shell');
+assert.ok(worker.includes('./hr.js?v=20261119-04') && worker.includes('hr-time-compliance.js?v=20261119-03'), 'HR modules missing from offline shell');
 assert.ok(hr.includes('employee_compensation') && hr.includes('hr_company_settings') && hr.includes('hr_events'), 'HR data modules missing');
 assert.ok(hr.includes('gei_post_hr_monthly_cost') && hr.includes('Lançar custo estimado'), 'HR finance posting flow missing');
 assert.ok(hr.includes('FGTS') && hr.includes('INSS patronal') && hr.includes('Provisões'), 'HR cost breakdown missing');
@@ -285,7 +287,7 @@ assert.ok(modules.includes('GEI_MODULE_PAGES'), 'Dynamic module page map missing
 assert.ok(modules.includes('geiLoadModuleAccess') && modules.includes('geiRenderModuleNavigation'), 'Dynamic module catalog loading/navigation missing');
 assert.ok(modules.includes('geiRenderCompanyModuleSettings') && modules.includes('company_modules'), 'Company module controls missing');
 assert.ok(modules.includes('geiPageIsEnabled'), 'Disabled modules must be blocked in navigation routing');
-assert.ok(html.includes('modules.js?v=20261119-02'), 'Dynamic module asset cache version missing');
+assert.ok(html.includes('modules.js?v=20261119-02') && html.includes('hr-time-compliance.js?v=20261119-03'), 'Dynamic module and HR calculation asset cache versions missing');
 assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v28'), 'Service worker cache must match dynamic module release');
 
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
