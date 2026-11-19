@@ -248,6 +248,27 @@ declare
   v_old_company_id uuid;
   v_old_employee_id uuid;
 begin
+  if tg_table_name = 'hr_work_schedules' then
+    if tg_op='DELETE' or tg_op='UPDATE' then
+      if exists (
+        select 1 from public.hr_time_periods p
+        where p.company_id=old.company_id and p.employee_id=old.employee_id and p.status='closed'
+          and p.period_month>=date_trunc('month',old.effective_from)::date
+          and (old.effective_to is null or p.period_month<=date_trunc('month',old.effective_to)::date)
+      ) then raise exception 'A escala original participa de competência fechada. Reabra o período antes de alterar ou excluir.'; end if;
+    end if;
+    if tg_op<>'DELETE' then
+      if exists (
+        select 1 from public.hr_time_periods p
+        where p.company_id=new.company_id and p.employee_id=new.employee_id and p.status='closed'
+          and p.period_month>=date_trunc('month',new.effective_from)::date
+          and (new.effective_to is null or p.period_month<=date_trunc('month',new.effective_to)::date)
+      ) then raise exception 'A nova vigência da escala alcança competência fechada. Reabra o período antes de alterar.'; end if;
+    end if;
+    if tg_op='DELETE' then return old; end if;
+    return new;
+  end if;
+
   if tg_op='DELETE' then
     v_company_id := old.company_id;
     v_employee_id := old.employee_id;
@@ -303,6 +324,11 @@ end;
 $function$;
 
 revoke all on function public.hr_guard_closed_time_period() from public, anon, authenticated;
+
+drop trigger if exists hr_work_schedules_closed_period_guard on public.hr_work_schedules;
+create trigger hr_work_schedules_closed_period_guard
+before insert or update or delete on public.hr_work_schedules
+for each row execute function public.hr_guard_closed_time_period();
 
 drop trigger if exists hr_schedule_exceptions_closed_period_guard on public.hr_schedule_exceptions;
 create trigger hr_schedule_exceptions_closed_period_guard
