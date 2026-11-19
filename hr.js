@@ -12,7 +12,7 @@ const hrEsc=value=>esc(value==null?'':String(value));
 const hrToday=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const hrMonth=()=>hrToday().slice(0,7)+'-01';
 const hrDate=value=>value?new Date(value+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-const hrActive=e=>e.employment_status==='ativo'&&e.status!=='inactive';
+const hrActive=e=>e.employment_status!=='inativo'&&e.status!=='inactive';
 function hrCompOf(id){return hrComp.find(x=>x.employee_id===id)||{salary_base:0,contract_type:'clt',weekly_hours:44,transportation_allowance:0,meal_allowance:0,health_benefit:0,other_benefits:0,work_schedule:''};}
 function hrSettingsReady(){return !!hrSettings;}
 function hrRateSettings(){
