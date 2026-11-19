@@ -47,12 +47,12 @@ A tela **Apuração de jornada** (menu RH) acrescenta:
 
 - Parâmetros configuráveis por empresa: limite semanal, limite diário opcional, adicional de horas extras, regra de domingo/feriado, adicional e faixa noturna, hora noturna reduzida, tolerância e configuração de banco de horas.
 - Apuração por marcações originais, separando jornada diária, extras diárias e complemento semanal sem somar duas vezes a mesma hora.
-- Estimativa de adicional noturno, considerando faixa configurada e duração reduzida da hora noturna quando habilitada.
+- Estimativa de adicional noturno, considerando faixa configurada, prorrogação após as 5h quando houver continuidade e duração reduzida da hora noturna quando habilitada.
 - Calendário de feriados nacional, estadual, municipal e da empresa. Há atalho para cadastrar feriados nacionais fixos; feriados estaduais/municipais e datas móveis locais precisam ser conferidos e cadastrados pelo responsável.
 - Conferência de escala x marcações, com alertas de ausência, entrada/saída faltante e intervalo sem marcação. O sistema não aplica desconto automático.
 - Ocorrências justificadas/não justificadas, com observação e responsável pela revisão.
 - Livro de banco de horas append-only (crédito/débito/expiração/pagamento/ajuste), validade do crédito e saldo por funcionário.
-- Exportação CSV gerencial e fechamento mensal por funcionário, com resumo persistido, bloqueio de novos pontos/tratamentos e possibilidade de reabertura mediante justificativa.
+- Exportação CSV gerencial e fechamento mensal por funcionário, com resumo persistido de horas, extras, atrasos, saídas antecipadas e adicionais, bloqueio de novos pontos/tratamentos e possibilidade de reabertura mediante justificativa.
 
 ### Critérios e cautelas de cálculo
 
