@@ -322,7 +322,7 @@ function geiPageIsEnabled(page) {
   if (page === 'company') return true;
   if (page === 'sector') return geiModuleEnabled('servicos') || geiModuleEnabled('industria');
   const pairs = {
-    home:'dashboard', employees:'rh', products:'produtos_servicos',
+    home:'dashboard', employees:'rh', timeclock:'rh', products:'produtos_servicos',
     stock:'estoque', suppliers:'cadastros', customers:'cadastros',
     categories:'cadastros', sales:'vendas', purchases:'compras',
     finance:'financeiro', documents:'fiscal', reports:'relatorios'
@@ -346,7 +346,7 @@ function geiRenderModuleNavigation() {
   if (geiModuleEnabled('servicos') || geiModuleEnabled('industria')) geiAddNavButton(nav,'sector');
   geiAddNavButton(nav,'company');
   const order = [
-    ['rh','employees'],['produtos_servicos','products'],['estoque','stock'],
+    ['rh','employees'],['rh','timeclock'],['produtos_servicos','products'],['estoque','stock'],
     ['cadastros','suppliers'],['cadastros','customers'],['cadastros','categories'],
     ['vendas','sales'],['compras','purchases'],['financeiro','finance'],
     ['fiscal','documents'],['relatorios','reports']
