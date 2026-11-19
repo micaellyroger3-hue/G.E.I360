@@ -83,4 +83,4 @@ Verificações confirmadas:
 O banco já tinha tabelas e dados antes desta revisão, sem histórico inicial de migrations. O antigo instalador `supabase/INSTALL_GEI360_ALL.sql` está desativado para impedir execução incompatível. **Não executar o instalador antigo nem `supabase db push`** até reconciliar formalmente todo o histórico.
 
 O navegador pode conter somente URL do projeto e chave publicável. Nunca expor `service_role`, `sb_secret_` ou credenciais de terceiros no front-end.
-- A navegação dinâmica e os controles do catálogo foram publicados com validação automatizada e cache PWA `gei360-shell-v25`; ainda requerem conferência visual no aparelho do usuário.
+- A navegação dinâmica e os controles do catálogo foram publicados com validação automatizada e cache PWA `gei360-shell-v26`; ainda requerem conferência visual no aparelho do usuário.
