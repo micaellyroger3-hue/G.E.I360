@@ -85,7 +85,8 @@ function hrSummary(){
  const otherContracts=active.filter(e=>!['clt','aprendiz'].includes(hrCompOf(e.id).contract_type)).length;
  const incomplete=active.filter(e=>['clt','aprendiz'].includes(hrCompOf(e.id).contract_type)&&!hrCost(hrCompOf(e.id)).complete).length;
  const meiSalaryReview=hrSettings?.tax_regime==='mei'&&meiEmployees.some(e=>hrCost(hrCompOf(e.id)).base>1621);
- const meiEmployees=active.filter(e=>['clt','aprendiz'].includes(hrCompOf(e.id).contract_type));\n const meiOverLimit=hrSettings?.tax_regime==='mei'&&meiEmployees.length>1;
+ const meiEmployees=active.filter(e=>['clt','aprendiz'].includes(hrCompOf(e.id).contract_type));
+ const meiOverLimit=hrSettings?.tax_regime==='mei'&&meiEmployees.length>1;
  const rates=hrRateSettings();
  const posted=hrPostings.find(p=>p.period===hrMonth());
  return '<div class="gei-hr-kpis">'+hrKpi('Funcionários ativos',active.length,'Vínculos ativos')+hrKpi('Remuneração estimada',hrMoney(payroll),'Total bruto mensal equivalente')+hrKpi('Custo estimado',hrMoney(total),'Salários, benefícios e encargos')+hrKpi('Eventos em aberto',eventCount,'Férias, ausências e afastamentos')+'</div>'+
