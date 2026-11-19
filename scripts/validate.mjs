@@ -298,6 +298,8 @@ assert.ok(hrTimeCompliance.includes('transitionDailyCap') && hrTimeCompliance.in
 assert.ok(hrTimeCompliance.includes('liminar do STF') && !hrTimeCompliance.includes('minRest7'), 'Rest validation must not impose a fixed rolling seven-day rule contrary to the STF interim decision');
 const hrTaxMigration = fs.readFileSync('supabase/migrations/20261119165027_hr_tax_parameters_fap_and_mixed_annex.sql', 'utf8');
 assert.ok(hrTaxMigration.includes('fap_factor') && hrTaxMigration.includes('anexo_iv_revenue_share') && hrTaxMigration.includes('third_party_confirmed'), 'HR tax parameter migration missing');
+const hrMixedAnnexMigration = fs.readFileSync('supabase/migrations/20261119165352_hr_allow_mixed_simples_annex.sql', 'utf8');
+assert.ok(hrMixedAnnexMigration.includes("'mixed'"), 'Mixed Simples annex database constraint missing');
 assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v33'), 'Service worker cache must match dynamic module release');
 
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
