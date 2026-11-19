@@ -61,7 +61,7 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v30"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v31"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
@@ -159,7 +159,7 @@ const hrPrivilegeSql = fs.readFileSync('supabase/migrations/20261119132000_hr_pr
 assert.ok(hrPrivilegeSql.includes('revoke truncate, references, trigger') && hrPrivilegeSql.includes('revoke update, delete on public.hr_cost_postings'), 'HR table privileges must follow least privilege');
 const hrIndexesSql = fs.readFileSync('supabase/migrations/20261119133000_hr_fk_indexes.sql', 'utf8');
 assert.ok(hrIndexesSql.includes('employee_compensation_employee_id_idx') && hrIndexesSql.includes('hr_events_employee_id_idx') && hrIndexesSql.includes('hr_cost_postings_created_by_idx'), 'HR foreign keys must have supporting indexes');
-assert.ok(worker.includes('gei360-shell-v30'), 'Offline shell cache version missing');
+assert.ok(worker.includes('gei360-shell-v31'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
 assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
@@ -289,7 +289,7 @@ assert.ok(modules.includes('geiLoadModuleAccess') && modules.includes('geiRender
 assert.ok(modules.includes('geiRenderCompanyModuleSettings') && modules.includes('company_modules'), 'Company module controls missing');
 assert.ok(modules.includes('geiPageIsEnabled'), 'Disabled modules must be blocked in navigation routing');
 assert.ok(html.includes('modules.js?v=20261119-02') && html.includes('hr-time-compliance.js?v=20261119-05'), 'Dynamic module and HR calculation asset cache versions missing');
-assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v30'), 'Service worker cache must match dynamic module release');
+assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v31'), 'Service worker cache must match dynamic module release');
 
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
 assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunction.includes('company_members'), 'Secure employee invitation function missing');
