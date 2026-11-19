@@ -43,6 +43,7 @@ function expectedH(s,date,employeeId){
  return baseExpectedH(s,date);
 }
 function restComplianceH(employeeId){
+ if(monthPick<'2026-12')return null;
  const start=monthPick==='2026-12'?'2026-12-16':monthPick+'-01';
  const end=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),0).toISOString().slice(0,10);
  const days=Math.max(0,Math.round((new Date(end+'T12:00:00-03:00')-new Date(start+'T12:00:00-03:00'))/86400000)+1);
@@ -121,14 +122,15 @@ function summaryH(){
   old.actual+=s.actual;old.night+=workNightMinutesH(s);old.open=old.open||s.open;
   const dt=new Date(s.day+'T12:00:00-03:00');old.sunday=dt.getDay()===0;
   old.holiday=dataH.holidays.some(h=>h.holiday_date===s.day&&h.is_paid!==false);
-  const sch=scheduleForH(s.employee_id,s.day);
-  if(sch?.shift_start&&sch?.shift_end){
+  const sch=scheduleForH(s.employee_id,s.day),dayException=dataH.scheduleExceptions.find(x=>x.employee_id===s.employee_id&&x.exception_date===s.day);
+  if(dayException){old.planned=0;}
+  else if(sch?.shift_start&&sch?.shift_end){
    const a=Number(sch.shift_start.slice(0,2))*60+Number(sch.shift_start.slice(3,5)),b=Number(sch.shift_end.slice(0,2))*60+Number(sch.shift_end.slice(3,5));
    const actualStart=zonedPartsH(s.start),actualEnd=s.end?zonedPartsH(s.end):null;
    const late=(actualStart.hour*60+actualStart.minute-a+1440)%1440,early=actualEnd?(b-(actualEnd.hour*60+actualEnd.minute)+1440)%1440:0;
    old.late+=late<=720?late:0;old.early+=early<=720?early:0;
    old.planned=Math.max(old.planned,((b-a+1440)%1440)-Number(sch.break_minutes||0));
-  }else if(expectedH(sch,s.day))old.planned=Number(sch?.weekly_hours||44)*60/(sch?.weekdays?.length||5);
+  }else if(expectedH(sch,s.day,s.employee_id))old.planned=Number(sch?.weekly_hours||44)*60/(sch?.weekdays?.length||5);
   daily.set(key,old);
  }
  const rows=[...daily.values()].map(d=>{
