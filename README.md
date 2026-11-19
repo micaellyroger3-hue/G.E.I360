@@ -84,3 +84,7 @@ O banco já tinha tabelas e dados antes desta revisão, sem histórico inicial d
 
 O navegador pode conter somente URL do projeto e chave publicável. Nunca expor `service_role`, `sb_secret_` ou credenciais de terceiros no front-end.
 - A navegação dinâmica e os controles do catálogo foram publicados com validação automatizada e cache PWA `gei360-shell-v26`; ainda requerem conferência visual no aparelho do usuário.
+
+
+### RH — apuração de jornada
+O módulo inclui escala e ponto gerencial, apuração mensal de horas, extras diárias/semanais estimadas, adicional noturno e hora reduzida configuráveis, calendário de feriados, alertas de marcações ausentes, ocorrências justificadas, livro de banco de horas e fechamento/reabertura de competência. Consulte [docs/HR_MODULE.md](docs/HR_MODULE.md) para critérios e limites regulatórios. **Não declarar REP-P certificado nem folha oficial:** a conformidade integral com a Portaria MTP 671/2021 depende de requisitos técnicos e documentais adicionais, incluindo HLB, armazenamento/NSR, comprovantes e assinaturas ICP-Brasil.

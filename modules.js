@@ -289,7 +289,7 @@ const GEI_MODULE_PAGES = {
 };
 const GEI_MODULE_LABELS = {
   home:'Visão geral', sector:'Operação do ramo', company:'Minha empresa',
-  employees:'Funcionários', products:'Estoque', stock:'Movimentações',
+  employees:'Funcionários', timepayroll:'Apuração de jornada', products:'Estoque', stock:'Movimentações',
   suppliers:'Fornecedores', customers:'Clientes', categories:'Categorias',
   sales:'Vendas', purchases:'Compras', finance:'Financeiro',
   documents:'Documentos', reports:'Relatórios'
@@ -322,7 +322,7 @@ function geiPageIsEnabled(page) {
   if (page === 'company') return true;
   if (page === 'sector') return geiModuleEnabled('servicos') || geiModuleEnabled('industria');
   const pairs = {
-    home:'dashboard', employees:'rh', timeclock:'rh', products:'produtos_servicos',
+    home:'dashboard', employees:'rh', timeclock:'rh', timepayroll:'rh', products:'produtos_servicos',
     stock:'estoque', suppliers:'cadastros', customers:'cadastros',
     categories:'cadastros', sales:'vendas', purchases:'compras',
     finance:'financeiro', documents:'fiscal', reports:'relatorios'
@@ -346,7 +346,7 @@ function geiRenderModuleNavigation() {
   if (geiModuleEnabled('servicos') || geiModuleEnabled('industria')) geiAddNavButton(nav,'sector');
   geiAddNavButton(nav,'company');
   const order = [
-    ['rh','employees'],['rh','timeclock'],['produtos_servicos','products'],['estoque','stock'],
+    ['rh','employees'],['rh','timeclock'],['rh','timepayroll'],['produtos_servicos','products'],['estoque','stock'],
     ['cadastros','suppliers'],['cadastros','customers'],['cadastros','categories'],
     ['vendas','sales'],['compras','purchases'],['financeiro','finance'],
     ['fiscal','documents'],['relatorios','reports']
