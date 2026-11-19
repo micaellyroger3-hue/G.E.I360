@@ -31,9 +31,9 @@ Este módulo é uma ferramenta de gestão e estimativa. Não gera folha oficial,
 O lançamento no Financeiro cria uma despesa gerencial pendente, uma vez por competência; não marca pagamento automaticamente e não substitui o fechamento da folha.
 
 
-## Jornadas, escalas e ponto (em implementação)
+## Jornadas, escalas e ponto
 
-- Configuração por funcionário: 12x36 com data-base de ciclo, trabalho por hora, horário fixo, 6x1, 5x2, personalizada e variável.
+- Configuração por funcionário: 12x36 com data-base de ciclo e indicação de trabalho/folga, trabalho por hora, horário fixo, 6x1, 5x2, personalizada e variável.
 - Remuneração pode ser mensal ou por hora; a estimativa mensal por hora usa valor/hora × horas semanais × 52 ÷ 12. É uma aproximação gerencial e não substitui o cálculo da folha ou o fechamento de horas efetivamente trabalhadas.
 - Marcações de entrada, início/fim de intervalo e saída são registradas pelo servidor, com horário `timestamptz` e origem (funcionário ou gestor).
 - Marcações originais não podem ser alteradas ou excluídas pelo cliente. Correções devem ter justificativa e aprovação, preservando a trilha original.
