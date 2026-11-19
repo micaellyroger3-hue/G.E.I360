@@ -24,7 +24,8 @@ create table if not exists public.hr_time_rules (
   notes text,
   created_by uuid not null default auth.uid(),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  check (bank_validity_months is null or (bank_agreement_type='individual' and bank_validity_months between 1 and 6) or (bank_agreement_type='collective' and bank_validity_months between 1 and 12))
 );
 
 create table if not exists public.hr_holidays (
