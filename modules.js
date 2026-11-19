@@ -178,7 +178,7 @@ async function erpRenderSectorOperations(options={}){
   const formOptions=config.records.map((r,i)=>'<option value="'+i+'">'+esc(r.label)+'</option>').join('');
   const body='<section class="card"><div class="head"><div><b>'+esc(config.title)+'</b><p class="muted">'+esc(config.desc)+'</p></div><span class="gei-panel-tag">'+esc(type.toUpperCase())+'</span></div>'+
    (readOnly?'<div class="notice">Seu perfil tem acesso de consulta. Peça ao administrador para registrar novas operações.</div>':'<form id="sectorOpsForm"><div class="field"><label>Tipo de registro</label><select id="sectorOpsType">'+formOptions+'</select></div><div id="sectorOpsFields"></div><button id="sectorOpsSave">Salvar registro</button></form>')+
-   '</section><section class="card"><div class="head"><div><b>Histórico operacional</b><p class="muted">Últimos 100 registros desta empresa.</p></div><span class="gei-count">'+records.length+'</span></div><div id="sectorOpsHistory"></div></section>';
+   '</section><section class="card"><div class="head"><div><b>Histórico operacional</b><p class="muted">Últimos 100 registros desta empresa.</p></div><span class="gei-count" id="sectorOpsCount">'+records.length+'</span></div><div class="toolbar"><input id="sectorOpsSearch" class="search" type="search" placeholder="Pesquisar no histórico..." aria-label="Pesquisar registros operacionais"><button type="button" class="alt" id="sectorOpsExport">Exportar CSV</button></div><div id="sectorOpsHistory"></div></section>';
   erpPageShell(config.title,config.desc,body);
   const renderFields=()=>{
    const selected=config.records[Number($('sectorOpsType')?.value||0)]||config.records[0];
@@ -200,11 +200,32 @@ async function erpRenderSectorOperations(options={}){
    finally{const button=$('sectorOpsSave');if(button)button.disabled=false}
   }}
   const history=$('sectorOpsHistory');
-  history.innerHTML=records.length?'<div class="tablewrap"><table><thead><tr><th>Tipo</th><th>Resumo</th><th>Data de registro</th></tr></thead><tbody>'+records.map(record=>{
-   const definition=config.records.find(item=>item.type===record.record_type);
-   const summary=Object.entries(record.payload||{}).filter(([,value])=>value!==null&&value!=='').slice(0,4).map(([key,value])=>'<div><b>'+esc(key.replaceAll('_',' '))+':</b> '+esc(value)+'</div>').join('');
-   return '<tr><td>'+esc(definition?.label||record.record_type)+'</td><td>'+summary+'</td><td>'+new Date(record.created_at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+'</td></tr>';
-  }).join('')+'</tbody></table></div>':'<div class="empty">Nenhum registro operacional foi lançado ainda.</div>';
+  const renderHistory=()=>{
+   const query=($('sectorOpsSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');
+   const filtered=records.filter(record=>{
+    const definition=config.records.find(item=>item.type===record.record_type);
+    return [definition?.label||record.record_type,JSON.stringify(record.payload||{}),record.created_at].join(' ').toLocaleLowerCase('pt-BR').includes(query);
+   });
+   const count=$('sectorOpsCount');
+   if(count)count.textContent=filtered.length+(query?' / '+records.length:'');
+   history.innerHTML=filtered.length?'<div class="tablewrap"><table><thead><tr><th>Tipo</th><th>Resumo</th><th>Data de registro</th></tr></thead><tbody>'+filtered.map(record=>{
+    const definition=config.records.find(item=>item.type===record.record_type);
+    const summary=Object.entries(record.payload||{}).filter(([,value])=>value!==null&&value!=='').slice(0,4).map(([key,value])=>'<div><b>'+esc(key.replaceAll('_',' '))+':</b> '+esc(value)+'</div>').join('');
+    return '<tr><td>'+esc(definition?.label||record.record_type)+'</td><td>'+summary+'</td><td>'+new Date(record.created_at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+'</td></tr>';
+   }).join('')+'</tbody></table></div>':'<div class="empty">'+(query?'Nenhum registro corresponde à pesquisa.':'Nenhum registro operacional foi lançado ainda.')+'</div>';
+  };
+  $('sectorOpsSearch').oninput=renderHistory;
+  $('sectorOpsExport').onclick=()=>{
+   const rows=[['Tipo','Resumo','Data de registro'],...records.map(record=>{
+    const definition=config.records.find(item=>item.type===record.record_type);
+    const summary=Object.entries(record.payload||{}).filter(([,value])=>value!==null&&value!=='').map(([key,value])=>key.replaceAll('_',' ')+': '+String(value)).join(' | ');
+    return [definition?.label||record.record_type,summary,new Date(record.created_at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})];
+   })];
+   const csv='\\uFEFF'+rows.map(row=>row.map(value=>'"'+String(value??'').replace(/"/g,'""')+'"').join(';')).join('\\r\\n');
+   const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+   const link=document.createElement('a');link.href=url;link.download='gei360-operacao-'+erpToday()+'.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+  };
+  renderHistory();
  }catch(error){erpPageShell('Operação do ramo','Módulos operacionais específicos','<div class="err">Não foi possível abrir esta área: '+esc(error.message)+'</div>')}
 }
 
