@@ -115,8 +115,9 @@ alter table public.hr_company_settings enable row level security;
 alter table public.hr_events enable row level security;
 alter table public.hr_cost_postings enable row level security;
 
-revoke all on public.employee_compensation, public.hr_company_settings, public.hr_events, public.hr_cost_postings from anon;
-grant select, insert, update, delete on public.employee_compensation, public.hr_company_settings, public.hr_events, public.hr_cost_postings to authenticated;
+revoke all on public.employee_compensation, public.hr_company_settings, public.hr_events, public.hr_cost_postings from public, anon;
+grant select, insert, update, delete on public.employee_compensation, public.hr_company_settings, public.hr_events to authenticated;
+grant select, insert on public.hr_cost_postings to authenticated;
 
 drop policy if exists gei_hr_compensation_select on public.employee_compensation;
 create policy gei_hr_compensation_select on public.employee_compensation
