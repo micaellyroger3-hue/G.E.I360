@@ -52,7 +52,7 @@ A tela **Apuração de jornada** (menu RH) acrescenta:
 - Conferência de escala x marcações, com alertas de ausência, entrada/saída faltante e intervalo sem marcação. O sistema não aplica desconto automático.
 - Ocorrências justificadas/não justificadas, com observação e responsável pela revisão.
 - Livro de banco de horas append-only (crédito/débito/expiração/pagamento/ajuste), validade do crédito e saldo por funcionário.
-- Exportação CSV gerencial e fechamento mensal por funcionário, com resumo persistido e possibilidade de reabertura mediante justificativa.
+- Exportação CSV gerencial e fechamento mensal por funcionário, com resumo persistido, bloqueio de novos pontos/tratamentos e possibilidade de reabertura mediante justificativa.
 
 ### Critérios e cautelas de cálculo
 
