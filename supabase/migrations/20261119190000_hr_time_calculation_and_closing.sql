@@ -141,17 +141,34 @@ alter table public.hr_time_bank_entries enable row level security;
 alter table public.hr_time_periods enable row level security;
 
 drop policy if exists hr_time_rules_admin_all on public.hr_time_rules;
-create policy hr_time_rules_admin_all on public.hr_time_rules for all to authenticated
-using (public.has_company_role(company_id,array['owner','admin']))
+drop policy if exists hr_time_rules_admin_read on public.hr_time_rules;
+drop policy if exists hr_time_rules_admin_insert on public.hr_time_rules;
+drop policy if exists hr_time_rules_admin_update on public.hr_time_rules;
+drop policy if exists hr_time_rules_admin_delete on public.hr_time_rules;
+create policy hr_time_rules_admin_read on public.hr_time_rules for select to authenticated
+using (public.has_company_role(company_id,array['owner','admin']));
+create policy hr_time_rules_admin_insert on public.hr_time_rules for insert to authenticated
 with check (public.has_company_role(company_id,array['owner','admin']) and created_by=(select auth.uid()));
+create policy hr_time_rules_admin_update on public.hr_time_rules for update to authenticated
+using (public.has_company_role(company_id,array['owner','admin']))
+with check (public.has_company_role(company_id,array['owner','admin']));
+create policy hr_time_rules_admin_delete on public.hr_time_rules for delete to authenticated
+using (public.has_company_role(company_id,array['owner','admin']));
 
 drop policy if exists hr_holidays_member_read on public.hr_holidays;
 create policy hr_holidays_member_read on public.hr_holidays for select to authenticated
 using (public.is_company_member(company_id));
 drop policy if exists hr_holidays_admin_write on public.hr_holidays;
-create policy hr_holidays_admin_write on public.hr_holidays for all to authenticated
-using (public.has_company_role(company_id,array['owner','admin']))
+drop policy if exists hr_holidays_admin_insert on public.hr_holidays;
+drop policy if exists hr_holidays_admin_update on public.hr_holidays;
+drop policy if exists hr_holidays_admin_delete on public.hr_holidays;
+create policy hr_holidays_admin_insert on public.hr_holidays for insert to authenticated
 with check (public.has_company_role(company_id,array['owner','admin']) and created_by=(select auth.uid()));
+create policy hr_holidays_admin_update on public.hr_holidays for update to authenticated
+using (public.has_company_role(company_id,array['owner','admin']))
+with check (public.has_company_role(company_id,array['owner','admin']));
+create policy hr_holidays_admin_delete on public.hr_holidays for delete to authenticated
+using (public.has_company_role(company_id,array['owner','admin']));
 
 drop policy if exists hr_schedule_exceptions_member_read on public.hr_schedule_exceptions;
 create policy hr_schedule_exceptions_member_read on public.hr_schedule_exceptions for select to authenticated
@@ -161,9 +178,16 @@ using (public.has_company_role(company_id,array['owner','admin','manager']) or e
  and e.auth_user_id=(select auth.uid()) and cm.user_id=(select auth.uid()) and cm.status='active' and cm.role='employee'
 ));
 drop policy if exists hr_schedule_exceptions_manager_write on public.hr_schedule_exceptions;
-create policy hr_schedule_exceptions_manager_write on public.hr_schedule_exceptions for all to authenticated
+drop policy if exists hr_schedule_exceptions_manager_insert on public.hr_schedule_exceptions;
+drop policy if exists hr_schedule_exceptions_manager_update on public.hr_schedule_exceptions;
+drop policy if exists hr_schedule_exceptions_manager_delete on public.hr_schedule_exceptions;
+create policy hr_schedule_exceptions_manager_insert on public.hr_schedule_exceptions for insert to authenticated
+with check (public.has_company_role(company_id,array['owner','admin','manager']) and created_by=(select auth.uid()));
+create policy hr_schedule_exceptions_manager_update on public.hr_schedule_exceptions for update to authenticated
 using (public.has_company_role(company_id,array['owner','admin','manager']))
 with check (public.has_company_role(company_id,array['owner','admin','manager']));
+create policy hr_schedule_exceptions_manager_delete on public.hr_schedule_exceptions for delete to authenticated
+using (public.has_company_role(company_id,array['owner','admin','manager']));
 
 drop policy if exists hr_occurrences_manager_read on public.hr_time_occurrences;
 create policy hr_occurrences_manager_read on public.hr_time_occurrences for select to authenticated
