@@ -11,7 +11,7 @@ O modo offline mantém apenas a estrutura de abertura. Login e dados empresariai
 ## Módulos disponíveis no código
 - Cadastro, login, renovação de sessão, recuperação de senha e logout.
 - Cadastro e seleção de empresas; perfil por ramo e canais comerciais.
-- Funcionários: fichas da equipe e convite de acesso por e-mail (owner/admin), com vínculo à empresa e perfil inicial employee.
+- Funcionários e RH: fichas da equipe, remuneração mensal ou por hora, convites, escalas (12x36, 6x1, 5x2, fixa e variável) e registro gerencial de ponto (em implantação; não homologado como REP).
 - Clientes, fornecedores, categorias, produtos, SKU e código de barras.
 - Estoque, entradas, saídas e ajustes.
 - Compras e vendas com carrinho; integração automática com movimentações e lançamentos financeiros.
