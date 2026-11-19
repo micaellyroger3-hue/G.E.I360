@@ -27,7 +27,7 @@ Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A l
 ## Supabase e segurança
 Projeto `mxikqdarqgatqoecfprg`, status ativo/saudável, PostgreSQL 17.
 
-Dezesseis migrations direcionadas estão registradas no Supabase:
+Dezoito migrations direcionadas estão registradas no Supabase:
 1. `company_business_profiles`
 2. `integrity_hardening`
 3. `product_categories`
@@ -44,6 +44,8 @@ Dezesseis migrations direcionadas estão registradas no Supabase:
 14. `least_privilege_cleanup`
 15. `business_activity_detail`
 16. `business_activity_detail_permissions`
+17. `hr_timekeeping_and_hourly_pay`
+18. `hr_timekeeping_index_policy_tuning`
 
 Verificações confirmadas:
 - 20/20 tabelas públicas com RLS habilitado.
