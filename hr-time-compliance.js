@@ -221,5 +221,5 @@ function renderH(){
 async function reloadH(){try{await loadH();renderH()}catch(e){$('view').innerHTML='<div class="err">Não foi possível carregar a apuração: '+escH(e.message)+'</div>'}}
 async function openH(){if(!adminH()){$('view').innerHTML='<div class="notice">A apuração, remuneração e fechamento são restritos a proprietário e administrador.</div>';return}await reloadH()}
 window.setPage=function(page){if(page==='timepayroll'){document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('pageTitle').textContent='Apuração de jornada';openH();return}return baseSetPage(page)};
-document.addEventListener('click',e=>{const b=e.target.closest('[data-page="timepayroll"]');if(b)window.setPage('timepayroll')});
+
 })();
