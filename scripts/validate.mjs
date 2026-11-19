@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 const html = fs.readFileSync('index.html', 'utf8');
 const modules = fs.readFileSync('modules.js', 'utf8');
 const profiles = fs.readFileSync('business-profiles.js', 'utf8');
+const hr = fs.readFileSync('hr.js', 'utf8');
 const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
 const worker = fs.readFileSync('sw.js', 'utf8');
 const inviteFunction = fs.readFileSync('supabase/functions/invite-company-member/index.ts', 'utf8');
@@ -11,6 +12,7 @@ const functionConfig = fs.readFileSync('supabase/config.toml', 'utf8');
 
 new Function(modules);
 new Function(profiles);
+new Function(hr);
 const inlineScripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
   .map(match => match[1]).filter(source => source.trim());
 assert.ok(inlineScripts.length > 0, 'index.html must contain application scripts');
@@ -55,7 +57,7 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v21"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v24"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
@@ -120,6 +122,16 @@ const profileJs = fs.readFileSync('business-profiles.js', 'utf8');
 new Function(profileJs);
 assert.ok(html.includes('business-profiles.js?v=20261116-02'), 'Business profile script not loaded');
 assert.ok(worker.includes('./business-profiles.js?v=20261116-02'), 'Business profile script missing from offline shell');
+assert.ok(html.includes('hr.js?v=20261119-03'), 'HR module script not loaded');
+assert.ok(worker.includes('./hr.js?v=20261119-03'), 'HR module missing from offline shell');
+assert.ok(hr.includes('employee_compensation') && hr.includes('hr_company_settings') && hr.includes('hr_events'), 'HR data modules missing');
+assert.ok(hr.includes('gei_post_hr_monthly_cost') && hr.includes('Lançar custo estimado'), 'HR finance posting flow missing');
+assert.ok(hr.includes('FGTS') && hr.includes('INSS patronal') && hr.includes('Provisões'), 'HR cost breakdown missing');
+const hrSql = fs.readFileSync('supabase/migrations/20261119130000_hr_management.sql', 'utf8');
+assert.ok(hrSql.includes('enable row level security') && hrSql.includes("array['owner','admin']"), 'HR sensitive data must be protected by RLS and owner/admin roles');
+assert.ok(hrSql.includes('gei_hr_guard_employee_link') && hrSql.includes('gei_post_hr_monthly_cost'), 'HR database integrity and finance RPC missing');
+assert.ok(hrSql.includes('unique(company_id, period)'), 'HR finance posting must be unique per company and period');
+assert.ok(fs.existsSync('docs/HR_MODULE.md'), 'HR module documentation missing');
 assert.ok(worker.includes('gei360-shell-v21'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
