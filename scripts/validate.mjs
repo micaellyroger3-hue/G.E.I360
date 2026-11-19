@@ -139,10 +139,10 @@ assert.ok(hrTimeCompliance.includes('workNightMinutesH') && hrTimeCompliance.inc
 assert.ok(hrTimeCompliance.includes('statutoryWeeklyCapH') && hrTimeCompliance.includes('restComplianceH') && hrTimeCompliance.includes('hr_schedule_exceptions') && hrTimeCompliance.includes('interjornada_short'), 'EC 141 weekly caps, rest-day calendar and inter-shift compliance missing');
 assert.ok(hrTimeCompliance.includes('monthly_hour_divisor') && hrTimeCompliance.includes('breakIndemnity') && hrTimeCompliance.includes('overtimeNightValue'), 'Hourly divisor and detailed pay calculations missing');
 assert.ok(hrTimeCompliance.includes('hr_schedule_exceptions') && hrTimeCompliance.includes('statutoryWeeklyCapH') && hrTimeCompliance.includes('restComplianceH') && hrTimeCompliance.includes('interjornada_short'), 'EC 141 weekly/rest compliance and schedule exceptions missing');
-assert.ok(hrTimeCompliance.includes('minRest7'), 'Rolling seven-day rest requirement must be validated');
+assert.ok(!hrTimeCompliance.includes('minRest7'), 'Do not impose a fixed rolling seven-day rest rule after the STF interim decision');
 
 assert.ok(html.includes('hr-time-compliance.js?v=20261119-07') && worker.includes('hr-time-compliance.js?v=20261119-07'), 'HR calculation asset must be loaded and cached');
-assert.ok(worker.includes('./hr.js?v=20261119-04') && worker.includes('hr-time-compliance.js?v=20261119-07'), 'HR modules missing from offline shell');
+assert.ok(worker.includes('./hr.js?v=20261119-05') && worker.includes('hr-time-compliance.js?v=20261119-07'), 'HR modules missing from offline shell');
 assert.ok(hr.includes('employee_compensation') && hr.includes('hr_company_settings') && hr.includes('hr_events'), 'HR data modules missing');
 assert.ok(hr.includes('gei_post_hr_monthly_cost') && hr.includes('Lançar custo estimado'), 'HR finance posting flow missing');
 assert.ok(hr.includes('FGTS') && hr.includes('INSS patronal') && hr.includes('Provisões'), 'HR cost breakdown missing');
@@ -297,7 +297,7 @@ const hrEmployeeShareMigration = fs.readFileSync('supabase/migrations/2026111916
 assert.ok(hrEmployeeShareMigration.includes('anexo_iv_share'), 'Employee-level Anexo IV share migration missing');
 assert.ok(hr.includes("apprentice?2:rates.fgts"), 'Apprentice FGTS rate must be 2 percent');
 assert.ok(hrTimeCompliance.includes('s.actual=Math.max(0,elapsed-recorded)'), 'Unmarked or suppressed breaks must not be deducted from actual worked time');
-assert.ok(hrTimeCompliance.includes('transitionDailyCap') && hrTimeCompliance.includes('ordinaryDailyCap') && hrTimeCompliance.includes('finalDailyCap') && hrTimeCompliance.includes('504'), 'Daily limits across EC 141 transition are missing');
+assert.ok(hrTimeCompliance.includes('transitionDailyCap') && hrTimeCompliance.includes('noAgreement') && hrTimeCompliance.includes('504'), 'Daily limits across EC 141 transition are missing');
 assert.ok(hrTimeCompliance.includes('liminar do STF') && !hrTimeCompliance.includes('minRest7'), 'Rest validation must not impose a fixed rolling seven-day rule contrary to the STF interim decision');
 const hrTaxMigration = fs.readFileSync('supabase/migrations/20261119165027_hr_tax_parameters_fap_and_mixed_annex.sql', 'utf8');
 assert.ok(hrTaxMigration.includes('fap_factor') && hrTaxMigration.includes('anexo_iv_revenue_share') && hrTaxMigration.includes('third_party_confirmed'), 'HR tax parameter migration missing');
