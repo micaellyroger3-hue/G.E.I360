@@ -13,7 +13,7 @@ const minsH=n=>{n=Math.round(Number(n)||0);return (n<0?'-':'')+Math.floor(Math.a
 const dateLabelH=d=>d?new Date(d+'T12:00:00-03:00').toLocaleDateString('pt-BR'):'—';
 const adminH=()=>['owner','admin'].includes(companyRole);
 let dataH={employees:[],schedules:[],punches:[],comp:[],rules:null,holidays:[],occurrences:[],bank:[],periods:[]},monthPick=monthH();
-const apiH=(table,query='')=>api('/rest/v1/'+table+'?'+query);
+const apiH=(table,query='')=>api('/rest/v1/'+table+'?'+query);\nasync function apiAllH(table,query=''){const all=[],size=500;let offset=0;while(true){const rows=await apiH(table,query+(query?'&':'')+'limit='+size+'&offset='+offset);if(!Array.isArray(rows))throw Error('Resposta inválida ao consultar '+table+'.');all.push(...rows);if(rows.length<size)break;offset+=size}return all}
 function zonedPartsH(value){
  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(value));
  const get=t=>parts.find(x=>x.type===t)?.value||'00';
@@ -146,15 +146,15 @@ async function loadH(){
  const cid=encodeURIComponent(companyId);
  const monthStart=monthPick+'-01',monthEnd=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),0).toISOString().slice(0,10),nextMonth=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),1).toISOString().slice(0,10),fetchStart=new Date(monthStart+'T12:00:00-03:00');fetchStart.setDate(fetchStart.getDate()-7);const fetchEnd=new Date(nextMonth+'T12:00:00-03:00');fetchEnd.setDate(fetchEnd.getDate()+7);
  const [employees,schedules,punches,comp,rules,holidays,occurrences,bank,periods]=await Promise.all([
-  apiH('employees','select=id,full_name,email,status,employment_status&company_id=eq.'+cid+'&order=full_name.asc'),
-  apiH('hr_work_schedules','select=*&company_id=eq.'+cid+'&order=effective_from.desc'),
-  apiH('hr_time_punches','select=*&company_id=eq.'+cid+'&punched_at=gte.'+fetchStart.toISOString()+'&punched_at=lt.'+fetchEnd.toISOString()+'&order=punched_at.asc&limit=5000'),
-  apiH('employee_compensation','select=employee_id,salary_base,weekly_hours,remuneration_basis,hourly_rate&company_id=eq.'+cid),
+  apiAllH('employees','select=id,full_name,email,status,employment_status&company_id=eq.'+cid+'&order=full_name.asc,id.asc'),
+  apiAllH('hr_work_schedules','select=*&company_id=eq.'+cid+'&order=effective_from.desc,id.asc'),
+  apiAllH('hr_time_punches','select=*&company_id=eq.'+cid+'&and=(punched_at.gte.'+fetchStart.toISOString()+',punched_at.lt.'+fetchEnd.toISOString()+')&order=punched_at.asc,id.asc'),
+  apiAllH('employee_compensation','select=employee_id,salary_base,weekly_hours,remuneration_basis,hourly_rate&company_id=eq.'+cid+'&order=employee_id.asc'),
   apiH('hr_time_rules','select=*&company_id=eq.'+cid+'&limit=1'),
-  apiH('hr_holidays','select=*&company_id=eq.'+cid+'&holiday_date=gte.'+monthStart+'&holiday_date=lte.'+monthEnd),
-  apiH('hr_time_occurrences','select=*&company_id=eq.'+cid+'&occurrence_date=gte.'+monthStart+'&occurrence_date=lte.'+monthEnd+'&order=occurrence_date.desc'),
-  apiH('hr_time_bank_entries','select=*&company_id=eq.'+cid+'&order=effective_date.desc&limit=5000'),
-  apiH('hr_time_periods','select=*&company_id=eq.'+cid+'&period_month=eq.'+monthStart)
+  apiAllH('hr_holidays','select=*&company_id=eq.'+cid+'&holiday_date=gte.'+monthStart+'&holiday_date=lte.'+monthEnd+'&order=holiday_date.asc,id.asc'),
+  apiAllH('hr_time_occurrences','select=*&company_id=eq.'+cid+'&occurrence_date=gte.'+monthStart+'&occurrence_date=lte.'+monthEnd+'&order=occurrence_date.desc,id.desc'),
+  apiAllH('hr_time_bank_entries','select=*&company_id=eq.'+cid+'&order=effective_date.asc,created_at.asc,id.asc'),
+  apiAllH('hr_time_periods','select=*&company_id=eq.'+cid+'&period_month=eq.'+monthStart+'&order=employee_id.asc')
  ]);
  Object.assign(dataH,{employees,schedules,punches,comp,rules:rules[0]||null,holidays,occurrences,bank,periods});
 }
