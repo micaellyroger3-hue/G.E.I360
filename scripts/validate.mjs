@@ -139,7 +139,7 @@ assert.ok(hrTimeCompliance.includes('workNightMinutesH') && hrTimeCompliance.inc
 assert.ok(hrTimeCompliance.includes('statutoryWeeklyCapH') && hrTimeCompliance.includes('restComplianceH') && hrTimeCompliance.includes('hr_schedule_exceptions') && hrTimeCompliance.includes('interjornada_short'), 'EC 141 weekly caps, rest-day calendar and inter-shift compliance missing');
 assert.ok(hrTimeCompliance.includes('monthly_hour_divisor') && hrTimeCompliance.includes('breakIndemnity') && hrTimeCompliance.includes('overtimeNightValue'), 'Hourly divisor and detailed pay calculations missing');
 assert.ok(hrTimeCompliance.includes('hr_schedule_exceptions') && hrTimeCompliance.includes('statutoryWeeklyCapH') && hrTimeCompliance.includes('restComplianceH') && hrTimeCompliance.includes('interjornada_short'), 'EC 141 weekly/rest compliance and schedule exceptions missing');
-assert.ok(hrTimeCalcSql.includes('hr_schedule_exceptions') && hrTimeCalcSql.includes('monthly_hour_divisor') && hrTimeCalcSql.includes('night_extension') && hrTimeCalcSql.includes('hr_guard_closed_time_period'), 'HR compliance migration must protect schedules and closed periods');
+
 assert.ok(html.includes('hr-time-compliance.js?v=20261119-03') && worker.includes('hr-time-compliance.js?v=20261119-03'), 'HR calculation asset must be loaded and cached');
 assert.ok(worker.includes('./hr.js?v=20261119-04') && worker.includes('hr-time-compliance.js?v=20261119-03'), 'HR modules missing from offline shell');
 assert.ok(hr.includes('employee_compensation') && hr.includes('hr_company_settings') && hr.includes('hr_events'), 'HR data modules missing');
@@ -154,6 +154,7 @@ assert.ok(fs.existsSync('docs/HR_MODULE.md'), 'HR module documentation missing')
 const hrTimeCalcSql = fs.readFileSync('supabase/migrations/20261119190000_hr_time_calculation_and_closing.sql', 'utf8');
 assert.ok(hrTimeCalcSql.includes('hr_time_rules') && hrTimeCalcSql.includes('hr_holidays') && hrTimeCalcSql.includes('hr_time_occurrences') && hrTimeCalcSql.includes('hr_time_bank_entries') && hrTimeCalcSql.includes('hr_time_periods'), 'HR time calculation schema missing');
 assert.ok(hrTimeCalcSql.includes('enable row level security') && hrTimeCalcSql.includes('append-only'), 'HR time calculation tables must use RLS and immutable bank ledger');
+assert.ok(hrTimeCalcSql.includes('hr_schedule_exceptions') && hrTimeCalcSql.includes('monthly_hour_divisor') && hrTimeCalcSql.includes('night_extension') && hrTimeCalcSql.includes('hr_guard_closed_time_period'), 'HR compliance migration must protect schedules and closed periods');
 const hrPrivilegeSql = fs.readFileSync('supabase/migrations/20261119132000_hr_privilege_tightening.sql', 'utf8');
 assert.ok(hrPrivilegeSql.includes('revoke truncate, references, trigger') && hrPrivilegeSql.includes('revoke update, delete on public.hr_cost_postings'), 'HR table privileges must follow least privilege');
 const hrIndexesSql = fs.readFileSync('supabase/migrations/20261119133000_hr_fk_indexes.sql', 'utf8');
