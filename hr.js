@@ -202,6 +202,7 @@ async function hrRender(){
 }
 const hrBaseSetPage=setPage;
 setPage=async function(page){
+ if(page==='employees' && typeof geiModuleCatalog!=='undefined' && geiModuleCatalog.length && !geiPageIsEnabled('employees')) return hrBaseSetPage(page);
  if(page==='employees'){await hrRender();return;}
  return hrBaseSetPage(page);
 };
