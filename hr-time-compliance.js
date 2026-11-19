@@ -90,21 +90,15 @@ function workNightMinutesH(s){
  for(const [a,b] of breaks){if(a>cursor)intervals.push([cursor,a]);cursor=Math.max(cursor,b)}
  if(end>cursor)intervals.push([cursor,end]);
  const startText=String(rules.night_start||'22:00'),endText=String(rules.night_end||'05:00');
- let total=0;
- for(const [a,b] of intervals){
-  let day=zonedPartsH(a).date,stop=zonedPartsH(b).date;
-  for(let guard=0;day<=stop&&guard<4;guard++){
-   const nightStart=new Date(day+'T'+startText+':00-03:00').getTime();
-   let nightEnd=new Date(day+'T'+endText+':00-03:00').getTime();
-   if(nightEnd<=nightStart)nightEnd+=86400000;
-   const overlap=Math.max(0,Math.min(b,nightEnd)-Math.max(a,nightStart));
-   total+=overlap/60000;
-   if(overlap>0&&applyExtension&&b>nightEnd){
-    const nextNight=new Date(day+'T'+startText+':00-03:00').getTime()+86400000;
-    total+=Math.max(0,Math.min(b,nextNight)-Math.max(a,nightEnd))/60000;
-   }
-   const next=new Date(day+'T12:00:00-03:00');next.setDate(next.getDate()+1);day=zonedPartsH(next).date;
-  }
+ let total=0,day=zonedPartsH(start).date,stop=zonedPartsH(end).date;
+ for(let guard=0;day<=stop&&guard<4;guard++){
+  const nightStart=new Date(day+'T'+startText+':00-03:00').getTime();
+  let nightEnd=new Date(day+'T'+endText+':00-03:00').getTime();
+  if(nightEnd<=nightStart)nightEnd+=86400000;
+  let workedNight=false;
+  for(const [a,b] of intervals){const overlap=Math.max(0,Math.min(b,nightEnd)-Math.max(a,nightStart));if(overlap>0){total+=overlap/60000;workedNight=true}}
+  if(workedNight&&applyExtension){const nextNight=nightStart+86400000;for(const [a,b] of intervals)total+=Math.max(0,Math.min(b,nextNight)-Math.max(a,nightEnd))/60000}
+  const next=new Date(day+'T12:00:00-03:00');next.setDate(next.getDate()+1);day=zonedPartsH(next).date;
  }
  return total;
 }
