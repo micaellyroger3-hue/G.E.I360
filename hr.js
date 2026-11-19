@@ -207,7 +207,8 @@ function hrBind(){
    hide('simples_annex',regime==='simples_nacional');hide('anexo_iv_revenue_share',mixed);
    hide('rat_rate',ratApplies);hide('fap_factor',ratApplies);hide('rat_confirmed',ratApplies);
    hide('third_party_rate',lucro);hide('fpas_code',lucro);hide('third_party_confirmed',lucro);
-   const customInss=lucro||regime==='outro'||(regime==='simples_nacional'&&(annex==='IV'||mixed));\n   hide('employer_inss_mode',customInss);hide('employer_inss_rate',customInss);
+   const customInss=lucro||regime==='outro'||(regime==='simples_nacional'&&(annex==='IV'||mixed));
+   hide('employer_inss_mode',customInss);hide('employer_inss_rate',customInss);
   };
   settingsForm.elements.tax_regime.addEventListener('change',syncTaxFields);
   settingsForm.elements.simples_annex.addEventListener('change',syncTaxFields);
