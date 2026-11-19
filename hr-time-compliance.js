@@ -103,7 +103,7 @@ function workNightMinutesH(s){
  return total;
 }
 function bankLotsH(employeeId){
- const entries=dataH.bank.filter(b=>b.employee_id===employeeId).sort((a,b)=>String(a.effective_date).localeCompare(String(b.effective_date))||String(a.created_at).localeCompare(String(b.created_at)));
+ const entries=dataH.bank.filter(b=>b.employee_id===employeeId&&b.effective_date<=todayH()).sort((a,b)=>String(a.effective_date).localeCompare(String(b.effective_date))||String(a.created_at).localeCompare(String(b.created_at)));
  const lots=[];
  for(const entry of entries){
   const amount=Number(entry.minutes)*Number(entry.multiplier||1);
