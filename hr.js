@@ -153,7 +153,7 @@ function hrConfig(){
   '<label class="check"><input type="checkbox" name="use_13th_provision" '+(s.use_13th_provision?'checked':'')+'> Incluir provisão mensal de 13º</label>'+
   '<label class="check"><input type="checkbox" name="use_vacation_provision" '+(s.use_vacation_provision?'checked':'')+'> Incluir provisão mensal de férias + 1/3</label>'+
   '<label class="wide">Observações / fonte das alíquotas<textarea name="notes" rows="3" maxlength="1500" placeholder="Ex.: parâmetros confirmados com contador em DD/MM/AAAA">'+hrEsc(s.notes||'')+'</textarea></label>'+
-  '<div class="wide notice">Atenção: MEI possui regras próprias e limite legal de contratação. No Simples Nacional, a contribuição patronal previdenciária depende do anexo e da atividade (Anexo IV é tratado separadamente). RAT, FAP e terceiros variam conforme enquadramento. Confirme com a contabilidade antes de salvar.</div><button type="submit">Salvar configuração</button></form></div>';
+  '<div class="wide notice">MEI: referência de 3% de CPP e 8% de FGTS para um único empregado, limitado ao salário mínimo ou piso da categoria. Simples Nacional: CPP no DAS nos Anexos I, II, III e V; Anexo IV fora do DAS; atividades mistas exigem a proporção de receita do Anexo IV. Empresas fora do Simples devem confirmar RAT × FAP e FPAS/terceiros. Aprendiz tem FGTS de 2%. Não se calcula CPRB/desoneração nem regimes especiais automaticamente. Informe fonte e data dos dados; valores incompletos ficam sinalizados como parciais.</div><button type="submit">Salvar configuração</button></form></div>';
 }
 async function hrRenderTab(){
  const host=$hr('geiHrContent');if(!host)return;
@@ -197,7 +197,24 @@ function hrBind(){
  const exportBtn=$hr('hrExport');if(exportBtn)exportBtn.onclick=()=>hrCsv('equipe');
  const costExport=$hr('hrExportCosts');if(costExport)costExport.onclick=()=>hrCsv('custos');
  const eventForm=$hr('hrEventForm');if(eventForm)eventForm.onsubmit=async ev=>{ev.preventDefault();const f=new FormData(eventForm);const p=Object.fromEntries(f.entries());if(!p.end_date)p.end_date=null;try{await api('/rest/v1/hr_events',{method:'POST',body:{...p,company_id:companyId,created_by:session.user.id}});await hrLoad();await hrRenderTab()}catch(error){alert('Não foi possível salvar o evento: '+error.message)}};
- const settingsForm=$hr('hrSettingsForm');if(settingsForm)settingsForm.onsubmit=async ev=>{ev.preventDefault();const f=new FormData(settingsForm);const p=Object.fromEntries(f.entries());p.use_13th_provision=f.has('use_13th_provision');p.use_vacation_provision=f.has('use_vacation_provision');p.rat_confirmed=f.has('rat_confirmed');p.third_party_confirmed=f.has('third_party_confirmed');for(const k of ['employer_inss_rate','fgts_rate','rat_rate','fap_factor','third_party_rate','anexo_iv_revenue_share'])p[k]=p[k]===''||p[k]==null?null:hrNum(p[k]);if(p.simples_annex==='')p.simples_annex=null;p.fpas_code=String(p.fpas_code||'').trim()||null;
+ const settingsForm=$hr('hrSettingsForm');
+ if(settingsForm){
+  const syncTaxFields=()=>{
+   const regime=settingsForm.elements.tax_regime.value,annex=settingsForm.elements.simples_annex.value;
+   const mixed=regime==='simples_nacional'&&annex==='mixed',ratApplies=regime==='lucro_presumido'||regime==='lucro_real'||(regime==='simples_nacional'&&(annex==='IV'||(mixed&&Number(settingsForm.elements.anexo_iv_revenue_share.value)>0)));
+   const lucro=['lucro_presumido','lucro_real'].includes(regime);
+   const hide=(name,visible)=>{const field=settingsForm.elements[name];if(field?.closest('label'))field.closest('label').hidden=!visible};
+   hide('simples_annex',regime==='simples_nacional');hide('anexo_iv_revenue_share',mixed);
+   hide('rat_rate',ratApplies);hide('fap_factor',ratApplies);hide('rat_confirmed',ratApplies);
+   hide('third_party_rate',lucro);hide('fpas_code',lucro);hide('third_party_confirmed',lucro);
+   hide('employer_inss_mode',lucro||regime==='outro');hide('employer_inss_rate',lucro||regime==='outro');
+  };
+  settingsForm.elements.tax_regime.addEventListener('change',syncTaxFields);
+  settingsForm.elements.simples_annex.addEventListener('change',syncTaxFields);
+  settingsForm.elements.anexo_iv_revenue_share.addEventListener('input',syncTaxFields);
+  syncTaxFields();
+ }
+ if(settingsForm)settingsForm.onsubmit=async ev=>{ev.preventDefault();const f=new FormData(settingsForm);const p=Object.fromEntries(f.entries());p.use_13th_provision=f.has('use_13th_provision');p.use_vacation_provision=f.has('use_vacation_provision');p.rat_confirmed=f.has('rat_confirmed');p.third_party_confirmed=f.has('third_party_confirmed');for(const k of ['employer_inss_rate','fgts_rate','rat_rate','fap_factor','third_party_rate','anexo_iv_revenue_share'])p[k]=p[k]===''||p[k]==null?null:hrNum(p[k]);if(p.simples_annex==='')p.simples_annex=null;p.fpas_code=String(p.fpas_code||'').trim()||null;
   if(p.tax_regime==='mei'){p.employer_inss_mode='mei_3_percent';p.employer_inss_rate=3;p.fgts_rate=8;p.simples_annex=null;p.rat_rate=0;p.fap_factor=null;p.rat_confirmed=false;p.third_party_rate=0;p.third_party_confirmed=true;p.anexo_iv_revenue_share=null;p.fpas_code=null;}
   if(p.tax_regime==='simples_nacional'){
    if(!p.simples_annex){alert('Selecione o anexo do Simples Nacional.');return}
