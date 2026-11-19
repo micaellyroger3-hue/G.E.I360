@@ -101,6 +101,7 @@ create index if not exists hr_occurrences_company_date_idx on public.hr_time_occ
 create index if not exists hr_occurrences_employee_status_idx on public.hr_time_occurrences(employee_id,status,occurrence_date);
 create index if not exists hr_bank_employee_date_idx on public.hr_time_bank_entries(company_id,employee_id,effective_date);
 create index if not exists hr_periods_company_month_idx on public.hr_time_periods(company_id,period_month);
+create unique index if not exists hr_bank_source_once_uidx on public.hr_time_bank_entries(company_id,employee_id,source_type,source_id) where source_id is not null;
 
 alter table public.hr_time_rules enable row level security;
 alter table public.hr_holidays enable row level security;
