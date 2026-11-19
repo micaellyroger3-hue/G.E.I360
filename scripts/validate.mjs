@@ -279,7 +279,7 @@ assert.ok(modules.includes('geiLoadModuleAccess') && modules.includes('geiRender
 assert.ok(modules.includes('geiRenderCompanyModuleSettings') && modules.includes('company_modules'), 'Company module controls missing');
 assert.ok(modules.includes('geiPageIsEnabled'), 'Disabled modules must be blocked in navigation routing');
 assert.ok(html.includes('modules.js?v=20261119-02'), 'Dynamic module asset cache version missing');
-assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v24'), 'Service worker cache must match dynamic module release');
+assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v27'), 'Service worker cache must match dynamic module release');
 
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
 assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunction.includes('company_members'), 'Secure employee invitation function missing');
