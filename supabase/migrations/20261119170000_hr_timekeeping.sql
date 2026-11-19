@@ -3,6 +3,8 @@
 alter table public.employees
   add column auth_user_id uuid null references auth.users(id) on delete set null;
 
+create unique index employees_company_id_id_uidx on public.employees(company_id, id);
+
 create unique index employees_auth_user_id_company_uidx
   on public.employees(company_id, auth_user_id)
   where auth_user_id is not null;
@@ -10,7 +12,7 @@ create unique index employees_auth_user_id_company_uidx
 create table public.hr_work_schedules (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references public.companies(id) on delete cascade,
-  employee_id uuid not null references public.employees(id) on delete restrict,
+  employee_id uuid not null,
   schedule_type text not null check (schedule_type in ('12x36','por_hora','fixa','6x1','5x2','personalizada','variavel')),
   effective_from date not null,
   effective_to date null,
@@ -32,6 +34,7 @@ create table public.hr_work_schedules (
     references public.employees(company_id, id) on delete restrict,
   constraint hr_work_schedules_date_range_ck
     check (effective_to is null or effective_to >= effective_from),
+  constraint hr_work_schedules_12x36_times_ck check (schedule_type <> '12x36' or (shift_start is not null and shift_end is not null)),
   constraint hr_work_schedules_cycle_ck
     check (
       (schedule_type = '12x36' and cycle_on_days = 1 and cycle_off_days = 1 and cycle_anchor_date is not null)
@@ -86,6 +89,10 @@ alter table public.hr_time_adjustments enable row level security;
 
 create policy hr_work_schedules_admin_select on public.hr_work_schedules
   for select to authenticated using (public.has_company_role(company_id, array['owner','admin','manager']));
+create policy hr_work_schedules_employee_select on public.hr_work_schedules
+  for select to authenticated using (
+    exists (select 1 from public.employees e where e.id = employee_id and e.company_id = hr_work_schedules.company_id and e.auth_user_id = (select auth.uid()))
+  );
 create policy hr_work_schedules_admin_insert on public.hr_work_schedules
   for insert to authenticated with check (
     created_by = (select auth.uid())
