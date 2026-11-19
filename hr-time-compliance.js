@@ -1,0 +1,172 @@
+/* G.E.I360 — Apuração gerencial de jornada, adicionais, ocorrências e fechamento.
+ * O tratamento preserva marcações originais; não se declara REP-P/REP-A certificado.
+ */
+(function(){
+'use strict';
+const baseSetPage=window.setPage;
+const $=id=>document.getElementById(id);
+const escH=s=>esc(String(s??''));
+const todayH=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const monthH=()=>todayH().slice(0,7);
+const moneyH=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const minsH=n=>{n=Math.round(Number(n)||0);return (n<0?'-':'')+Math.floor(Math.abs(n)/60)+'h '+String(Math.abs(n)%60).padStart(2,'0')+'min'};
+const dateLabelH=d=>d?new Date(d+'T12:00:00-03:00').toLocaleDateString('pt-BR'):'—';
+const adminH=()=>['owner','admin'].includes(companyRole);
+let dataH={employees:[],schedules:[],punches:[],comp:[],rules:null,holidays:[],occurrences:[],bank:[],periods:[]},monthPick=monthH();
+const apiH=(table,query='')=>api('/rest/v1/'+table+'?'+query);
+function zonedPartsH(value){
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(value));
+ const get=t=>parts.find(x=>x.type===t)?.value||'00';
+ return {date:get('year')+'-'+get('month')+'-'+get('day'),hour:Number(get('hour')),minute:Number(get('minute'))};
+}
+function scheduleForH(employeeId,date){
+ return dataH.schedules.find(s=>s.employee_id===employeeId&&s.effective_from<=date&&(!s.effective_to||s.effective_to>=date))||null;
+}
+function expectedH(s,date){
+ if(!s)return false;
+ if(s.schedule_type==='variavel'||s.schedule_type==='por_hora')return false;
+ const d=new Date(date+'T12:00:00-03:00'),dow=d.getDay()===0?7:d.getDay();
+ if(s.schedule_type==='12x36'){
+  if(!s.cycle_anchor_date)return false;
+  const a=new Date(s.cycle_anchor_date+'T12:00:00-03:00');
+  const delta=Math.round((d-a)/86400000),cycle=Math.max(1,Number(s.cycle_on_days||1)+Number(s.cycle_off_days||1));
+  return ((delta%cycle)+cycle)%cycle<Number(s.cycle_on_days||1);
+ }
+ const days=Array.isArray(s.weekdays)&&s.weekdays.length?s.weekdays:(s.schedule_type==='5x2'?[1,2,3,4,5]:s.schedule_type==='6x1'?[1,2,3,4,5,6]:[1,2,3,4,5]);
+ return days.includes(dow);
+}
+function sessionsH(){
+ const sorted=[...dataH.punches].sort((a,b)=>new Date(a.punched_at)-new Date(b.punched_at));
+ const open=new Map(),out=[];
+ for(const p of sorted){
+  let s=open.get(p.employee_id);
+  if(p.punch_type==='entrada'){if(s)out.push({...s,open:true,invalid:true});open.set(p.employee_id,{employee_id:p.employee_id,start:p.punched_at,breaks:[],breakStart:null,marks:1});continue;}
+  if(!s)continue;
+  if(p.punch_type==='inicio_intervalo'){s.breakStart=p.punched_at;s.marks++;continue}
+  if(p.punch_type==='fim_intervalo'&&s.breakStart){s.breaks.push([s.breakStart,p.punched_at]);s.breakStart=null;s.marks++;continue}
+  if(p.punch_type==='saida'){
+   s.end=p.punched_at;s.marks++;s.actual=Math.max(0,(new Date(s.end)-new Date(s.start))/60000-s.breaks.reduce((a,b)=>a+(new Date(b[1])-new Date(b[0]))/60000,0));
+   s.day=zonedPartsH(s.start).date;s.open=false;out.push(s);open.delete(p.employee_id);
+  }
+ }
+ for(const s of open.values()){s.day=zonedPartsH(s.start).date;s.open=true;s.actual=Math.max(0,(Date.now()-new Date(s.start))/60000-s.breaks.reduce((a,b)=>a+(new Date(b[1])-new Date(b[0]))/60000,0));out.push(s)}
+ return out;
+}
+function workNightMinutesH(s){
+ if(!s.end)return 0;
+ let total=0;
+ const spans=[[new Date(s.start).getTime(),new Date(s.end).getTime()]];
+ for(const [a,b] of s.breaks)spans.push([new Date(a).getTime(),new Date(b).getTime()]);
+ const start=spans[0][0],end=spans[0][1];
+ for(let t=Math.floor(start/60000)*60000;t<end;t+=60000){
+  if(spans.slice(1).some(([a,b])=>t>=a&&t<b))continue;
+  const z=zonedPartsH(t),m=z.hour*60+z.minute;
+  if(m>=22*60||m<5*60)total++;
+ }
+ return total;
+}
+function summaryH(){
+ const sessions=sessionsH().filter(s=>s.day.slice(0,7)===monthPick);
+ const rules=dataH.rules||{},daily=new Map();
+ for(const s of sessions){
+  const key=s.employee_id+'|'+s.day,old=daily.get(key)||{employee_id:s.employee_id,day:s.day,actual:0,night:0,open:false,holiday:false,sunday:false,planned:0};
+  old.actual+=s.actual;old.night+=workNightMinutesH(s);old.open=old.open||s.open;
+  const dt=new Date(s.day+'T12:00:00-03:00');old.sunday=dt.getDay()===0;
+  old.holiday=dataH.holidays.some(h=>h.holiday_date===s.day&&h.is_paid!==false);
+  const sch=scheduleForH(s.employee_id,s.day);
+  if(sch?.shift_start&&sch?.shift_end){
+   const a=Number(sch.shift_start.slice(0,2))*60+Number(sch.shift_start.slice(3,5)),b=Number(sch.shift_end.slice(0,2))*60+Number(sch.shift_end.slice(3,5));
+   old.planned=Math.max(old.planned,((b-a+1440)%1440)-Number(sch.break_minutes||0));
+  }else if(expectedH(sch,s.day))old.planned=Number(sch?.weekly_hours||44)*60/(sch?.weekdays?.length||5);
+  daily.set(key,old);
+ }
+ const rows=[...daily.values()].map(d=>{
+  const emp=dataH.employees.find(e=>e.id===d.employee_id),comp=dataH.comp.find(c=>c.employee_id===d.employee_id)||{};
+  const base=comp.remuneration_basis==='hourly'?Number(comp.hourly_rate||0):Number(comp.salary_base||0)/Math.max(1,Number(comp.weekly_hours||44)*52/12);
+  const tolerance=Number(rules.daily_tolerance_minutes??10);
+  let overtime=Math.max(0,d.actual-d.planned);
+  if(overtime<=tolerance)overtime=0;
+  const nightHours=d.night/(rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5));
+  const nightValue=nightHours*base*Number(rules.night_additional_percent??20)/100;
+  const premium=(d.holiday||d.sunday)?Math.max(0,d.actual)*base/60*(Number(rules.sunday_holiday_multiplier||2)-1):0;
+  const overtimeValue=overtime/60*base*(Number(rules.overtime_multiplier||1.5)-1);
+  return {...d,name:emp?.full_name||'Funcionário',base,overtime,nightHours,nightValue,premium,overtimeValue,estimatedAdditional:nightValue+premium+overtimeValue};
+ });
+ return rows;
+}
+async function loadH(){
+ if(!companyId)throw Error('Selecione uma empresa.');
+ const cid=encodeURIComponent(companyId);
+ const monthStart=monthPick+'-01',monthEnd=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),0).toISOString().slice(0,10);
+ const [employees,schedules,punches,comp,rules,holidays,occurrences,bank,periods]=await Promise.all([
+  apiH('employees','select=id,full_name,email,status,employment_status&company_id=eq.'+cid+'&order=full_name.asc'),
+  apiH('hr_work_schedules','select=*&company_id=eq.'+cid+'&order=effective_from.desc'),
+  apiH('hr_time_punches','select=*&company_id=eq.'+cid+'&punched_at=gte.'+monthStart+'T00:00:00-03:00&punched_at=lt.'+monthEnd+'T23:59:59-03:00&order=punched_at.asc&limit=5000'),
+  apiH('employee_compensation','select=employee_id,salary_base,weekly_hours,remuneration_basis,hourly_rate&company_id=eq.'+cid),
+  apiH('hr_time_rules','select=*&company_id=eq.'+cid+'&limit=1'),
+  apiH('hr_holidays','select=*&company_id=eq.'+cid+'&holiday_date=gte.'+monthStart+'&holiday_date=lte.'+monthEnd),
+  apiH('hr_time_occurrences','select=*&company_id=eq.'+cid+'&occurrence_date=gte.'+monthStart+'&occurrence_date=lte.'+monthEnd+'&order=occurrence_date.desc'),
+  apiH('hr_time_bank_entries','select=*&company_id=eq.'+cid+'&effective_date=lte.'+monthEnd+'&order=effective_date.desc'),
+  apiH('hr_time_periods','select=*&company_id=eq.'+cid+'&period_month=eq.'+monthStart)
+ ]);
+ Object.assign(dataH,{employees,schedules,punches,comp,rules:rules[0]||null,holidays,occurrences,bank,periods});
+}
+function renderH(){
+ const host=$('view');if(!host)return;
+ const rows=summaryH(),rules=dataH.rules||{},bankByEmp=new Map();
+ for(const b of dataH.bank){const delta=b.entry_type==='credit'?b.minutes:-b.minutes;bankByEmp.set(b.employee_id,(bankByEmp.get(b.employee_id)||0)+delta)}
+ const periodByEmp=new Map(dataH.periods.map(p=>[p.employee_id,p]));
+ const total=rows.reduce((a,r)=>{a.minutes+=r.actual;a.ot+=r.overtime;a.extra+=r.estimatedAdditional;return a},{minutes:0,ot:0,extra:0});
+ const monthStart=monthPick+'-01',lastDay=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),0).getDate();
+ const missing=[];
+ for(const e of dataH.employees.filter(x=>x.status!=='inactive'&&x.employment_status!=='inativo')){
+  for(let day=1;day<=lastDay;day++){const d=monthPick+'-'+String(day).padStart(2,'0');if(d>todayH())continue;const sch=scheduleForH(e.id,d);if(!expectedH(sch,d))continue;
+   const has=sessionsH().some(s=>s.employee_id===e.id&&s.day===d);
+   const hasOcc=dataH.occurrences.some(o=>o.employee_id===e.id&&o.occurrence_date===d);
+   if(!has&&!hasOcc)missing.push({employee:e,date:d});
+  }
+ }
+ host.innerHTML='<section class="gei-hr-panel"><div class="head"><div><h1>Apuração e fechamento de jornada</h1><span class="muted">Cálculo mensal, adicionais, ausências, banco de horas e conferência</span></div></div>'+
+ '<div class="notice"><b>Importante:</b> módulo de tratamento e apuração gerencial. O registro oficial REP-P exige requisitos próprios (incluindo sincronismo com Hora Legal Brasileira, armazenamento inviolável, comprovantes e assinatura ICP-Brasil). Não declare este aplicativo como REP-P ou folha homologada.</div>'+
+ '<div class="toolbar"><label>Mês de apuração <input id="hrCalcMonth" type="month" value="'+monthPick+'"></label><button type="button" class="alt" id="hrCalcReload">Atualizar dados</button><button type="button" class="alt" id="hrCalcExport">Exportar CSV</button></div>'+
+ '<div class="grid"><div class="card"><span class="muted">Horas apuradas</span><div class="metric">'+minsH(total.minutes)+'</div></div><div class="card"><span class="muted">Horas extras estimadas</span><div class="metric">'+minsH(total.ot)+'</div></div><div class="card"><span class="muted">Adicionais estimados</span><div class="metric">'+moneyH(total.extra)+'</div></div></div>'+
+ '<section class="card"><h3>Parâmetros de cálculo da empresa</h3><form id="hrRulesForm"><div class="grid">'+
+ '<div class="field"><label>Jornada semanal padrão (horas)</label><input name="weekly_standard_minutes" type="number" min="1" max="168" step=".5" value="'+Number(rules.weekly_standard_minutes||2640)/60+'"></div>'+
+ '<div class="field"><label>Limite diário para hora extra (minutos; vazio = escala)</label><input name="overtime_daily_threshold_minutes" type="number" min="0" max="1440" value="'+(rules.overtime_daily_threshold_minutes??'')+'"></div>'+
+ '<div class="field"><label>Adicional de hora extra (%)</label><input name="overtime_multiplier" type="number" min="100" max="500" step=".1" value="'+Number(rules.overtime_multiplier||1.5)*100+'"></div>'+
+ '<div class="field"><label>Multiplicador domingo/feriado (%)</label><input name="sunday_holiday_multiplier" type="number" min="100" max="500" step=".1" value="'+Number(rules.sunday_holiday_multiplier||2)*100+'"></div>'+
+ '<div class="field"><label>Adicional noturno (%)</label><input name="night_additional_percent" type="number" min="0" max="200" value="'+Number(rules.night_additional_percent??20)+'"></div>'+
+ '<div class="field"><label>Início período noturno</label><input name="night_start" type="time" value="'+(rules.night_start||'22:00')+'"></div>'+
+ '<div class="field"><label>Fim período noturno</label><input name="night_end" type="time" value="'+(rules.night_end||'05:00')+'"></div>'+
+ '<div class="field"><label>Duração hora noturna reduzida (minutos)</label><input name="night_hour_minutes" type="number" min="1" max="60" step=".001" value="'+Number(rules.night_hour_minutes||52.5)+'"></div>'+
+ '<div class="field"><label>Tolerância diária (minutos)</label><input name="daily_tolerance_minutes" type="number" min="0" max="60" value="'+Number(rules.daily_tolerance_minutes??10)+'"></div>'+
+ '<div class="field"><label>Banco de horas</label><select name="bank_enabled"><option value="false" '+(rules.bank_enabled?'':'selected')+'>Desativado</option><option value="true" '+(rules.bank_enabled?'selected':'')+'>Ativado</option></select></div>'+
+ '<div class="field"><label>Instrumento do banco</label><select name="bank_agreement_type"><option value="none">Não configurado</option><option value="individual">Acordo individual</option><option value="collective">Acordo/convenção coletiva</option></select></div>'+
+ '<div class="field"><label>Validade do saldo (meses)</label><input name="bank_validity_months" type="number" min="1" max="24" value="'+(rules.bank_validity_months||'')+'"></div>'+
+ '<div class="field"><label>Intervalo mínimo configurado (minutos)</label><input name="break_minimum_minutes" type="number" min="0" max="720" value="'+Number(rules.break_minimum_minutes??60)+'"></div>'+
+ '</div><div class="field"><label>Observações / referência de acordo coletivo</label><textarea name="notes" rows="2">'+escH(rules.notes||'')+'</textarea></div><button type="submit">Salvar parâmetros</button></form></section>'+
+ '<section class="card"><h3>Calendário de feriados</h3><form id="hrHolidayForm"><div class="grid"><div class="field"><label>Data</label><input type="date" name="holiday_date" required></div><div class="field"><label>Nome do feriado</label><input name="title" maxlength="120" required></div><div class="field"><label>Abrangência</label><select name="scope"><option value="national">Nacional</option><option value="state">Estadual</option><option value="municipal">Municipal</option><option value="company">Da empresa</option></select></div><div class="field"><label>UF</label><input name="state_code" maxlength="2"></div><div class="field"><label>Município</label><input name="city_name" maxlength="100"></div></div><button type="submit">Adicionar feriado</button></form><div id="hrHolidayList">'+(dataH.holidays.map(h=>'<p>'+dateLabelH(h.holiday_date)+' — '+escH(h.title)+' ('+escH(h.scope)+') <button class="danger small" data-holiday-delete="'+h.id+'">Excluir</button></p>').join('')||'<p class="muted">Nenhum feriado cadastrado neste mês.</p>')+'</div></section>'+
+ '<section class="card"><h3>Ausências e marcações pendentes</h3><p class="muted">O sistema compara a escala com as jornadas do mês. A ausência é um alerta para conferência, nunca um desconto automático.</p><button type="button" id="hrGenerateMissing" class="alt">Gerar ocorrências de marcação ausente ('+missing.length+')</button><div class="tablewrap"><table><thead><tr><th>Funcionário</th><th>Data</th><th>Ocorrência</th><th>Status</th><th>Motivo</th><th>Ação</th></tr></thead><tbody>'+(dataH.occurrences.map(o=>'<tr><td>'+escH(dataH.employees.find(e=>e.id===o.employee_id)?.full_name||'Funcionário')+'</td><td>'+dateLabelH(o.occurrence_date)+'</td><td>'+escH(o.occurrence_type)+'</td><td>'+escH(o.status)+'</td><td>'+escH(o.reason)+'</td><td>'+(adminH()&&o.status==='pending'?'<button class="alt small" data-occ-review="'+o.id+'" data-status="justified">Justificar</button> <button class="danger small" data-occ-review="'+o.id+'" data-status="unjustified">Não justificada</button>':'—')+'</td></tr>').join('')||'<tr><td colspan="6">Nenhuma ocorrência registrada.</td></tr>')+'</tbody></table></div>'+
+ (adminH()?'<form id="hrOccurrenceForm"><div class="grid"><div class="field"><label>Funcionário</label><select name="employee_id">'+dataH.employees.map(e=>'<option value="'+e.id+'">'+escH(e.full_name)+'</option>').join('')+'</select></div><div class="field"><label>Data</label><input type="date" name="occurrence_date" required value="'+todayH()+'"></div><div class="field"><label>Tipo</label><select name="occurrence_type"><option value="absence">Ausência</option><option value="missing_entry">Entrada não marcada</option><option value="missing_exit">Saída não marcada</option><option value="justified_absence">Falta justificada</option><option value="medical_leave">Afastamento</option><option value="vacation">Férias</option><option value="day_off_worked">Folga trabalhada</option><option value="other">Outra ocorrência</option></select></div><div class="field"><label>Minutos</label><input type="number" name="minutes" min="0" max="1440"></div><div class="field"><label>Motivo (sem CID ou diagnóstico)</label><input name="reason" minlength="3" maxlength="1000" required></div></div><button type="submit">Registrar ocorrência</button></form>':'')+'</section>'+
+ '<section class="card"><h3>Banco de horas</h3><p class="muted">Saldo abaixo é a soma dos lançamentos. O crédito automático não é criado sem validar o instrumento aplicável.</p><div class="tablewrap"><table><thead><tr><th>Funcionário</th><th>Saldo</th><th>Últimos lançamentos</th></tr></thead><tbody>'+dataH.employees.map(e=>{const bs=dataH.bank.filter(b=>b.employee_id===e.id),balance=bs.reduce((n,b)=>n+(b.entry_type==='credit'?Number(b.minutes):-Number(b.minutes)),0);return '<tr><td>'+escH(e.full_name)+'</td><td>'+minsH(balance)+'</td><td>'+bs.slice(0,2).map(b=>escH(b.entry_type)+' '+minsH(b.minutes)).join(' · ')+'</td></tr>'}).join('')+'</tbody></table></div>'+
+ (adminH()?'<form id="hrBankForm"><div class="grid"><div class="field"><label>Funcionário</label><select name="employee_id">'+dataH.employees.map(e=>'<option value="'+e.id+'">'+escH(e.full_name)+'</option>').join('')+'</select></div><div class="field"><label>Movimento</label><select name="entry_type"><option value="credit">Crédito</option><option value="debit">Débito</option><option value="payout">Pagamento em folha</option><option value="adjustment">Ajuste</option></select></div><div class="field"><label>Minutos</label><input type="number" name="minutes" min="1" max="10080" required></div><div class="field"><label>Origem</label><select name="source_type"><option value="manual">Manual</option><option value="overtime">Hora extra</option><option value="compensation">Compensação</option><option value="absence">Ausência</option><option value="payroll">Folha</option></select></div><div class="field"><label>Data</label><input type="date" name="effective_date" required value="'+todayH()+'"></div><div class="field"><label>Vencimento do crédito</label><input type="date" name="expires_on"></div><div class="field"><label>Descrição / justificativa</label><input name="description" minlength="3" maxlength="500" required></div></div><button type="submit">Lançar movimento</button></form>':'')+'</section>'+
+ '<section class="card"><h3>Apuração por funcionário</h3><div class="tablewrap"><table><thead><tr><th>Funcionário</th><th>Horas</th><th>Extras</th><th>Noturnas</th><th>Domingo/feriado</th><th>Adicionais estimados</th><th>Fechamento</th></tr></thead><tbody>'+dataH.employees.map(e=>{const r=rows.filter(x=>x.employee_id===e.id),actual=r.reduce((a,x)=>a+x.actual,0),ot=r.reduce((a,x)=>a+x.overtime,0),night=r.reduce((a,x)=>a+x.nightHours,0),extra=r.reduce((a,x)=>a+x.estimatedAdditional,0),period=periodByEmp.get(e.id);return '<tr><td>'+escH(e.full_name)+'</td><td>'+minsH(actual)+'</td><td>'+minsH(ot)+'</td><td>'+night.toFixed(2).replace('.',',')+' h</td><td>'+minsH(r.filter(x=>x.holiday||x.sunday).reduce((a,x)=>a+x.actual,0))+'</td><td>'+moneyH(extra)+'</td><td>'+(period?.status||'Aberto')+'</td></tr>'}).join('')+'</tbody></table></div>'+
+ (adminH()?'<button type="button" id="hrCloseMonth">Fechar competência para todos</button> <button type="button" class="alt" id="hrReopenMonth">Reabrir competência (com justificativa)</button>':'')+'</section></section>';
+ $('hrCalcMonth').onchange=async e=>{monthPick=e.target.value;await reloadH()};
+ $('hrCalcReload').onclick=reloadH;
+ $('hrCalcExport').onclick=()=>{const rowsCsv=[['Funcionário','Data','Minutos trabalhados','Minutos extras','Horas noturnas','Adicional estimado'],...rows.map(r=>[r.name,r.day,r.actual,r.overtime,r.nightHours.toFixed(2),r.estimatedAdditional.toFixed(2)])];const csv='\uFEFF'+rowsCsv.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');const a=document.createElement('a'),u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.href=u;a.download='gei360-apuracao-'+monthPick+'.csv';a.click();URL.revokeObjectURL(u)};
+ $('hrRulesForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),v=Object.fromEntries(f.entries()),payload={company_id:companyId,weekly_standard_minutes:Math.round(Number(v.weekly_standard_minutes)*60),overtime_daily_threshold_minutes:v.overtime_daily_threshold_minutes===''?null:Number(v.overtime_daily_threshold_minutes),overtime_multiplier:Number(v.overtime_multiplier)/100,sunday_holiday_multiplier:Number(v.sunday_holiday_multiplier)/100,night_additional_percent:Number(v.night_additional_percent),night_start:v.night_start,night_end:v.night_end,night_hour_minutes:Number(v.night_hour_minutes),daily_tolerance_minutes:Number(v.daily_tolerance_minutes),bank_enabled:v.bank_enabled==='true',bank_agreement_type:v.bank_agreement_type,bank_validity_months:v.bank_validity_months===''?null:Number(v.bank_validity_months),break_minimum_minutes:Number(v.break_minimum_minutes),notes:v.notes||null,created_by:session.user.id,updated_at:new Date().toISOString()};try{await api('/rest/v1/hr_time_rules?on_conflict=company_id',{method:'POST',body:payload,headers:{Prefer:'resolution=merge-duplicates,return=minimal'}});alert('Parâmetros salvos.');await reloadH()}catch(err){alert('Falha ao salvar parâmetros: '+err.message)}};
+ $('hrHolidayForm').onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target).entries());try{await api('/rest/v1/hr_holidays',{method:'POST',body:{...v,company_id:companyId,created_by:session.user.id,is_paid:true}});await reloadH()}catch(err){alert('Falha ao cadastrar feriado: '+err.message)}};
+ $('hrOccurrenceForm')?.addEventListener('submit',async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target).entries());try{await api('/rest/v1/hr_time_occurrences',{method:'POST',body:{...v,company_id:companyId,minutes:v.minutes===''?null:Number(v.minutes),requested_by:session.user.id,status:'pending'}});await reloadH()}catch(err){alert('Falha ao registrar ocorrência: '+err.message)}});
+ $('hrBankForm')?.addEventListener('submit',async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target).entries());try{await api('/rest/v1/hr_time_bank_entries',{method:'POST',body:{...v,company_id:companyId,minutes:Number(v.minutes),approved_by:session.user.id}});await reloadH()}catch(err){alert('Falha ao lançar banco: '+err.message)}});
+ $('hrGenerateMissing').onclick=async()=>{if(!missing.length){alert('Nenhuma ausência de marcação foi identificada pela escala neste mês.');return}if(!confirm('Criar '+missing.length+' ocorrências pendentes para conferência? Nenhum desconto será aplicado.'))return;try{for(const m of missing){await api('/rest/v1/hr_time_occurrences',{method:'POST',body:{company_id:companyId,employee_id:m.employee.id,occurrence_date:m.date,occurrence_type:'absence',status:'pending',reason:'Sem marcação localizada na escala. Conferir falta, folga, atestado ou falha de registro.',requested_by:session.user.id}})}await reloadH()}catch(err){alert('Algumas ocorrências podem ter sido criadas antes da falha. Atualize para conferir. '+err.message)}};
+ host.querySelectorAll('[data-holiday-delete]').forEach(b=>b.onclick=async()=>{if(!confirm('Excluir este feriado do calendário da empresa?'))return;try{await api('/rest/v1/hr_holidays?id=eq.'+b.dataset.holidayDelete,{method:'DELETE'});await reloadH()}catch(e){alert(e.message)}});
+ host.querySelectorAll('[data-occ-review]').forEach(b=>b.onclick=async()=>{const note=prompt('Observação da revisão (obrigatória):');if(!note||note.trim().length<3)return;try{await api('/rest/v1/hr_time_occurrences?id=eq.'+b.dataset.occReview,{method:'PATCH',body:{status:b.dataset.status,manager_note:note,reviewed_by:session.user.id,reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()}});await reloadH()}catch(e){alert(e.message)}});
+ $('hrCloseMonth')?.addEventListener('click',async()=>{if(!confirm('Fechar a competência '+monthPick+' para todos os funcionários? O sistema salvará um resumo e bloqueará novas alterações no fechamento até reabertura.'))return;try{for(const e of dataH.employees){const r=rows.filter(x=>x.employee_id===e.id);const snap={month:monthPick,employee_id:e.id,minutes_worked:r.reduce((a,x)=>a+x.actual,0),overtime_minutes:r.reduce((a,x)=>a+x.overtime,0),night_hours:r.reduce((a,x)=>a+x.nightHours,0),estimated_additional:r.reduce((a,x)=>a+x.estimatedAdditional,0),occurrence_ids:dataH.occurrences.filter(o=>o.employee_id===e.id).map(o=>o.id),closed_at:new Date().toISOString()};await api('/rest/v1/hr_time_periods?on_conflict=company_id,employee_id,period_month',{method:'POST',body:{company_id:companyId,employee_id:e.id,period_month:monthPick+'-01',status:'closed',summary:snap,closed_by:session.user.id,closed_at:new Date().toISOString(),updated_at:new Date().toISOString()},headers:{Prefer:'resolution=merge-duplicates,return=minimal'}})}await reloadH();alert('Competência fechada.')}catch(err){alert('Fechamento parcial; atualize para conferir. '+err.message)}});
+ $('hrReopenMonth')?.addEventListener('click',async()=>{const reason=prompt('Informe o motivo da reabertura da competência:');if(!reason||reason.trim().length<5)return;try{for(const p of dataH.periods){await api('/rest/v1/hr_time_periods?id=eq.'+p.id,{method:'PATCH',body:{status:'reopened',reopened_by:session.user.id,reopened_at:new Date().toISOString(),reopen_reason:reason,updated_at:new Date().toISOString()}})}await reloadH()}catch(err){alert('Não foi possível reabrir: '+err.message)}});
+}
+async function reloadH(){try{await loadH();renderH()}catch(e){$('view').innerHTML='<div class="err">Não foi possível carregar a apuração: '+escH(e.message)+'</div>'}}
+async function openH(){if(!adminH()){$('view').innerHTML='<div class="notice">A apuração, remuneração e fechamento são restritos a proprietário e administrador.</div>';return}await reloadH()}
+window.setPage=function(page){if(page==='timepayroll'){document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('pageTitle').textContent='Apuração de jornada';openH();return}return baseSetPage(page)};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-page="timepayroll"]');if(b)window.setPage('timepayroll')});
+})();
