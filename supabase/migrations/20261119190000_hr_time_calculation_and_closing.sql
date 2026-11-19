@@ -163,7 +163,7 @@ using (public.has_company_role(company_id,array['owner','admin','manager']) or e
 drop policy if exists hr_schedule_exceptions_manager_write on public.hr_schedule_exceptions;
 create policy hr_schedule_exceptions_manager_write on public.hr_schedule_exceptions for all to authenticated
 using (public.has_company_role(company_id,array['owner','admin','manager']))
-with check (public.has_company_role(company_id,array['owner','admin','manager']) and created_by=(select auth.uid()));
+with check (public.has_company_role(company_id,array['owner','admin','manager']));
 
 drop policy if exists hr_occurrences_manager_read on public.hr_time_occurrences;
 create policy hr_occurrences_manager_read on public.hr_time_occurrences for select to authenticated
@@ -207,7 +207,7 @@ with check (public.has_company_role(company_id,array['owner','admin']));
 
 grant select,insert,update,delete on public.hr_time_rules,public.hr_holidays,public.hr_schedule_exceptions,public.hr_time_occurrences,public.hr_time_periods to authenticated;
 grant select,insert on public.hr_time_bank_entries to authenticated;
-revoke all on public.hr_time_rules,public.hr_holidays,public.hr_time_occurrences,public.hr_time_bank_entries,public.hr_time_periods from anon;
+revoke all on public.hr_time_rules,public.hr_holidays,public.hr_schedule_exceptions,public.hr_time_occurrences,public.hr_time_bank_entries,public.hr_time_periods from anon;
 
 -- Competência fechada: impede novos pontos, ocorrências e ajustes retroativos.
 create or replace function public.hr_guard_closed_time_period()
@@ -218,11 +218,23 @@ set search_path to ''
 as $function$
 declare
   v_day date;
+  v_company_id uuid;
+  v_employee_id uuid;
 begin
+  if tg_op='DELETE' then
+    v_company_id := old.company_id;
+    v_employee_id := old.employee_id;
+  else
+    v_company_id := new.company_id;
+    v_employee_id := new.employee_id;
+  end if;
+
   if tg_table_name = 'hr_time_punches' then
     v_day := (new.punched_at at time zone 'America/Sao_Paulo')::date;
   elsif tg_table_name = 'hr_time_occurrences' then
     v_day := new.occurrence_date;
+  elsif tg_table_name = 'hr_schedule_exceptions' then
+    if tg_op='DELETE' then v_day := old.exception_date; else v_day := new.exception_date; end if;
   elsif tg_table_name = 'hr_time_adjustments' then
     v_day := (new.proposed_punched_at at time zone 'America/Sao_Paulo')::date;
   else
@@ -231,13 +243,14 @@ begin
 
   if exists (
     select 1 from public.hr_time_periods p
-    where p.company_id = new.company_id
-      and p.employee_id = new.employee_id
+    where p.company_id = v_company_id
+      and p.employee_id = v_employee_id
       and p.period_month = date_trunc('month',v_day)::date
       and p.status = 'closed'
   ) then
     raise exception 'Competência fechada. Reabra o período com justificativa antes de lançar ou tratar registros.';
   end if;
+  if tg_op='DELETE' then return old; end if;
   return new;
 end;
 $function$;
