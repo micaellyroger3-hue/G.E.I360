@@ -244,6 +244,9 @@ declare
   v_day date;
   v_company_id uuid;
   v_employee_id uuid;
+  v_old_day date;
+  v_old_company_id uuid;
+  v_old_employee_id uuid;
 begin
   if tg_op='DELETE' then
     v_company_id := old.company_id;
@@ -273,6 +276,26 @@ begin
       and p.status = 'closed'
   ) then
     raise exception 'Competência fechada. Reabra o período com justificativa antes de lançar ou tratar registros.';
+  end if;
+  if tg_op='UPDATE' then
+    v_old_company_id := old.company_id;
+    v_old_employee_id := old.employee_id;
+    if tg_table_name = 'hr_time_occurrences' then
+      v_old_day := old.occurrence_date;
+    elsif tg_table_name = 'hr_schedule_exceptions' then
+      v_old_day := old.exception_date;
+    elsif tg_table_name = 'hr_time_adjustments' then
+      v_old_day := (old.proposed_punched_at at time zone 'America/Sao_Paulo')::date;
+    end if;
+    if exists (
+      select 1 from public.hr_time_periods p
+      where p.company_id = v_old_company_id
+        and p.employee_id = v_old_employee_id
+        and p.period_month = date_trunc('month',v_old_day)::date
+        and p.status = 'closed'
+    ) then
+      raise exception 'Competência original fechada. Reabra o período com justificativa antes de alterar o registro.';
+    end if;
   end if;
   if tg_op='DELETE' then return old; end if;
   return new;
