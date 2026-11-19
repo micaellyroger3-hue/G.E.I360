@@ -71,7 +71,7 @@ function hrTabs(){
 function hrHeader(subtitle){
  $('pageTitle').textContent='RH e equipe';
  $('view').innerHTML='<section class="gei-hr"><div class="gei-hr-head"><div><h1>RH e gestão de pessoas</h1><p>'+hrEsc(subtitle||'Equipe, custos e rotinas de pessoal em um só lugar')+'</p></div><span class="gei-hr-tag">ACESSO RESTRITO</span></div>'+hrTabs()+'<div id="geiHrContent"></div></section>';
- document.querySelectorAll('[data-hr-tab]').forEach(b=>b.onclick=()=>{hrTab=b.dataset.hrTab;hrRenderTab()});
+ document.querySelectorAll('[data-hr-tab]').forEach(b=>b.onclick=()=>{hrTab=b.dataset.hrTab;document.querySelectorAll('[data-hr-tab]').forEach(tab=>{const selected=tab.dataset.hrTab===hrTab;tab.classList.toggle('active',selected);tab.setAttribute('aria-pressed',selected?'true':'false')});hrRenderTab()});
 }
 function hrKpi(label,value,detail){
  return '<article class="gei-hr-kpi"><span>'+label+'</span><strong>'+value+'</strong><small>'+detail+'</small></article>';
