@@ -1,10 +1,12 @@
 -- G.E.I360 — regras de apuração, calendário, ocorrências, banco de horas e fechamento.
+-- Transição constitucional de jornada EC 141/2026: 42h a partir de 16/12/2026; 40h a partir de 16/12/2027.
 -- A migração é aditiva: não apaga nem reescreve marcações ou cadastros existentes.
 
 create table if not exists public.hr_time_rules (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null unique references public.companies(id) on delete cascade,
   weekly_standard_minutes integer not null default 2640 check (weekly_standard_minutes between 1 and 10080),
+  rest_schedule_agreement_reference text check (rest_schedule_agreement_reference is null or char_length(rest_schedule_agreement_reference)<=500),
   overtime_daily_threshold_minutes integer check (overtime_daily_threshold_minutes between 0 and 1440),
   overtime_weekly_threshold_minutes integer check (overtime_weekly_threshold_minutes between 0 and 10080),
   overtime_multiplier numeric(6,3) not null default 1.500 check (overtime_multiplier between 1 and 5),
