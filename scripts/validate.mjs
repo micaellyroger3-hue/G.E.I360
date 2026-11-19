@@ -296,7 +296,7 @@ assert.ok(hr.includes('hrRateSettings(c)') && hr.includes('anexo_iv_share'), 'Em
 const hrEmployeeShareMigration = fs.readFileSync('supabase/migrations/20261119165904_hr_employee_anexo_iv_share.sql', 'utf8');
 assert.ok(hrEmployeeShareMigration.includes('anexo_iv_share'), 'Employee-level Anexo IV share migration missing');
 assert.ok(hr.includes("apprentice?2:rates.fgts"), 'Apprentice FGTS rate must be 2 percent');
-assert.ok(hrTimeCompliance.includes('s.actual=Math.max(0,elapsed-recorded)'), 'Unmarked or suppressed breaks must not be deducted from actual worked time');
+assert.ok(hrTimeCompliance.includes('s.actual=Math.max(0,elapsed-effectiveBreak)') && hrTimeCompliance.includes('confirmedBreak=confirmed?') && !hrTimeCompliance.includes('elapsed-effectiveBreak-(s.breaks.length'), 'Break calculation must separate confirmed rest from suppressed break minutes');
 assert.ok(hrTimeCompliance.includes('transitionDailyCap') && hrTimeCompliance.includes('noAgreement') && hrTimeCompliance.includes('504'), 'Daily limits across EC 141 transition are missing');
 assert.ok(hrTimeCompliance.includes('liminar do STF') && !hrTimeCompliance.includes('minRest7'), 'Rest validation must not impose a fixed rolling seven-day rule contrary to the STF interim decision');
 const hrTaxMigration = fs.readFileSync('supabase/migrations/20261119165027_hr_tax_parameters_fap_and_mixed_annex.sql', 'utf8');
