@@ -52,7 +52,7 @@ function restComplianceH(employeeId){
  if(monthSchedules.every(s=>['por_hora','variavel'].includes(s.schedule_type)))return null;
  let rest=0,work=0,consecutive=0,maxWork=0;
  const begin=new Date(start+'T12:00:00-03:00');begin.setDate(begin.getDate()-6);
- for(let i=0;i<days+6;i++){const dt=new Date(begin);dt.setDate(begin.getDate()+i);const d=dt.toISOString().slice(0,10);if(d<start) {if(expectedH(scheduleForH(employeeId,d),d))consecutive++;else consecutive=0;continue}
+ for(let i=0;i<days+6;i++){const dt=new Date(begin);dt.setDate(begin.getDate()+i);const d=dt.toISOString().slice(0,10);if(d<start) {if(expectedH(scheduleForH(employeeId,d),d,employeeId))consecutive++;else consecutive=0;continue}
   if(expectedH(scheduleForH(employeeId,d),d)){work++;consecutive++;maxWork=Math.max(maxWork,consecutive)}else{rest++;consecutive=0}
  }
  return {special:false,rest,target:Math.ceil(days*2/7),maxWork,compliant:rest>=Math.ceil(days*2/7)&&maxWork<=6};
@@ -139,7 +139,7 @@ function summaryH(){
   if(overtime<=tolerance)overtime=0;
   const nightHours=d.night/(rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5));
   const nightValue=nightHours*base*Number(rules.night_additional_percent??20)/100;
-  const daySchedule=scheduleForH(d.employee_id,d.day),scheduledSunday=expectedH(daySchedule,d.day),premium=(daySchedule?.schedule_type!=='12x36'&&(d.holiday||(d.sunday&&!scheduledSunday)))?Math.max(0,d.actual)*base/60*(Number(rules.sunday_holiday_multiplier||2)-1):0;
+  const daySchedule=scheduleForH(d.employee_id,d.day),scheduledSunday=expectedH(daySchedule,d.day,d.employee_id),premium=(daySchedule?.schedule_type!=='12x36'&&(d.holiday||(d.sunday&&!scheduledSunday)))?Math.max(0,d.actual)*base/60*(Number(rules.sunday_holiday_multiplier||2)-1):0;
   const overtimeValue=overtime/60*base*(Number(rules.overtime_multiplier||1.5)-1);
   return {...d,name:emp?.full_name||'Funcionário',base,overtime,nightHours,nightValue,premium,overtimeValue,estimatedAdditional:nightValue+premium+overtimeValue};
  });
@@ -174,7 +174,8 @@ async function loadH(){
   apiAllH('hr_time_punches','select=*&company_id=eq.'+cid+'&and=(punched_at.gte.'+fetchStart.toISOString()+',punched_at.lt.'+fetchEnd.toISOString()+')&order=punched_at.asc,id.asc'),
   apiAllH('employee_compensation','select=employee_id,salary_base,weekly_hours,remuneration_basis,hourly_rate,monthly_hour_divisor&company_id=eq.'+cid+'&order=employee_id.asc'),
   apiH('hr_time_rules','select=*&company_id=eq.'+cid+'&limit=1'),
-  apiAllH('hr_holidays','select=*&company_id=eq.'+cid+'&holiday_date=gte.'+monthStart+'&holiday_date=lte.'+monthEnd+'&order=holiday_date.asc,id.asc'),\n  apiAllH('hr_schedule_exceptions','select=*&company_id=eq.'+cid+'&exception_date=gte.'+monthStart+'&exception_date=lte.'+monthEnd+'&order=exception_date.asc,id.asc'),
+  apiAllH('hr_holidays','select=*&company_id=eq.'+cid+'&holiday_date=gte.'+monthStart+'&holiday_date=lte.'+monthEnd+'&order=holiday_date.asc,id.asc'),
+  apiAllH('hr_schedule_exceptions','select=*&company_id=eq.'+cid+'&exception_date=gte.'+monthStart+'&exception_date=lte.'+monthEnd+'&order=exception_date.asc,id.asc'),
   apiAllH('hr_time_occurrences','select=*&company_id=eq.'+cid+'&occurrence_date=gte.'+monthStart+'&occurrence_date=lte.'+monthEnd+'&order=occurrence_date.desc,id.desc'),
   apiAllH('hr_time_bank_entries','select=*&company_id=eq.'+cid+'&order=effective_date.asc,created_at.asc,id.asc'),
   apiAllH('hr_time_periods','select=*&company_id=eq.'+cid+'&period_month=eq.'+monthStart+'&order=employee_id.asc')
@@ -190,7 +191,7 @@ function renderH(){
  const monthStart=monthPick+'-01',lastDay=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),0).getDate();
  const missing=[],monthSessions=sessionsH();
  for(const e of dataH.employees.filter(x=>x.status!=='inactive'&&x.employment_status!=='inativo')){
-  for(let day=1;day<=lastDay;day++){const d=monthPick+'-'+String(day).padStart(2,'0');if(d>todayH())continue;const sch=scheduleForH(e.id,d);if(!expectedH(sch,d))continue;
+  for(let day=1;day<=lastDay;day++){const d=monthPick+'-'+String(day).padStart(2,'0');if(d>todayH())continue;const sch=scheduleForH(e.id,d);if(!expectedH(sch,d,e.id))continue;
    const daySessions=monthSessions.filter(s=>s.employee_id===e.id&&s.day===d);
    const hasOcc=dataH.occurrences.some(o=>o.employee_id===e.id&&o.occurrence_date===d);
    if(!daySessions.length&&!hasOcc)missing.push({employee:e,date:d,kind:'absence'});
