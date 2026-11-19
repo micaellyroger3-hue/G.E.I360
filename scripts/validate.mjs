@@ -132,7 +132,7 @@ assert.ok(hrSql.includes('enable row level security') && hrSql.includes("array['
 assert.ok(hrSql.includes('gei_hr_guard_employee_link') && hrSql.includes('gei_post_hr_monthly_cost'), 'HR database integrity and finance RPC missing');
 assert.ok(hrSql.includes('unique(company_id, period)'), 'HR finance posting must be unique per company and period');
 assert.ok(fs.existsSync('docs/HR_MODULE.md'), 'HR module documentation missing');
-assert.ok(worker.includes('gei360-shell-v21'), 'Offline shell cache version missing');
+assert.ok(worker.includes('gei360-shell-v24'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
 assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
@@ -262,7 +262,7 @@ assert.ok(modules.includes('geiLoadModuleAccess') && modules.includes('geiRender
 assert.ok(modules.includes('geiRenderCompanyModuleSettings') && modules.includes('company_modules'), 'Company module controls missing');
 assert.ok(modules.includes('geiPageIsEnabled'), 'Disabled modules must be blocked in navigation routing');
 assert.ok(html.includes('modules.js?v=20261119-02'), 'Dynamic module asset cache version missing');
-assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v21'), 'Service worker cache must match dynamic module release');
+assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v24'), 'Service worker cache must match dynamic module release');
 
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
 assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunction.includes('company_members'), 'Secure employee invitation function missing');
