@@ -22,7 +22,7 @@ function hrRateSettings(){
  else if(regime==='simples_nacional'){
   if(annex==='IV')inss=20;
   else if(annex==='mixed')inss=20*hrNum(s.anexo_iv_revenue_share)/100;
-  needsRat=annex==='IV'||annex==='mixed';
+  needsRat=annex==='IV'||(annex==='mixed'&&Number(s.anexo_iv_revenue_share)>0);
  }
  else if(['lucro_presumido','lucro_real'].includes(regime)){
   inss=s.employer_inss_mode==='custom'?hrNum(s.employer_inss_rate):20;
@@ -31,7 +31,7 @@ function hrRateSettings(){
  }
  else if(regime==='outro'&&s.employer_inss_mode==='custom')inss=hrNum(s.employer_inss_rate);
  if(needsRat)rat=hrNum(s.rat_rate)*hrNum(s.fap_factor);
- const ratReady=!needsRat||(s.rat_confirmed===true&&Number(s.fap_factor)>=0.5&&Number(s.fap_factor)<=2);
+ const ratReady=!needsRat||(s.rat_confirmed===true&&s.rat_rate!=null&&Number(s.fap_factor)>=0.5&&Number(s.fap_factor)<=2);
  const thirdReady=!needsThird||s.third_party_confirmed===true;
  const shareReady=!(regime==='simples_nacional'&&annex==='mixed')||(Number(s.anexo_iv_revenue_share)>=0&&Number(s.anexo_iv_revenue_share)<=100);
  const regimeReady=!!regime&&(regime!=='simples_nacional'||['I','II','III','IV','V','mixed'].includes(annex))&&(regime!=='outro'||s.employer_inss_mode==='custom'||s.employer_inss_mode==='not_applicable');
@@ -82,13 +82,17 @@ function hrSummary(){
  const payroll=active.reduce((sum,e)=>sum+hrCost(hrCompOf(e.id)).base,0);
  const eventCount=hrEvents.filter(e=>e.status!=='cancelado'&&e.status!=='concluido').length;
  const missing=active.filter(e=>!hrComp.some(c=>c.employee_id===e.id)).length;
- const otherContracts=active.filter(e=>hrCompOf(e.id).contract_type!=='clt').length;
+ const otherContracts=active.filter(e=>!['clt','aprendiz'].includes(hrCompOf(e.id).contract_type)).length;
+ const incomplete=active.filter(e=>['clt','aprendiz'].includes(hrCompOf(e.id).contract_type)&&!hrCost(hrCompOf(e.id)).complete).length;
+ const meiSalaryReview=hrSettings?.tax_regime==='mei'&&active.some(e=>hrCost(hrCompOf(e.id)).base>1621);
  const meiOverLimit=hrSettings?.tax_regime==='mei'&&active.length>1;
  const rates=hrRateSettings();
  const posted=hrPostings.find(p=>p.period===hrMonth());
  return '<div class="gei-hr-kpis">'+hrKpi('Funcionários ativos',active.length,'Vínculos ativos')+hrKpi('Remuneração estimada',hrMoney(payroll),'Total bruto mensal equivalente')+hrKpi('Custo estimado',hrMoney(total),'Salários, benefícios e encargos')+hrKpi('Eventos em aberto',eventCount,'Férias, ausências e afastamentos')+'</div>'+
   (!hrSettings?'<div class="notice">Configure o regime tributário e os encargos em <b>Configuração</b>. Sem essa informação, o custo total é apenas parcial e não deve ser usado como valor final.</div>':'')+
   (missing?'<div class="notice">'+missing+' funcionário(s) ativo(s) ainda não têm salário e benefícios cadastrados.</div>':'')+
+  (incomplete?'<div class="err">'+incomplete+' vínculo(s) CLT/aprendiz têm encargos incompletos. Confira RAT/FAP/FPAS e o regime na aba Configuração. O custo exibido é parcial.</div>':'')+
+  (meiSalaryReview?'<div class="notice">Há remuneração mensal acima do salário mínimo de 2026 (R$ 1.621,00). O MEI só pode contratar um empregado remunerado pelo salário mínimo ou piso da categoria; confirme eventual piso superior e a composição da remuneração.</div>':'')+
   (meiOverLimit?'<div class="err">Atenção: o cadastro mostra mais de um funcionário ativo. O MEI tem limite legal de um empregado; revise o enquadramento antes de usar esta estimativa.</div>':'')+
   (otherContracts?'<div class="notice">'+otherContracts+' vínculo(s) não CLT: o sistema soma remuneração e benefícios, mas não presume encargos específicos desses contratos.</div>':'')+
   '<div class="gei-hr-grid"><section class="gei-hr-panel"><h3>Composição estimada da equipe</h3><p>Valores mensais estimados com base nos dados cadastrados.</p><div class="gei-hr-breakdown"><div><span>Remuneração mensal estimada</span><b>'+hrMoney(payroll)+'</b></div><div><span>Benefícios</span><b>'+hrMoney(active.reduce((s,e)=>s+hrCost(hrCompOf(e.id)).benefits,0))+'</b></div><div><span>FGTS estimado</span><b>'+hrMoney(active.reduce((s,e)=>s+hrCost(hrCompOf(e.id)).fgts,0))+'</b></div><div><span>INSS patronal estimado</span><b>'+hrMoney(active.reduce((s,e)=>s+hrCost(hrCompOf(e.id)).inss,0))+'</b></div><div><span>Provisões 13º + férias</span><b>'+hrMoney(active.reduce((s,e)=>s+hrCost(hrCompOf(e.id)).thirteenth+hrCost(hrCompOf(e.id)).vacation,0))+'</b></div><div class="total"><span>Custo mensal estimado</span><b>'+hrMoney(total)+'</b></div></div></section>'+
