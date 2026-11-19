@@ -2,6 +2,9 @@
 -- Transição constitucional de jornada EC 141/2026: 42h a partir de 16/12/2026; 40h a partir de 16/12/2027.
 -- A migração é aditiva: não apaga nem reescreve marcações ou cadastros existentes.
 
+alter table public.employee_compensation
+  add column if not exists monthly_hour_divisor numeric(6,2) null check (monthly_hour_divisor between 1 and 400);
+
 create table if not exists public.hr_time_rules (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null unique references public.companies(id) on delete cascade,
