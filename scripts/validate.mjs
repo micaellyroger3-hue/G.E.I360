@@ -55,7 +55,7 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v19"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v20"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
@@ -120,7 +120,7 @@ const profileJs = fs.readFileSync('business-profiles.js', 'utf8');
 new Function(profileJs);
 assert.ok(html.includes('business-profiles.js?v=20261116-02'), 'Business profile script not loaded');
 assert.ok(worker.includes('./business-profiles.js?v=20261116-02'), 'Business profile script missing from offline shell');
-assert.ok(worker.includes('gei360-shell-v19'), 'Offline shell cache version missing');
+assert.ok(worker.includes('gei360-shell-v20'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
 assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
@@ -240,6 +240,7 @@ assert.ok(modules.includes("module_code:'sector_ops'") && modules.includes("gei_
 assert.ok(modules.includes("readOnly:companyRole==='viewer'"), 'Sector operations must be read-only for non-managers');
 assert.ok(html.includes('data-page="sector"'), 'Sector operations navigation missing');
 assert.ok(profiles.includes("'Produção e fichas de preparo (registro manual)':'sector'") && profiles.includes("'Controle manual de validade e perdas':'sector'"), 'Implemented sector profile shortcuts must open operational area');
+assert.ok(modules.includes('sectorOpsSearch') && modules.includes('sectorOpsExport') && modules.includes('Exportar CSV'), 'Sector history search and CSV export missing');
 
 console.log('G.E.I360 validation passed: JavaScript, navigation, PWA, intelligence insights, AI/fiscal plans, privacy checks, migrations and transactional RPCs.');
 
@@ -248,8 +249,8 @@ assert.ok(modules.includes('GEI_MODULE_PAGES'), 'Dynamic module page map missing
 assert.ok(modules.includes('geiLoadModuleAccess') && modules.includes('geiRenderModuleNavigation'), 'Dynamic module catalog loading/navigation missing');
 assert.ok(modules.includes('geiRenderCompanyModuleSettings') && modules.includes('company_modules'), 'Company module controls missing');
 assert.ok(modules.includes('geiPageIsEnabled'), 'Disabled modules must be blocked in navigation routing');
-assert.ok(html.includes('modules.js?v=20261116-05'), 'Dynamic module asset cache version missing');
-assert.ok(worker.includes('modules.js?v=20261116-05') && worker.includes('gei360-shell-v19'), 'Service worker cache must match dynamic module release');
+assert.ok(html.includes('modules.js?v=20261119-01'), 'Dynamic module asset cache version missing');
+assert.ok(worker.includes('modules.js?v=20261119-01') && worker.includes('gei360-shell-v20'), 'Service worker cache must match dynamic module release');
 
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
 assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunction.includes('company_members'), 'Secure employee invitation function missing');
