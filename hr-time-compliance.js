@@ -186,7 +186,7 @@ async function loadH(){
 }
 function renderH(){
  const host=$('view');if(!host)return;
- const rows=summaryH(),rules=dataH.rules||{},bankByEmp=new Map(),restRows=dataH.employees.map(e=>({employee:e,rest:restComplianceH(e.id)})).filter(x=>x.rest),monthCap=statutoryWeeklyCapH(monthPick+'-28')/60,specialSchedules=dataH.schedules.filter(s=>['6x1','12x36'].includes(s.schedule_type)&&s.effective_from<=monthPick+'-31'&&(!s.effective_to||s.effective_to>=monthPick+'-01'));
+ const rows=summaryH(),rules=dataH.rules||{},bankByEmp=new Map(),restRows=dataH.employees.map(e=>({employee:e,rest:restComplianceH(e.id)})).filter(x=>x.rest),monthCap=statutoryWeeklyCapH(monthPick+'-28')/60,specialSchedules=dataH.schedules.filter(s=>monthPick>='2026-12'&&['6x1','12x36'].includes(s.schedule_type)&&s.effective_from<=monthPick+'-31'&&(!s.effective_to||s.effective_to>=monthPick+'-01'));
  for(const b of dataH.bank){const delta=bankBalanceH(b.employee_id);bankByEmp.set(b.employee_id,delta)}
  const periodByEmp=new Map(dataH.periods.map(p=>[p.employee_id,p]));
  const total=rows.reduce((a,r)=>{a.minutes+=r.actual;a.ot+=r.overtime;a.extra+=r.estimatedAdditional;return a},{minutes:0,ot:0,extra:0});
