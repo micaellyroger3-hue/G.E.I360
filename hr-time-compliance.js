@@ -173,7 +173,7 @@ function renderH(){
    const hasOcc=dataH.occurrences.some(o=>o.employee_id===e.id&&o.occurrence_date===d);
    if(!daySessions.length&&!hasOcc)missing.push({employee:e,date:d,kind:'absence'});
    else if(daySessions.some(s=>s.open)&&!hasOcc)missing.push({employee:e,date:d,kind:'missing_exit'});
-   else if(daySessions.some(s=>!s.open&&s.actual>360&&s.breaks.length===0&&Number(sch.break_minutes||0)>0)&&!hasOcc)missing.push({employee:e,date:d,kind:'missing_break_start'});
+   else if(daySessions.some(s=>!s.open&&s.actual>360&&s.breaks.length===0&&Number(sch.break_minutes||rules.break_minimum_minutes||0)>0)&&!hasOcc)missing.push({employee:e,date:d,kind:'missing_break_start'});
   }
  }
  host.innerHTML='<section class="gei-hr-panel"><div class="head"><div><h1>Apuração e fechamento de jornada</h1><span class="muted">Cálculo mensal, adicionais, ausências, banco de horas e conferência</span></div></div>'+
