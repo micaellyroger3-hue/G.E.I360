@@ -13,7 +13,7 @@ const hrToday=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',
 const hrMonth=()=>hrToday().slice(0,7)+'-01';
 const hrDate=value=>value?new Date(value+'T12:00:00').toLocaleDateString('pt-BR'):'—';
 const hrActive=e=>e.employment_status!=='inativo'&&e.status!=='inactive';
-function hrCompOf(id){return hrComp.find(x=>x.employee_id===id)||{salary_base:0,contract_type:'clt',weekly_hours:44,transportation_allowance:0,meal_allowance:0,health_benefit:0,other_benefits:0,work_schedule:''};}
+function hrCompOf(id){return hrComp.find(x=>x.employee_id===id)||{salary_base:0,remuneration_basis:'monthly',hourly_rate:0,contract_type:'clt',weekly_hours:44,transportation_allowance:0,meal_allowance:0,health_benefit:0,other_benefits:0,work_schedule:''};}
 function hrSettingsReady(){return !!hrSettings;}
 function hrRateSettings(){
  const s=hrSettings||{};
@@ -23,7 +23,7 @@ function hrRateSettings(){
  return {fgts:hrNum(s.fgts_rate),inss,rat:hrNum(s.rat_rate),third:hrNum(s.third_party_rate)};
 }
 function hrCost(c){
- const base=hrNum(c.salary_base),benefits=hrNum(c.transportation_allowance)+hrNum(c.meal_allowance)+hrNum(c.health_benefit)+hrNum(c.other_benefits);
+ const base=c.remuneration_basis==='hourly'?hrNum(c.hourly_rate)*hrNum(c.weekly_hours)*52/12:hrNum(c.salary_base),benefits=hrNum(c.transportation_allowance)+hrNum(c.meal_allowance)+hrNum(c.health_benefit)+hrNum(c.other_benefits);
  const clt=c.contract_type==='clt';
  const thirteenth=clt&&hrSettings?.use_13th_provision?base/12:0;
  const vacation=clt&&hrSettings?.use_vacation_provision?base/9:0;
@@ -65,7 +65,7 @@ function hrKpi(label,value,detail){
 function hrSummary(){
  const active=hrEmployees.filter(hrActive);
  const total=active.reduce((sum,e)=>sum+hrCost(hrCompOf(e.id)).total,0);
- const payroll=active.reduce((sum,e)=>sum+hrNum(hrCompOf(e.id).salary_base),0);
+ const payroll=active.reduce((sum,e)=>sum+hrCost(hrCompOf(e.id)).base,0);
  const eventCount=hrEvents.filter(e=>e.status!=='cancelado'&&e.status!=='concluido').length;
  const missing=active.filter(e=>!hrComp.some(c=>c.employee_id===e.id)).length;
  const otherContracts=active.filter(e=>hrCompOf(e.id).contract_type!=='clt').length;
@@ -84,7 +84,7 @@ function hrSummary(){
 function hrEmployeeRows(){
  return hrEmployees.map(e=>{
   const c=hrCompOf(e.id),cost=hrCost(c);
-  return '<tr><td><b>'+hrEsc(e.full_name)+'</b><small>'+hrEsc(e.email||'')+'</small></td><td>'+hrEsc(e.job_title||'—')+'</td><td>'+hrEsc(e.department||'—')+'</td><td>'+hrDate(e.admission_date)+'</td><td>'+hrEsc(e.employment_status||'ativo')+'</td><td>'+hrMoney(c.salary_base)+'</td><td><b>'+hrMoney(cost.total)+'</b></td><td><div class="actions"><button class="alt small" data-hr-edit="'+e.id+'">Editar</button><button class="alt small" data-hr-event="'+e.id+'">Evento</button></div></td></tr>';
+  return '<tr><td><b>'+hrEsc(e.full_name)+'</b><small>'+hrEsc(e.email||'')+'</small></td><td>'+hrEsc(e.job_title||'—')+'</td><td>'+hrEsc(e.department||'—')+'</td><td>'+hrDate(e.admission_date)+'</td><td>'+hrEsc(e.employment_status||'ativo')+'</td><td>'+hrMoney(cost.base)+'</td><td><b>'+hrMoney(cost.total)+'</b></td><td><div class="actions"><button class="alt small" data-hr-edit="'+e.id+'">Editar</button><button class="alt small" data-hr-event="'+e.id+'">Evento</button></div></td></tr>';
  }).join('');
 }
 function hrTeam(){
@@ -155,7 +155,7 @@ function hrEmployeeForm(id){
  $hr('hrEmployeeForm').onsubmit=async ev=>{
   ev.preventDefault();const f=new FormData(ev.currentTarget);const vals=Object.fromEntries(f.entries());
   const employee={full_name:String(vals.full_name).trim(),email:String(vals.email||'').trim()||null,phone:String(vals.phone||'').trim()||null,job_title:String(vals.job_title||'').trim()||null,department:String(vals.department||'').trim()||null,admission_date:vals.admission_date||null,employment_status:vals.employment_status,status:vals.employment_status==='inativo'?'inactive':'active'};
-  const comp={salary_base:hrNum(vals.salary_base),contract_type:vals.contract_type,weekly_hours:vals.weekly_hours===''?null:hrNum(vals.weekly_hours),work_schedule:String(vals.work_schedule||'').trim()||null,transportation_allowance:hrNum(vals.transportation_allowance),meal_allowance:hrNum(vals.meal_allowance),health_benefit:hrNum(vals.health_benefit),other_benefits:hrNum(vals.other_benefits),notes:String(vals.notes||'').trim()||null};
+  const comp={salary_base:hrNum(vals.salary_base),remuneration_basis:vals.remuneration_basis==='hourly'?'hourly':'monthly',hourly_rate:hrNum(vals.hourly_rate),contract_type:vals.contract_type,weekly_hours:vals.weekly_hours===''?null:hrNum(vals.weekly_hours),work_schedule:String(vals.work_schedule||'').trim()||null,transportation_allowance:hrNum(vals.transportation_allowance),meal_allowance:hrNum(vals.meal_allowance),health_benefit:hrNum(vals.health_benefit),other_benefits:hrNum(vals.other_benefits),notes:String(vals.notes||'').trim()||null};
   try{
    let employeeId=id;
    if(id)await api('/rest/v1/employees?id=eq.'+id,{method:'PATCH',body:employee});
@@ -169,7 +169,7 @@ function hrEmployeeForm(id){
 }
 function hrBind(){
  const add=$hr('hrNewEmployee');if(add)add.onclick=()=>hrEmployeeForm('');
- const search=$hr('hrSearch');if(search)search.oninput=()=>{const q=search.value.toLocaleLowerCase('pt-BR');const filtered=hrEmployees.filter(e=>[e.full_name,e.job_title,e.department].join(' ').toLocaleLowerCase('pt-BR').includes(q));$hr('hrEmployeeRows').innerHTML=filtered.length?filtered.map(e=>{const c=hrCompOf(e.id);return '<tr><td><b>'+hrEsc(e.full_name)+'</b><small>'+hrEsc(e.email||'')+'</small></td><td>'+hrEsc(e.job_title||'—')+'</td><td>'+hrEsc(e.department||'—')+'</td><td>'+hrDate(e.admission_date)+'</td><td>'+hrEsc(e.employment_status||'ativo')+'</td><td>'+hrMoney(c.salary_base)+'</td><td><b>'+hrMoney(hrCost(c).total)+'</b></td><td><button class="alt small" data-hr-edit="'+e.id+'">Editar</button></td></tr>'}).join(''):'<tr><td colspan="8">Nenhum resultado.</td></tr>';hrBindEdit();};
+ const search=$hr('hrSearch');if(search)search.oninput=()=>{const q=search.value.toLocaleLowerCase('pt-BR');const filtered=hrEmployees.filter(e=>[e.full_name,e.job_title,e.department].join(' ').toLocaleLowerCase('pt-BR').includes(q));$hr('hrEmployeeRows').innerHTML=filtered.length?filtered.map(e=>{const c=hrCompOf(e.id),v=hrCost(c);return '<tr><td><b>'+hrEsc(e.full_name)+'</b><small>'+hrEsc(e.email||'')+'</small></td><td>'+hrEsc(e.job_title||'—')+'</td><td>'+hrEsc(e.department||'—')+'</td><td>'+hrDate(e.admission_date)+'</td><td>'+hrEsc(e.employment_status||'ativo')+'</td><td>'+hrMoney(v.base)+'</td><td><b>'+hrMoney(v.total)+'</b></td><td><button class="alt small" data-hr-edit="'+e.id+'">Editar</button></td></tr>'}).join(''):'<tr><td colspan="8">Nenhum resultado.</td></tr>';hrBindEdit();};
  hrBindEdit();
  const exportBtn=$hr('hrExport');if(exportBtn)exportBtn.onclick=()=>hrCsv('equipe');
  const costExport=$hr('hrExportCosts');if(costExport)costExport.onclick=()=>hrCsv('custos');
@@ -189,7 +189,7 @@ function hrBindEdit(){
 }
 function hrCsv(kind){
  let rows=[];
- if(kind==='equipe')rows=[['Nome','Cargo','Departamento','Admissão','Situação','Salário mensal','Benefícios','Custo estimado'],...hrEmployees.map(e=>{const c=hrCompOf(e.id),v=hrCost(c);return [e.full_name,e.job_title,e.department,e.admission_date,e.employment_status,c.salary_base,v.benefits,v.total]})];
+ if(kind==='equipe')rows=[['Nome','Cargo','Departamento','Admissão','Situação','Base remuneração','Valor hora','Remuneração mensal estimada','Benefícios','Custo estimado'],...hrEmployees.map(e=>{const c=hrCompOf(e.id),v=hrCost(c);return [e.full_name,e.job_title,e.department,e.admission_date,e.employment_status,c.remuneration_basis,c.hourly_rate,v.base,v.benefits,v.total]})];
  else rows=[['Funcionário','Salário','Benefícios','FGTS','INSS patronal','RAT','Terceiros','13º','Férias + 1/3','Custo total'],...hrEmployees.filter(hrActive).map(e=>{const v=hrCost(hrCompOf(e.id));return [e.full_name,v.base,v.benefits,v.fgts,v.inss,v.rat,v.third,v.thirteenth,v.vacation,v.total]})];
  const csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='gei360-rh-'+kind+'-'+hrToday()+'.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
