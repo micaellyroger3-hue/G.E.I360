@@ -6,7 +6,8 @@ const APP_SHELL = [
   './icon.svg',
   './modules.js?v=20261119-02',
   './hr.js?v=20261119-04',
-  './hr-time.js?v=20261119-03',\n  './hr-time-compliance.js?v=20261119-01',
+  './hr-time.js?v=20261119-03',
+  './hr-time-compliance.js?v=20261119-01',
   './business-profiles.js?v=20261116-02'
 ];
 
