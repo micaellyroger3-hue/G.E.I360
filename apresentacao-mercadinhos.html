@@ -1,68 +1,65 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101827">
-  <meta name="description" content="Conheça o G.E.I360: gestão de estoque, vendas, compras e financeiro para pequenos negócios.">
-  <title>G.E.I360 | Gestão para mercadinhos</title>
-  <style>
-    :root{--navy:#101827;--green:#16866d;--mint:#baf2df;--ink:#182333;--muted:#637184;--line:#e5ebf0;--bg:#f5f8f7}
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#fff}
-    a{color:inherit}.wrap{width:min(1080px,calc(100% - 36px));margin:auto}
-    header{background:var(--navy);color:#fff}.top{height:72px;display:flex;align-items:center;justify-content:space-between}
-    .brand{font-size:22px;font-weight:900;letter-spacing:-1px}.brand b{color:#42c49b}.top small{color:#c4d1d9}
-    .hero{padding:76px 0 82px;background:radial-gradient(circle at 85% 25%,#245d55 0,transparent 32%),linear-gradient(120deg,#101827,#173c43);color:#fff}
-    .eyebrow{color:#8ce2c3;font-size:12px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase}
-    h1{font-size:clamp(36px,6vw,58px);line-height:1.08;letter-spacing:-2px;max-width:760px;margin:16px 0}
-    .hero p{font-size:18px;color:#d6e4e4;max-width:660px;margin:0 0 28px}
-    .actions{display:flex;gap:12px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 19px;border-radius:9px;text-decoration:none;font-weight:800}
-    .primary{background:#35bd91;color:#08291f}.secondary{border:1px solid #ffffff55;color:#fff}
-    section{padding:58px 0}.section-soft{background:var(--bg)}h2{font-size:clamp(26px,4vw,36px);line-height:1.15;letter-spacing:-1px;margin:0 0 12px}
-    .lead{color:var(--muted);max-width:700px;margin:0 0 28px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    .feature{border:1px solid var(--line);border-radius:14px;padding:20px;background:#fff}.symbol{font-size:23px}.feature h3{font-size:17px;margin:8px 0 5px}.feature p{font-size:14px;color:var(--muted);margin:0}
-    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;counter-reset:step}.step{border-top:3px solid var(--green);padding:16px 4px}.step:before{counter-increment:step;content:"0" counter(step);font-size:13px;font-weight:900;color:var(--green)}.step h3{margin:7px 0}.step p{color:var(--muted);font-size:14px;margin:0}
-    .pilot{background:var(--navy);color:#fff;border-radius:18px;padding:30px;display:grid;grid-template-columns:1.4fr 1fr;gap:24px;align-items:center}.pilot p{color:#cfdbdf}.pilot ul{padding-left:20px;color:#e3ecee}.warning{background:#fff8e8;border:1px solid #f1dfb6;color:#75531c;border-radius:12px;padding:16px;font-size:13px;margin-top:22px}
-    footer{background:#0b1220;color:#b9c5cf;padding:25px 0;font-size:13px}footer .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
-    @media(max-width:760px){.grid,.steps{grid-template-columns:1fr 1fr}.pilot{grid-template-columns:1fr}.hero{padding:58px 0}}
-    @media(max-width:520px){.grid,.steps{grid-template-columns:1fr}.top small{font-size:11px}.hero p{font-size:16px}}
-  </style>
-</head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101827">
+<meta name="description" content="G.E.I360: gestão empresarial para comércio, mercadinhos, alimentação, serviços, distribuição e construção.">
+<title>G.E.I360 | Gestão para diferentes negócios</title>
+<style>
+:root{--navy:#101827;--green:#16866d;--mint:#baf2df;--ink:#182333;--muted:#637184;--line:#e5ebf0;--bg:#f5f8f7;--gold:#fff6df}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#fff}a{color:inherit}.wrap{width:min(1100px,calc(100% - 36px));margin:auto}
+header{background:var(--navy);color:#fff}.top{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:15px}.brand{font-size:23px;font-weight:900;letter-spacing:-1px}.brand b{color:#42c49b}.top small{color:#c4d1d9}
+.hero{padding:78px 0 84px;background:radial-gradient(circle at 85% 25%,#245d55 0,transparent 32%),linear-gradient(120deg,#101827,#173c43);color:#fff}.eyebrow{color:#8ce2c3;font-size:12px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase}
+h1{font-size:clamp(37px,6vw,60px);line-height:1.06;letter-spacing:-2px;max-width:850px;margin:16px 0}.hero p{font-size:18px;color:#d6e4e4;max-width:740px;margin:0 0 28px}
+.actions{display:flex;gap:12px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 19px;border-radius:9px;text-decoration:none;font-weight:800}.primary{background:#35bd91;color:#08291f}.secondary{border:1px solid #ffffff66;color:#fff}
+section{padding:60px 0}.soft{background:var(--bg)}h2{font-size:clamp(27px,4vw,37px);line-height:1.15;letter-spacing:-1px;margin:0 0 12px}.lead{color:var(--muted);max-width:760px;margin:0 0 28px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{border:1px solid var(--line);border-radius:15px;padding:20px;background:#fff}.symbol{font-size:25px}.card h3{font-size:18px;margin:8px 0 5px}.card p{font-size:14px;color:var(--muted);margin:0}
+.pill{display:inline-block;border-radius:99px;padding:4px 9px;background:#e5f7ef;color:#126348;font-size:11px;font-weight:800;margin-top:12px}.pill.gold{background:var(--gold);color:#805b17}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{border:1px solid var(--line);border-radius:16px;padding:23px;background:white}.panel ul{padding-left:20px;margin-bottom:0}.panel li{margin:7px 0}.available{border-top:4px solid var(--green)}.roadmap{border-top:4px solid #d9a441}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;counter-reset:step}.step{border-top:3px solid var(--green);padding:16px 4px}.step:before{counter-increment:step;content:"0" counter(step);font-size:13px;font-weight:900;color:var(--green)}.step h3{margin:7px 0}.step p{color:var(--muted);font-size:14px;margin:0}
+.pilot{background:var(--navy);color:#fff;border-radius:18px;padding:30px;display:grid;grid-template-columns:1.35fr 1fr;gap:24px;align-items:center}.pilot p{color:#cfdbdf}.pilot ul{padding-left:20px;color:#e3ecee}
+.note{background:#fff8e8;border:1px solid #f1dfb6;color:#75531c;border-radius:12px;padding:16px;font-size:13px;margin-top:20px}
+footer{background:#0b1220;color:#b9c5cf;padding:25px 0;font-size:13px}footer .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.cols,.pilot{grid-template-columns:1fr}.hero{padding:58px 0}.steps{grid-template-columns:1fr}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}.top small{font-size:11px}.hero p{font-size:16px}}
+</style></head>
 <body>
-<header><div class="wrap top"><div class="brand">G.E.I<b>360</b></div><small>Gestão empresarial para pequenos negócios</small></div></header>
+<header><div class="wrap top"><div class="brand">G.E.I<b>360</b></div><small>Gestão empresarial para diferentes tipos de negócio</small></div></header>
 <main>
-  <div class="hero"><div class="wrap">
-    <div class="eyebrow">Mais organização no dia a dia</div>
-    <h1>Seu mercadinho mais organizado. Sua gestão em um só lugar.</h1>
-    <p>O G.E.I360 reúne ferramentas para acompanhar estoque, vendas, compras, clientes, fornecedores e financeiro pelo computador ou celular.</p>
-    <div class="actions"><a class="btn primary" href="https://micaellyroger3-hue.github.io/G.E.I360/">Conhecer o sistema</a><a class="btn secondary" href="#piloto">Ver como funciona o piloto</a></div>
-  </div></div>
-  <section><div class="wrap">
-    <h2>Tenha uma visão melhor do seu negócio</h2>
-    <p class="lead">Informações importantes reunidas para ajudar você a acompanhar a operação e tomar decisões com mais clareza.</p>
-    <div class="grid">
-      <article class="feature"><div class="symbol">📦</div><h3>Estoque</h3><p>Cadastre produtos, acompanhe entradas, saídas e ajustes de estoque.</p></article>
-      <article class="feature"><div class="symbol">🛒</div><h3>Vendas</h3><p>Registre vendas e acompanhe os lançamentos relacionados.</p></article>
-      <article class="feature"><div class="symbol">🚚</div><h3>Compras</h3><p>Organize compras e recebimentos de mercadorias.</p></article>
-      <article class="feature"><div class="symbol">🤝</div><h3>Clientes e fornecedores</h3><p>Mantenha os cadastros organizados para consultar quando precisar.</p></article>
-      <article class="feature"><div class="symbol">💰</div><h3>Financeiro</h3><p>Acompanhe contas a pagar e receber e os lançamentos do negócio.</p></article>
-      <article class="feature"><div class="symbol">📊</div><h3>Painel e relatórios</h3><p>Consulte indicadores da operação e exporte relatórios disponíveis.</p></article>
-    </div>
-  </div></section>
-  <section class="section-soft"><div class="wrap">
-    <h2>Começar pode ser simples</h2><p class="lead">A implantação piloto começa entendendo como o mercadinho trabalha hoje.</p>
-    <div class="steps">
-      <article class="step"><h3>Conhecer</h3><p>Conversamos sobre a rotina, os produtos e os controles que o negócio já utiliza.</p></article>
-      <article class="step"><h3>Demonstrar</h3><p>Mostramos os módulos disponíveis com dados de demonstração, sem misturar informações reais.</p></article>
-      <article class="step"><h3>Avaliar</h3><p>Se fizer sentido, combinamos um piloto acompanhado, com escopo, prazo e condições definidos antes de começar.</p></article>
-    </div>
-  </div></section>
-  <section id="piloto"><div class="wrap">
-    <div class="pilot"><div><div class="eyebrow">Projeto piloto</div><h2>Vamos conhecer a rotina do seu mercadinho?</h2><p>Estamos abrindo conversas com pequenos comércios para apresentar o G.E.I360, entender necessidades reais e avaliar uma implantação piloto.</p><a class="btn primary" href="https://micaellyroger3-hue.github.io/G.E.I360/">Abrir o G.E.I360</a></div>
-      <div><strong>O que vamos avaliar juntos</strong><ul><li>Cadastro e controle de produtos</li><li>Entradas, saídas e vendas</li><li>Compras e fornecedores</li><li>Contas a pagar e receber</li><li>Relatórios e rotina de uso</li></ul></div>
-    </div>
-    <div class="warning"><strong>Transparência:</strong> o G.E.I360 está em evolução. Esta apresentação não promete emissão de nota fiscal, integração com iFood, folha oficial ou registro de ponto REP-P. O piloto deve usar dados autorizados e um escopo combinado. O sistema exige internet para login e acesso aos dados empresariais.</div>
-  </div></section>
-</main>
-<footer><div class="wrap"><span>G.E.I360 — Gestão Empresarial</span><span>Apresentação informativa • Projeto piloto sujeito a avaliação</span></div></footer>
+<div class="hero"><div class="wrap"><div class="eyebrow">Uma plataforma • vários segmentos</div>
+<h1>Organize a gestão do seu negócio em um só lugar.</h1>
+<p>Do mercadinho à lanchonete, do comércio à prestação de serviços: conheça uma plataforma que reúne ferramentas para acompanhar a operação, as equipes e as finanças da empresa.</p>
+<div class="actions"><a class="btn primary" href="https://micaellyroger3-hue.github.io/G.E.I360/">Conhecer o sistema</a><a class="btn secondary" href="#segmentos">Ver os segmentos</a></div>
+</div></div>
+<section id="segmentos"><div class="wrap"><h2>Para negócios de diferentes áreas</h2><p class="lead">O G.E.I360 tem uma base de gestão comum e caminhos de operação que podem ser adaptados ao tipo de empresa. Estamos começando pelos processos essenciais e evoluindo junto com quem usa.</p>
+<div class="grid">
+<article class="card"><div class="symbol">🛒</div><h3>Mercadinhos e comércio</h3><p>Mercados, mercearias, lojas, açougues, hortifrutis e pequenos comércios.</p><span class="pill">Melhor segmento para o primeiro piloto</span></article>
+<article class="card"><div class="symbol">🍔</div><h3>Alimentação</h3><p>Lanchonetes, padarias, pizzarias, cafeterias, restaurantes e delivery.</p><span class="pill">Base de gestão disponível</span></article>
+<article class="card"><div class="symbol">🧰</div><h3>Prestação de serviços</h3><p>Empresas de limpeza, manutenção, assistência e serviços em geral.</p><span class="pill">Base de gestão disponível</span></article>
+<article class="card"><div class="symbol">📦</div><h3>Distribuição e e-commerce</h3><p>Pequenos distribuidores, revendedores e operações de venda pela internet.</p><span class="pill gold">Fluxos específicos em evolução</span></article>
+<article class="card"><div class="symbol">🏗️</div><h3>Construção e obras</h3><p>Prestadores, equipes e pequenos negócios que precisam organizar atividades e materiais.</p><span class="pill gold">Fluxos específicos em evolução</span></article>
+<article class="card"><div class="symbol">🏢</div><h3>Outras empresas</h3><p>Negócios que precisam organizar cadastros, movimentações, equipe e financeiro.</p><span class="pill">Avaliação conforme a operação</span></article>
+</div></div></section>
+<section class="soft"><div class="wrap"><h2>O que já dá para conhecer e usar</h2><p class="lead">A estrutura central do G.E.I360 já reúne módulos de gestão que atendem a rotina de muitos pequenos negócios.</p>
+<div class="grid">
+<article class="card"><div class="symbol">📊</div><h3>Painel e relatórios</h3><p>Visão geral de indicadores e relatórios disponíveis.</p></article>
+<article class="card"><div class="symbol">📦</div><h3>Produtos e estoque</h3><p>Cadastro de produtos, entradas, saídas e ajustes de estoque.</p></article>
+<article class="card"><div class="symbol">🛍️</div><h3>Vendas e compras</h3><p>Registro de vendas, compras e recebimento de mercadorias.</p></article>
+<article class="card"><div class="symbol">🤝</div><h3>Clientes e fornecedores</h3><p>Cadastros organizados para apoiar o relacionamento comercial.</p></article>
+<article class="card"><div class="symbol">💰</div><h3>Financeiro</h3><p>Contas a pagar e receber e acompanhamento dos lançamentos.</p></article>
+<article class="card"><div class="symbol">👥</div><h3>Empresa e equipe</h3><p>Cadastro da empresa, funcionários, gestão de RH e recursos de jornada em evolução.</p></article>
+</div></div></section>
+<section><div class="wrap"><h2>O que ainda não estamos prometendo</h2><p class="lead">Preferimos ser transparentes. Algumas integrações e funções especializadas ainda precisam ser desenvolvidas, contratadas ou homologadas antes de serem oferecidas como serviço oficial.</p>
+<div class="cols">
+<div class="panel available"><h3>Disponível na base atual</h3><ul><li>Cadastros, estoque e movimentações</li><li>Vendas e compras</li><li>Clientes e fornecedores</li><li>Financeiro básico: pagar e receber</li><li>Painel, relatórios e gestão de equipe</li><li>Acesso pelo navegador no computador e celular</li></ul></div>
+<div class="panel roadmap"><h3>Não incluído ou não homologado ainda</h3><ul><li>Emissão fiscal NF-e/NFC-e e integração contábil</li><li>Integração automática com iFood e marketplaces</li><li>PDV completo com caixa, leitor e TEF</li><li>Receitas, ficha técnica e custo automático de produção</li><li>Folha oficial, eSocial e transmissão de obrigações</li><li>Ponto eletrônico REP-P registrado e homologado</li><li>Logística e produção avançadas específicas por ramo</li></ul></div>
+</div>
+<div class="note"><strong>Importante:</strong> os itens acima não devem ser anunciados como funções prontas. O controle de jornada existente é uma ferramenta de gestão interna; não é apresentado como REP-P oficial. Recursos específicos de cada ramo serão validados com empresas-piloto antes de serem anunciados.</div>
+</div></section>
+<section class="soft"><div class="wrap"><h2>Como vamos começar</h2><p class="lead">A primeira implantação será simples e acompanhada. Começamos por mercadinhos porque o fluxo de produtos, estoque, compras e vendas permite demonstrar a base do sistema com clareza — mas a apresentação é aberta a todos os segmentos.</p>
+<div class="steps"><article class="step"><h3>Conhecer</h3><p>Entender o ramo, o tamanho da empresa e como ela trabalha hoje.</p></article><article class="step"><h3>Demonstrar</h3><p>Mostrar os módulos existentes usando dados de demonstração, sem misturar empresas.</p></article><article class="step"><h3>Pilotar</h3><p>Combinar escopo, prazo, suporte e condições por escrito antes de usar dados reais.</p></article></div>
+</div></section>
+<section id="piloto"><div class="wrap"><div class="pilot"><div><div class="eyebrow">Conheça o G.E.I360</div><h2>Seu negócio pode ser o próximo a participar.</h2><p>Estamos conversando com empresas de diferentes segmentos para apresentar a plataforma, ouvir necessidades reais e selecionar operações para um projeto-piloto acompanhado.</p><a class="btn primary" href="https://micaellyroger3-hue.github.io/G.E.I360/">Abrir o sistema</a></div><div><strong>O piloto começa pelo essencial</strong><ul><li>Conhecer a rotina da empresa</li><li>Configurar a base adequada ao negócio</li><li>Demonstrar os módulos disponíveis</li><li>Registrar melhorias necessárias</li><li>Definir juntos os próximos passos</li></ul></div></div>
+<div class="note"><strong>Sobre valores:</strong> esta página é uma apresentação, não uma tabela de preços nem uma oferta de funcionalidades gratuitas. Valores, implantação e suporte serão combinados de acordo com o escopo do piloto. Não é necessário pagar por publicação em loja de aplicativos para conhecer a versão web atual.</div>
+</div></section>
+</main><footer><div class="wrap"><span>G.E.I360 — Gestão Empresarial</span><span>Apresentação institucional • Recursos em evolução contínua</span></div></footer>
 </body></html>
