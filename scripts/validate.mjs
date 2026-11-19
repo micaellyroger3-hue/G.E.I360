@@ -294,7 +294,7 @@ assert.ok(html.includes('hr.js?v=20261119-05') && worker.includes('hr.js?v=20261
 assert.ok(hr.includes('fap_factor') && hr.includes('anexo_iv_revenue_share') && hr.includes('third_party_confirmed'), 'Verified FAP and mixed Simples tax parameters missing');
 assert.ok(hr.includes("apprentice?2:rates.fgts"), 'Apprentice FGTS rate must be 2 percent');
 assert.ok(hrTimeCompliance.includes('s.actual=Math.max(0,elapsed-recorded)'), 'Unmarked or suppressed breaks must not be deducted from actual worked time');
-assert.ok(hrTimeCompliance.includes('transitionDailyCap') && hrTimeCompliance.includes('504'), 'STF 8h24 transitional daily rule missing');
+assert.ok(hrTimeCompliance.includes('transitionDailyCap') && hrTimeCompliance.includes('ordinaryDailyCap') && hrTimeCompliance.includes('finalDailyCap') && hrTimeCompliance.includes('504'), 'Daily limits across EC 141 transition are missing');
 assert.ok(hrTimeCompliance.includes('liminar do STF') && !hrTimeCompliance.includes('minRest7'), 'Rest validation must not impose a fixed rolling seven-day rule contrary to the STF interim decision');
 const hrTaxMigration = fs.readFileSync('supabase/migrations/20261119165027_hr_tax_parameters_fap_and_mixed_annex.sql', 'utf8');
 assert.ok(hrTaxMigration.includes('fap_factor') && hrTaxMigration.includes('anexo_iv_revenue_share') && hrTaxMigration.includes('third_party_confirmed'), 'HR tax parameter migration missing');
