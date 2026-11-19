@@ -223,10 +223,13 @@ function renderH(){
  for(const e of dataH.employees.filter(x=>x.status!=='inactive'&&x.employment_status!=='inativo')){
   for(let day=1;day<=lastDay;day++){const d=monthPick+'-'+String(day).padStart(2,'0');if(d>todayH())continue;const sch=scheduleForH(e.id,d);if(!expectedH(sch,d,e.id))continue;
    const daySessions=monthSessions.filter(s=>s.employee_id===e.id&&s.day===d);
-   const hasOcc=dataH.occurrences.some(o=>o.employee_id===e.id&&o.occurrence_date===d);
-   if(!daySessions.length&&!hasOcc)missing.push({employee:e,date:d,kind:'absence'});
-   else if(daySessions.some(s=>s.open)&&!hasOcc)missing.push({employee:e,date:d,kind:'missing_exit'});
-   else if(daySessions.some(s=>!s.open&&(s.breakUnverified||s.breakDeficit>0))&&!hasOcc){const issue=daySessions.find(s=>!s.open&&(s.breakUnverified||s.breakDeficit>0));missing.push({employee:e,date:d,kind:issue?.breakIssueType||'missing_break_start',minutes:daySessions.reduce((n,s)=>n+Number(s.breakDeficit||0),0)||null});}
+   const dayOccurrences=dataH.occurrences.filter(o=>o.employee_id===e.id&&o.occurrence_date===d);
+   const hasAbsenceOcc=dayOccurrences.some(o=>['absence','justified_absence','medical_leave','vacation','day_off_worked','missing_entry'].includes(o.occurrence_type));
+   const hasExitOcc=dayOccurrences.some(o=>o.occurrence_type==='missing_exit');
+   const hasBreakOcc=dayOccurrences.some(o=>['missing_break_start','missing_break_end'].includes(o.occurrence_type));
+   if(!daySessions.length&&!hasAbsenceOcc)missing.push({employee:e,date:d,kind:'absence'});
+   if(daySessions.some(s=>s.open)&&!hasExitOcc)missing.push({employee:e,date:d,kind:'missing_exit'});
+   if(daySessions.some(s=>!s.open&&(s.breakUnverified||s.breakDeficit>0))&&!hasBreakOcc){const issue=daySessions.find(s=>!s.open&&(s.breakUnverified||s.breakDeficit>0));missing.push({employee:e,date:d,kind:issue?.breakIssueType||'missing_break_start',minutes:daySessions.reduce((n,s)=>n+Number(s.breakDeficit||0),0)||null});}
   }
  }
  for(const e of dataH.employees){
