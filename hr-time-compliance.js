@@ -138,7 +138,7 @@ function summaryH(sessions=sessionsH()){
   const emp=dataH.employees.find(e=>e.id===d.employee_id),comp=dataH.comp.find(x=>x.employee_id===d.employee_id)||{};
   const legalWeekly=statutoryWeeklyCapH(d.day)/60,contractWeekly=Number(comp.weekly_hours||rules.weekly_standard_minutes/60||legalWeekly),companyWeekly=Number(rules.weekly_standard_minutes||legalWeekly*60)/60,effectiveWeekly=Math.min(contractWeekly,legalWeekly,companyWeekly),divisor=Number(comp.monthly_hour_divisor||effectiveWeekly*5);
   const base=comp.remuneration_basis==='hourly'?Number(comp.hourly_rate||0):Number(comp.salary_base||0)/Math.max(1,divisor);
-  const tolerance=Number(rules.daily_tolerance_minutes??10),daySchedule=scheduleForH(d.employee_id,d.day),weeklyContract=Number(comp.weekly_hours||rules.weekly_standard_minutes/60||0),transitionDailyCap=d.day>='2026-12-16'&&d.day<'2027-12-16'&&daySchedule?.schedule_type==='5x2'&&weeklyContract>=42&&!rules.rest_schedule_agreement_reference?504:null;
+  const tolerance=Number(rules.daily_tolerance_minutes??10),dailySchedule=scheduleForH(d.employee_id,d.day),weeklyContract=Number(comp.weekly_hours||rules.weekly_standard_minutes/60||0),transitionDailyCap=d.day>='2026-12-16'&&d.day<'2027-12-16'&&dailySchedule?.schedule_type==='5x2'&&weeklyContract>=42&&!rules.rest_schedule_agreement_reference?504:null;
   let dailyLimit=rules.overtime_daily_threshold_minutes==null?(d.planned>0?d.planned:null):Number(rules.overtime_daily_threshold_minutes);
   if(transitionDailyCap!=null)dailyLimit=dailyLimit==null?transitionDailyCap:Math.min(dailyLimit,transitionDailyCap);
   let overtime=dailyLimit==null?0:Math.max(0,d.actual-dailyLimit);if(overtime<=tolerance)overtime=0;
