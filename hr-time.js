@@ -57,7 +57,7 @@ function buildSessions(){
     const b=Number(sch.shift_end.slice(0,2))*60+Number(sch.shift_end.slice(3,5));
     planned=((b-a+1440)%1440)-Number(sch.break_minutes||0);
     late=Math.max(0,minutesSP(s.start)-a);
-    early=Math.max(0,planned-actual);
+    early=Math.max(0,((b-a+1440)%1440)-((minutesSP(p.punched_at)-a+1440)%1440));
    }
    done.push({...s,end:p.punched_at,actual,planned,late,early,employee_id:p.employee_id,day});
    open.delete(p.employee_id);
