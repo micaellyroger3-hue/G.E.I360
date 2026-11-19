@@ -20,8 +20,8 @@ function hrRateSettings(){
  let inss=0,rat=0,third=0,needsRat=false,needsThird=false;
  if(regime==='mei')inss=3;
  else if(regime==='simples_nacional'){
-  if(annex==='IV')inss=20;
-  else if(annex==='mixed')inss=20*hrNum(s.anexo_iv_revenue_share)/100;
+  if(annex==='IV')inss=(s.employer_inss_mode==='custom'?hrNum(s.employer_inss_rate):20);
+  else if(annex==='mixed')inss=(s.employer_inss_mode==='custom'?hrNum(s.employer_inss_rate):20)*hrNum(s.anexo_iv_revenue_share)/100;
   needsRat=annex==='IV'||(annex==='mixed'&&Number(s.anexo_iv_revenue_share)>0);
  }
  else if(['lucro_presumido','lucro_real'].includes(regime)){
@@ -207,7 +207,7 @@ function hrBind(){
    hide('simples_annex',regime==='simples_nacional');hide('anexo_iv_revenue_share',mixed);
    hide('rat_rate',ratApplies);hide('fap_factor',ratApplies);hide('rat_confirmed',ratApplies);
    hide('third_party_rate',lucro);hide('fpas_code',lucro);hide('third_party_confirmed',lucro);
-   hide('employer_inss_mode',lucro||regime==='outro');hide('employer_inss_rate',lucro||regime==='outro');
+   const customInss=lucro||regime==='outro'||(regime==='simples_nacional'&&(annex==='IV'||mixed));\n   hide('employer_inss_mode',customInss);hide('employer_inss_rate',customInss);
   };
   settingsForm.elements.tax_regime.addEventListener('change',syncTaxFields);
   settingsForm.elements.simples_annex.addEventListener('change',syncTaxFields);
@@ -219,10 +219,10 @@ function hrBind(){
   if(p.tax_regime==='simples_nacional'){
    if(!p.simples_annex){alert('Selecione o anexo do Simples Nacional.');return}
    if(['I','II','III','V'].includes(p.simples_annex)){p.employer_inss_mode='included_in_das';p.employer_inss_rate=0;p.rat_rate=0;p.fap_factor=null;p.rat_confirmed=false;p.third_party_rate=0;p.third_party_confirmed=true;p.anexo_iv_revenue_share=null;p.fpas_code=null;}
-   if(p.simples_annex==='IV'){p.employer_inss_mode='separate';p.employer_inss_rate=20;p.third_party_rate=0;p.third_party_confirmed=true;p.fpas_code=null;p.anexo_iv_revenue_share=100;if(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null){alert('No Anexo IV, informe RAT e FAP vigentes e marque a confirmação.');return}}
-   if(p.simples_annex==='mixed'){p.employer_inss_mode='separate';p.employer_inss_rate=20;if(p.anexo_iv_revenue_share==null||p.anexo_iv_revenue_share<0||p.anexo_iv_revenue_share>100){alert('Informe a participação da receita bruta do Anexo IV (0 a 100%).');return}p.third_party_rate=0;p.third_party_confirmed=true;p.fpas_code=null;if(p.anexo_iv_revenue_share>0&&(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null)){alert('Para atividades mistas com receita no Anexo IV, informe RAT e FAP e confirme os dados.');return}}
+   if(p.simples_annex==='IV'){if(p.employer_inss_mode!=='custom'){p.employer_inss_mode='separate';p.employer_inss_rate=20}else if(p.employer_inss_rate==null||p.employer_inss_rate<=0){alert('Informe a alíquota patronal personalizada e sua fonte.');return}p.third_party_rate=0;p.third_party_confirmed=true;p.fpas_code=null;p.anexo_iv_revenue_share=100;if(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null){alert('No Anexo IV, informe RAT e FAP vigentes e marque a confirmação.');return}}
+   if(p.simples_annex==='mixed'){if(p.employer_inss_mode!=='custom'){p.employer_inss_mode='separate';p.employer_inss_rate=20}else if(p.employer_inss_rate==null||p.employer_inss_rate<=0){alert('Informe a alíquota patronal personalizada e sua fonte.');return}if(p.anexo_iv_revenue_share==null||p.anexo_iv_revenue_share<0||p.anexo_iv_revenue_share>100){alert('Informe a participação da receita bruta do Anexo IV (0 a 100%).');return}p.third_party_rate=0;p.third_party_confirmed=true;p.fpas_code=null;if(p.anexo_iv_revenue_share>0&&(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null)){alert('Para atividades mistas com receita no Anexo IV, informe RAT e FAP e confirme os dados.');return}}
   }
-  if(['lucro_presumido','lucro_real'].includes(p.tax_regime)){p.employer_inss_mode='separate';if(p.employer_inss_rate==null)p.employer_inss_rate=20;if(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null||!p.third_party_confirmed||p.third_party_rate==null||!p.fpas_code){alert('Para Lucro Presumido/Real, informe RAT, FAP, terceiros e FPAS conforme o enquadramento e marque as confirmações.');return}}
+  if(['lucro_presumido','lucro_real'].includes(p.tax_regime)){if(p.employer_inss_mode!=='custom'){p.employer_inss_mode='separate';if(p.employer_inss_rate==null)p.employer_inss_rate=20}else if(p.employer_inss_rate==null||p.employer_inss_rate<=0){alert('Informe a alíquota patronal personalizada e sua fonte.');return}if(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null||!p.third_party_confirmed||p.third_party_rate==null||!p.fpas_code){alert('Para Lucro Presumido/Real, informe RAT, FAP, terceiros e FPAS conforme o enquadramento e marque as confirmações.');return}}
   if(p.tax_regime==='outro'&&p.employer_inss_mode==='included_in_das'){alert('Para Outro regime, escolha alíquota personalizada ou não aplicável e informe a fonte.');return}
   if(p.fap_factor!=null&&(p.fap_factor<0.5||p.fap_factor>2)){alert('O FAP deve estar entre 0,5000 e 2,0000.');return}
   if(!p.notes||p.notes.trim().length<5){alert('Informe a fonte dos parâmetros e a data de conferência nas observações.');return}
