@@ -35,7 +35,7 @@ O lançamento no Financeiro cria uma despesa gerencial pendente, uma vez por com
 
 - Configuração por funcionário: 12x36 com data-base de ciclo e indicação de trabalho/folga, trabalho por hora, horário fixo, 6x1, 5x2, personalizada e variável.
 - Remuneração pode ser mensal ou por hora; a estimativa mensal por hora usa valor/hora × horas semanais × 52 ÷ 12. É uma aproximação gerencial e não substitui o cálculo da folha ou o fechamento de horas efetivamente trabalhadas.
-- Marcações de entrada, início/fim de intervalo e saída são registradas pelo servidor, com horário `timestamptz` e origem (funcionário ou gestor).
+- Marcações de entrada, início/fim de intervalo e saída são registradas pelo relógio do servidor (`clock_timestamp()`), com horário `timestamptz` e origem (funcionário ou gestor).
 - Marcações originais não podem ser alteradas ou excluídas pelo cliente. Correções devem ter justificativa e aprovação, preservando a trilha original.
 - A conta do funcionário pode reivindicar a ficha quando o e-mail autenticado coincide com o e-mail cadastrado e existe vínculo ativo com papel employee.
 - O recurso é gerencial e ainda não está homologado como REP-P/REP-A/REP-C. Não emitir espelho legal de ponto ou prometer conformidade antes de revisão jurídica/técnica e validação com o DP.
