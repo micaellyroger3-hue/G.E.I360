@@ -166,3 +166,53 @@ with check (public.has_company_role(company_id,array['owner','admin']));
 grant select,insert,update,delete on public.hr_time_rules,public.hr_holidays,public.hr_time_occurrences,public.hr_time_periods to authenticated;
 grant select,insert on public.hr_time_bank_entries to authenticated;
 revoke all on public.hr_time_rules,public.hr_holidays,public.hr_time_occurrences,public.hr_time_bank_entries,public.hr_time_periods from anon;
+
+-- Competência fechada: impede novos pontos, ocorrências e ajustes retroativos.
+create or replace function public.hr_guard_closed_time_period()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_day date;
+begin
+  if tg_table_name = 'hr_time_punches' then
+    v_day := (new.punched_at at time zone 'America/Sao_Paulo')::date;
+  elsif tg_table_name = 'hr_time_occurrences' then
+    v_day := new.occurrence_date;
+  elsif tg_table_name = 'hr_time_adjustments' then
+    v_day := (new.proposed_punched_at at time zone 'America/Sao_Paulo')::date;
+  else
+    raise exception 'Tabela não suportada para trava de competência.';
+  end if;
+
+  if exists (
+    select 1 from public.hr_time_periods p
+    where p.company_id = new.company_id
+      and p.employee_id = new.employee_id
+      and p.period_month = date_trunc('month',v_day)::date
+      and p.status = 'closed'
+  ) then
+    raise exception 'Competência fechada. Reabra o período com justificativa antes de lançar ou tratar registros.';
+  end if;
+  return new;
+end;
+$function$;
+
+revoke all on function public.hr_guard_closed_time_period() from public, anon, authenticated;
+
+drop trigger if exists hr_time_punches_closed_period_guard on public.hr_time_punches;
+create trigger hr_time_punches_closed_period_guard
+before insert on public.hr_time_punches
+for each row execute function public.hr_guard_closed_time_period();
+
+drop trigger if exists hr_time_occurrences_closed_period_guard on public.hr_time_occurrences;
+create trigger hr_time_occurrences_closed_period_guard
+before insert or update on public.hr_time_occurrences
+for each row execute function public.hr_guard_closed_time_period();
+
+drop trigger if exists hr_time_adjustments_closed_period_guard on public.hr_time_adjustments;
+create trigger hr_time_adjustments_closed_period_guard
+before insert or update on public.hr_time_adjustments
+for each row execute function public.hr_guard_closed_time_period();
