@@ -142,7 +142,7 @@ assert.ok(hrSql.includes('gei_hr_guard_employee_link') && hrSql.includes('gei_po
 assert.ok(hrSql.includes('unique(company_id, period)'), 'HR finance posting must be unique per company and period');
 assert.ok(hrSql.includes('from public, anon') && hrSql.includes('grant select, insert on public.hr_cost_postings'), 'HR tables must revoke PUBLIC/anon access and keep cost postings append-only');
 assert.ok(fs.existsSync('docs/HR_MODULE.md'), 'HR module documentation missing');
-const hrTimeCalcSql = fs.readFileSync('supabase/migrations/20261119170000_hr_time_calculation_and_closing.sql', 'utf8');
+const hrTimeCalcSql = fs.readFileSync('supabase/migrations/20261119190000_hr_time_calculation_and_closing.sql', 'utf8');
 assert.ok(hrTimeCalcSql.includes('hr_time_rules') && hrTimeCalcSql.includes('hr_holidays') && hrTimeCalcSql.includes('hr_time_occurrences') && hrTimeCalcSql.includes('hr_time_bank_entries') && hrTimeCalcSql.includes('hr_time_periods'), 'HR time calculation schema missing');
 assert.ok(hrTimeCalcSql.includes('enable row level security') && hrTimeCalcSql.includes('append-only'), 'HR time calculation tables must use RLS and immutable bank ledger');
 const hrPrivilegeSql = fs.readFileSync('supabase/migrations/20261119132000_hr_privilege_tightening.sql', 'utf8');
