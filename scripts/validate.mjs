@@ -290,7 +290,7 @@ assert.ok(modules.includes('geiLoadModuleAccess') && modules.includes('geiRender
 assert.ok(modules.includes('geiRenderCompanyModuleSettings') && modules.includes('company_modules'), 'Company module controls missing');
 assert.ok(modules.includes('geiPageIsEnabled'), 'Disabled modules must be blocked in navigation routing');
 assert.ok(html.includes('modules.js?v=20261119-02') && html.includes('hr-time-compliance.js?v=20261119-09'), 'Dynamic module and HR calculation asset cache versions missing');
-assert.ok(html.includes('hr.js?v=20261119-06') && worker.includes('hr.js?v=20261119-06'), 'HR tax settings asset cache version missing');
+assert.ok(html.includes('hr.js?v=20261119-07') && worker.includes('hr.js?v=20261119-07'), 'HR tax settings asset cache version missing');
 assert.ok(hr.includes('fap_factor') && hr.includes('anexo_iv_revenue_share') && hr.includes('third_party_confirmed'), 'Verified FAP and mixed Simples tax parameters missing');
 assert.ok(hr.includes('hrRateSettings(c)') && hr.includes('anexo_iv_share'), 'Employee-level Anexo IV payroll allocation missing');
 assert.ok(hr.includes("regime==='outro'") && hr.includes('thirdPartyApplies'), 'Other tax regimes must confirm RAT/FAP and FPAS/third parties');
@@ -310,7 +310,7 @@ assert.ok(hrMixedAnnexMigration.includes("'mixed'"), 'Mixed Simples annex databa
 const hrCompRestMigration = fs.readFileSync('supabase/migrations/20261119165726_hr_link_compensatory_rest_to_workday.sql', 'utf8');
 assert.ok(hrCompRestMigration.includes('compensation_for_date') && hrTimeCompliance.includes('x.compensation_for_date===d.day'), 'Compensatory rest must be linked to the exact worked day');
 assert.ok(hrTimeCompliance.includes('transitionDailyCap') && hrTimeCompliance.includes('defaultDailyLimit') && hrTimeCompliance.includes('d.planned>0?d.planned:720'), 'Legal daily work limits must account for 12x36 and the 5x2 transition');
-assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v36'), 'Service worker cache must match dynamic module release');
+assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v37'), 'Service worker cache must match dynamic module release');
 
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
 assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunction.includes('company_members'), 'Secure employee invitation function missing');
