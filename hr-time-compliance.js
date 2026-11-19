@@ -116,11 +116,11 @@ function bankLotsH(employeeId){
   if(entry.entry_type==='credit'){lots.push({id:entry.id,remaining:amount,multiplier:Number(entry.multiplier||1),expires_on:entry.expires_on});continue}
   if(entry.entry_type==='expiry'&&entry.source_id){const lot=lots.find(x=>x.id===entry.source_id);if(lot)lot.remaining=Math.max(0,lot.remaining-amount);continue}
   let debit=amount;
-  for(const lot of lots){if(debit<=0)break;const used=Math.min(lot.remaining,debit);lot.remaining-=used;debit-=used}
+  for(const lot of lots){if(debit<=0)break;if(lot.expires_on&&lot.expires_on<=entry.effective_date)continue;const used=Math.min(lot.remaining,debit);lot.remaining-=used;debit-=used}
  }
  return lots;
 }
-function bankBalanceH(employeeId){return bankLotsH(employeeId).reduce((sum,lot)=>sum+lot.remaining,0)}
+function bankBalanceH(employeeId){const today=todayH();return bankLotsH(employeeId).reduce((sum,lot)=>sum+(lot.expires_on&&lot.expires_on<=today?0:lot.remaining),0)}
 function summaryH(sessions=sessionsH()){
  const rules=dataH.rules||{},daily=new Map();
  for(const s of sessions){
