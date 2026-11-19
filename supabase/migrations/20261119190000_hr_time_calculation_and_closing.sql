@@ -13,6 +13,7 @@ create table if not exists public.hr_time_rules (
   night_start time not null default '22:00',
   night_end time not null default '05:00',
   night_reduced_hour boolean not null default true,
+  night_extension boolean not null default true,
   night_hour_minutes numeric(6,3) not null default 52.500 check (night_hour_minutes between 1 and 60),
   daily_tolerance_minutes integer not null default 10 check (daily_tolerance_minutes between 0 and 60),
   bank_enabled boolean not null default false,
