@@ -48,7 +48,7 @@ A tela **Apuração de jornada** (menu RH) acrescenta:
 - Parâmetros configuráveis por empresa: limite semanal, limite diário opcional, adicional de horas extras, regra de domingo/feriado, adicional e faixa noturna, hora noturna reduzida, tolerância e configuração de banco de horas.
 - Apuração por marcações originais, separando jornada diária, extras diárias e complemento semanal sem somar duas vezes a mesma hora.
 - Estimativa de adicional noturno, considerando faixa configurada e duração reduzida da hora noturna quando habilitada.
-- Calendário de feriados nacional, estadual, municipal e da empresa. O cadastro é por empresa; feriados municipais/estaduais precisam ser informados e conferidos pelo responsável.
+- Calendário de feriados nacional, estadual, municipal e da empresa. Há atalho para cadastrar feriados nacionais fixos; feriados estaduais/municipais e datas móveis locais precisam ser conferidos e cadastrados pelo responsável.
 - Conferência de escala x marcações, com alertas de ausência, entrada/saída faltante e intervalo sem marcação. O sistema não aplica desconto automático.
 - Ocorrências justificadas/não justificadas, com observação e responsável pela revisão.
 - Livro de banco de horas append-only (crédito/débito/expiração/pagamento/ajuste), validade do crédito e saldo por funcionário.
@@ -60,7 +60,7 @@ A tela **Apuração de jornada** (menu RH) acrescenta:
 - O adicional noturno urbano parte de 20% e hora reduzida de 52min30s, mas o período e as condições podem variar conforme atividade, categoria e instrumento coletivo.
 - O multiplicador de 100% para feriado/domingo é apenas uma configuração inicial de referência. O enquadramento de domingo depende da escala, repouso semanal compensatório, legislação específica e convenção coletiva. O sistema apresenta estimativa e exige conferência.
 - O cálculo de salário-hora mensal usa divisor estimado a partir da jornada semanal (ex.: 44h → 220); o divisor correto deve ser confirmado para cada categoria/regime.
-- Banco de horas só deve ser ativado depois de cadastrar o tipo de acordo e conferir sua validade, limites e compensações. Lançamentos manuais exigem justificativa; o sistema não presume acordo válido.
+- Banco de horas só deve ser ativado depois de cadastrar o tipo de acordo e conferir sua validade, limites e compensações. A validade configurada é limitada a 6 meses no acordo individual escrito e 12 meses no acordo/convenção coletiva; o fator de conversão do crédito é configurável e começa em 1:1. No fechamento, horas extras podem ser creditadas automaticamente quando o banco e o instrumento estiverem habilitados. Créditos vencidos são lançados no livro por movimento de expiração. Lançamentos manuais exigem justificativa; o sistema não presume acordo válido.
 - Alertas de ausência são gerados ao abrir a tela e podem ser gravados como ocorrências pelo responsável. Não existe desconto ou punição automática.
 
 ### Limite regulatório do ponto eletrônico
