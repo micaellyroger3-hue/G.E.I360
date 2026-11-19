@@ -13,7 +13,7 @@ const moneyH=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'
 const minsH=n=>{n=Math.round(Number(n)||0);return (n<0?'-':'')+Math.floor(Math.abs(n)/60)+'h '+String(Math.abs(n)%60).padStart(2,'0')+'min'};
 const dateLabelH=d=>d?new Date(d+'T12:00:00-03:00').toLocaleDateString('pt-BR'):'—';
 const adminH=()=>['owner','admin'].includes(companyRole);
-let dataH={employees:[],schedules:[],punches:[],comp:[],rules:null,holidays:[],occurrences:[],bank:[],periods:[]},monthPick=monthH();
+let dataH={employees:[],schedules:[],punches:[],comp:[],rules:null,holidays:[],scheduleExceptions:[],occurrences:[],bank:[],periods:[]},monthPick=monthH();
 const apiH=(table,query='')=>api('/rest/v1/'+table+'?'+query);
 async function apiAllH(table,query=''){const all=[],size=500;let offset=0;while(true){const rows=await apiH(table,query+(query?'&':'')+'limit='+size+'&offset='+offset);if(!Array.isArray(rows))throw Error('Resposta inválida ao consultar '+table+'.');all.push(...rows);if(rows.length<size)break;offset+=size}return all}
 function zonedPartsH(value){
@@ -24,9 +24,8 @@ function zonedPartsH(value){
 function scheduleForH(employeeId,date){
  return dataH.schedules.find(s=>s.employee_id===employeeId&&s.effective_from<=date&&(!s.effective_to||s.effective_to>=date))||null;
 }
-function expectedH(s,date){
- if(!s)return false;
- if(s.schedule_type==='variavel'||s.schedule_type==='por_hora')return false;
+function baseExpectedH(s,date){
+ if(!s||s.schedule_type==='variavel'||s.schedule_type==='por_hora')return false;
  const d=new Date(date+'T12:00:00-03:00'),dow=d.getDay()===0?7:d.getDay();
  if(s.schedule_type==='12x36'){
   if(!s.cycle_anchor_date)return false;
@@ -36,6 +35,27 @@ function expectedH(s,date){
  }
  const days=Array.isArray(s.weekdays)&&s.weekdays.length?s.weekdays:(s.schedule_type==='5x2'?[1,2,3,4,5]:s.schedule_type==='6x1'?[1,2,3,4,5,6]:[1,2,3,4,5]);
  return days.includes(dow);
+}
+function expectedH(s,date){
+ const exception=dataH.scheduleExceptions.find(x=>x.employee_id===s?.employee_id&&x.exception_date===date);
+ if(exception?.exception_type==='extra_rest')return false;
+ if(exception?.exception_type==='extra_work')return true;
+ return baseExpectedH(s,date);
+}
+function restComplianceH(employeeId){
+ const start=monthPick==='2026-12'?'2026-12-16':monthPick+'-01';
+ const end=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),0).toISOString().slice(0,10);
+ const days=Math.max(0,Math.round((new Date(end+'T12:00:00-03:00')-new Date(start+'T12:00:00-03:00'))/86400000)+1);
+ const monthSchedules=dataH.schedules.filter(s=>s.employee_id===employeeId&&s.effective_from<=end&&(!s.effective_to||s.effective_to>=start));
+ if(!monthSchedules.length)return null;
+ if(monthSchedules.some(s=>s.schedule_type==='12x36'))return {special:true,rest:0,target:0,maxWork:0};
+ if(monthSchedules.every(s=>['por_hora','variavel'].includes(s.schedule_type)))return null;
+ let rest=0,work=0,consecutive=0,maxWork=0;
+ const begin=new Date(start+'T12:00:00-03:00');begin.setDate(begin.getDate()-6);
+ for(let i=0;i<days+6;i++){const dt=new Date(begin);dt.setDate(begin.getDate()+i);const d=dt.toISOString().slice(0,10);if(d<start) {if(expectedH(scheduleForH(employeeId,d),d))consecutive++;else consecutive=0;continue}
+  if(expectedH(scheduleForH(employeeId,d),d)){work++;consecutive++;maxWork=Math.max(maxWork,consecutive)}else{rest++;consecutive=0}
+ }
+ return {special:false,rest,target:Math.ceil(days*2/7),maxWork,compliant:rest>=Math.ceil(days*2/7)&&maxWork<=6};
 }
 function sessionsH(){
  const sorted=[...dataH.punches].sort((a,b)=>new Date(a.punched_at)-new Date(b.punched_at));
@@ -148,18 +168,18 @@ async function loadH(){
  if(!companyId)throw Error('Selecione uma empresa.');
  const cid=encodeURIComponent(companyId);
  const monthStart=monthPick+'-01',monthEnd=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),0).toISOString().slice(0,10),nextMonth=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),1).toISOString().slice(0,10),fetchStart=new Date(monthStart+'T12:00:00-03:00');fetchStart.setDate(fetchStart.getDate()-7);const fetchEnd=new Date(nextMonth+'T12:00:00-03:00');fetchEnd.setDate(fetchEnd.getDate()+7);
- const [employees,schedules,punches,comp,rules,holidays,occurrences,bank,periods]=await Promise.all([
+ const [employees,schedules,punches,comp,rules,holidays,scheduleExceptions,occurrences,bank,periods]=await Promise.all([
   apiAllH('employees','select=id,full_name,email,status,employment_status&company_id=eq.'+cid+'&order=full_name.asc,id.asc'),
   apiAllH('hr_work_schedules','select=*&company_id=eq.'+cid+'&order=effective_from.desc,id.asc'),
   apiAllH('hr_time_punches','select=*&company_id=eq.'+cid+'&and=(punched_at.gte.'+fetchStart.toISOString()+',punched_at.lt.'+fetchEnd.toISOString()+')&order=punched_at.asc,id.asc'),
   apiAllH('employee_compensation','select=employee_id,salary_base,weekly_hours,remuneration_basis,hourly_rate,monthly_hour_divisor&company_id=eq.'+cid+'&order=employee_id.asc'),
   apiH('hr_time_rules','select=*&company_id=eq.'+cid+'&limit=1'),
-  apiAllH('hr_holidays','select=*&company_id=eq.'+cid+'&holiday_date=gte.'+monthStart+'&holiday_date=lte.'+monthEnd+'&order=holiday_date.asc,id.asc'),
+  apiAllH('hr_holidays','select=*&company_id=eq.'+cid+'&holiday_date=gte.'+monthStart+'&holiday_date=lte.'+monthEnd+'&order=holiday_date.asc,id.asc'),\n  apiAllH('hr_schedule_exceptions','select=*&company_id=eq.'+cid+'&exception_date=gte.'+monthStart+'&exception_date=lte.'+monthEnd+'&order=exception_date.asc,id.asc'),
   apiAllH('hr_time_occurrences','select=*&company_id=eq.'+cid+'&occurrence_date=gte.'+monthStart+'&occurrence_date=lte.'+monthEnd+'&order=occurrence_date.desc,id.desc'),
   apiAllH('hr_time_bank_entries','select=*&company_id=eq.'+cid+'&order=effective_date.asc,created_at.asc,id.asc'),
   apiAllH('hr_time_periods','select=*&company_id=eq.'+cid+'&period_month=eq.'+monthStart+'&order=employee_id.asc')
  ]);
- Object.assign(dataH,{employees,schedules,punches,comp,rules:rules[0]||null,holidays,occurrences,bank,periods});
+ Object.assign(dataH,{employees,schedules,punches,comp,rules:rules[0]||null,holidays,scheduleExceptions,occurrences,bank,periods});
 }
 function renderH(){
  const host=$('view');if(!host)return;
