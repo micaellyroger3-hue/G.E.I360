@@ -135,7 +135,7 @@ assert.ok(hrTimeCompliance.includes('hr_time_rules') && hrTimeCompliance.include
 assert.ok(hrTimeCompliance.includes('missing_exit') && hrTimeCompliance.includes('missing_break_start') && hrTimeCompliance.includes('hrGenerateMissing'), 'Missing punch and absence detection workflow missing');
 assert.ok(hrTimeCompliance.includes('bank_credit_multiplier') && hrTimeCompliance.includes('hrExpireBank') && hrTimeCompliance.includes('hrCloseMonth'), 'Bank hour credit, expiry and monthly close workflows missing');
 assert.ok(hrTimeCompliance.includes('Cadastrar feriados nacionais fixos') && hrTimeCompliance.includes('overtimeValue'), 'National holiday calendar and overtime calculation missing');
-assert.ok(hrTimeCompliance.includes('workNightMinutesH') && hrTimeCompliance.includes('night_reduced_hour') && hrTimeCompliance.includes('weeklyLimit'), 'Night and weekly overtime calculations missing');
+assert.ok(hrTimeCompliance.includes('workNightMinutesH') && hrTimeCompliance.includes('night_reduced_hour') && hrTimeCompliance.includes('const weeks'), 'Night and weekly overtime calculations missing');
 assert.ok(worker.includes('./hr.js?v=20261119-04'), 'HR module missing from offline shell');
 assert.ok(hr.includes('employee_compensation') && hr.includes('hr_company_settings') && hr.includes('hr_events'), 'HR data modules missing');
 assert.ok(hr.includes('gei_post_hr_monthly_cost') && hr.includes('Lançar custo estimado'), 'HR finance posting flow missing');
