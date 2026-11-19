@@ -16,25 +16,39 @@ const hrActive=e=>e.employment_status!=='inativo'&&e.status!=='inactive';
 function hrCompOf(id){return hrComp.find(x=>x.employee_id===id)||{salary_base:0,remuneration_basis:'monthly',hourly_rate:0,contract_type:'clt',weekly_hours:44,transportation_allowance:0,meal_allowance:0,health_benefit:0,other_benefits:0,work_schedule:''};}
 function hrSettingsReady(){return !!hrSettings;}
 function hrRateSettings(){
- const s=hrSettings||{};
- let inss=hrNum(s.employer_inss_rate);
- if(s.employer_inss_mode==='mei_3_percent')inss=3;
- if(s.employer_inss_mode==='included_in_das'||s.employer_inss_mode==='not_applicable')inss=0;
- return {fgts:hrNum(s.fgts_rate),inss,rat:hrNum(s.rat_rate),third:hrNum(s.third_party_rate)};
+ const s=hrSettings||{},regime=s.tax_regime,annex=s.simples_annex;
+ let inss=0,rat=0,third=0,needsRat=false,needsThird=false;
+ if(regime==='mei')inss=3;
+ else if(regime==='simples_nacional'){
+  if(annex==='IV')inss=20;
+  else if(annex==='mixed')inss=20*hrNum(s.anexo_iv_revenue_share)/100;
+  needsRat=annex==='IV'||annex==='mixed';
+ }
+ else if(['lucro_presumido','lucro_real'].includes(regime)){
+  inss=s.employer_inss_mode==='custom'?hrNum(s.employer_inss_rate):20;
+  rat=hrNum(s.rat_rate)*hrNum(s.fap_factor);
+  third=hrNum(s.third_party_rate);needsRat=true;needsThird=true;
+ }
+ else if(regime==='outro'&&s.employer_inss_mode==='custom')inss=hrNum(s.employer_inss_rate);
+ if(needsRat)rat=hrNum(s.rat_rate)*hrNum(s.fap_factor);
+ const ratReady=!needsRat||(s.rat_confirmed===true&&Number(s.fap_factor)>=0.5&&Number(s.fap_factor)<=2);
+ const thirdReady=!needsThird||s.third_party_confirmed===true;
+ const shareReady=!(regime==='simples_nacional'&&annex==='mixed')||(Number(s.anexo_iv_revenue_share)>=0&&Number(s.anexo_iv_revenue_share)<=100);
+ const regimeReady=!!regime&&(regime!=='simples_nacional'||['I','II','III','IV','V','mixed'].includes(annex))&&(regime!=='outro'||s.employer_inss_mode==='custom'||s.employer_inss_mode==='not_applicable');
+ return {fgts:hrNum(s.fgts_rate),inss,rat,third,ratReady,thirdReady,shareReady,regimeReady,complete:regimeReady&&ratReady&&thirdReady&&shareReady};
 }
 function hrCost(c){
  const base=c.remuneration_basis==='hourly'?hrNum(c.hourly_rate)*hrNum(c.weekly_hours)*52/12:hrNum(c.salary_base),benefits=hrNum(c.transportation_allowance)+hrNum(c.meal_allowance)+hrNum(c.health_benefit)+hrNum(c.other_benefits);
- const clt=c.contract_type==='clt';
- const thirteenth=clt&&hrSettings?.use_13th_provision?base/12:0;
- const vacation=clt&&hrSettings?.use_vacation_provision?base/9:0;
- const payrollBase=base+thirteenth+vacation;
- const rates=hrRateSettings();
- const fgts=clt?payrollBase*rates.fgts/100:0;
- const inss=clt?payrollBase*rates.inss/100:0;
- const rat=clt?payrollBase*rates.rat/100:0;
- const third=clt?payrollBase*rates.third/100:0;
+ const employment=c.contract_type==='clt'||c.contract_type==='aprendiz',apprentice=c.contract_type==='aprendiz';
+ const thirteenth=employment&&hrSettings?.use_13th_provision?base/12:0;
+ const vacation=employment&&hrSettings?.use_vacation_provision?base/9:0;
+ const payrollBase=base+thirteenth+vacation,rates=hrRateSettings();
+ const fgts=employment?payrollBase*(apprentice?2:rates.fgts)/100:0;
+ const inss=employment?payrollBase*rates.inss/100:0;
+ const rat=employment?payrollBase*rates.rat/100:0;
+ const third=employment?payrollBase*rates.third/100:0;
  const total=base+benefits+thirteenth+vacation+fgts+inss+rat+third;
- return {base,benefits,thirteenth,vacation,fgts,inss,rat,third,total,clt,complete:!!hrSettings};
+ return {base,benefits,thirteenth,vacation,fgts,inss,rat,third,total,clt:employment,complete:!!hrSettings&&rates.complete};
 }
 async function hrLoad(){
  const q='/rest/v1/';
@@ -118,15 +132,20 @@ function hrEventsView(){
   '<div class="gei-hr-panel"><h3>Histórico de eventos</h3><div class="tablewrap"><table><thead><tr><th>Funcionário</th><th>Tipo</th><th>Início</th><th>Fim</th><th>Situação</th><th>Observações</th></tr></thead><tbody>'+(hrEventRows()||'<tr><td colspan="6">Nenhum evento registrado.</td></tr>')+'</tbody></table></div></div>';
 }
 function hrConfig(){
- const s=hrSettings||{tax_regime:'',simples_annex:'',employer_inss_mode:'included_in_das',employer_inss_rate:0,fgts_rate:8,rat_rate:0,third_party_rate:0,use_13th_provision:true,use_vacation_provision:true,notes:''};
+ const s=hrSettings||{tax_regime:'',simples_annex:'',employer_inss_mode:'included_in_das',employer_inss_rate:0,fgts_rate:8,rat_rate:null,fap_factor:null,rat_confirmed:false,third_party_rate:null,third_party_confirmed:false,anexo_iv_revenue_share:null,fpas_code:'',use_13th_provision:true,use_vacation_provision:true,notes:''};
  return '<div class="gei-hr-panel"><h3>Parâmetros trabalhistas e tributários</h3><p>Informe os parâmetros confirmados para esta empresa. O sistema não presume alíquotas de terceiros nem RAT/FAP.</p><form id="hrSettingsForm" class="gei-hr-form">'+
   '<label>Regime tributário<select name="tax_regime" required><option value="">Selecione</option><option value="mei" '+(s.tax_regime==='mei'?'selected':'')+'>MEI</option><option value="simples_nacional" '+(s.tax_regime==='simples_nacional'?'selected':'')+'>Simples Nacional</option><option value="lucro_presumido" '+(s.tax_regime==='lucro_presumido'?'selected':'')+'>Lucro Presumido</option><option value="lucro_real" '+(s.tax_regime==='lucro_real'?'selected':'')+'>Lucro Real</option><option value="outro" '+(s.tax_regime==='outro'?'selected':'')+'>Outro</option></select></label>'+
-  '<label>Anexo do Simples<select name="simples_annex"><option value="">Não se aplica</option>'+['I','II','III','IV','V'].map(x=>'<option value="'+x+'" '+(s.simples_annex===x?'selected':'')+'>Anexo '+x+'</option>').join('')+'</select></label>'+
+  '<label>Anexo do Simples<select name="simples_annex"><option value="">Não se aplica</option>'+['I','II','III','IV','V'].map(x=>'<option value="'+x+'" '+(s.simples_annex===x?'selected':'')+'>Anexo '+x+'</option>').join('')+'<option value="mixed" '+(s.simples_annex==='mixed'?'selected':'')+'>Atividades mistas (inclui Anexo IV)</option></select></label>'+
+  '<label>Receita bruta de atividades do Anexo IV (%)<input name="anexo_iv_revenue_share" type="number" min="0" max="100" step="0.01" value="'+(s.anexo_iv_revenue_share??'')+'" placeholder="Obrigatório para atividades mistas"></label>'+
   '<label>INSS patronal<select name="employer_inss_mode"><option value="mei_3_percent" '+(s.employer_inss_mode==='mei_3_percent'?'selected':'')+'>MEI — 3%</option><option value="included_in_das" '+(s.employer_inss_mode==='included_in_das'?'selected':'')+'>Incluído no DAS</option><option value="separate" '+(s.employer_inss_mode==='separate'?'selected':'')+'>Recolhido à parte</option><option value="custom" '+(s.employer_inss_mode==='custom'?'selected':'')+'>Alíquota personalizada</option><option value="not_applicable" '+(s.employer_inss_mode==='not_applicable'?'selected':'')+'>Não aplicável</option></select></label>'+
   '<label>Alíquota INSS patronal (%)<input name="employer_inss_rate" type="number" min="0" max="100" step="0.0001" value="'+hrNum(s.employer_inss_rate)+'"></label>'+
   '<label>FGTS (%)<input name="fgts_rate" type="number" min="0" max="100" step="0.0001" value="'+hrNum(s.fgts_rate)+'"></label>'+
-  '<label>RAT/SAT (%)<input name="rat_rate" type="number" min="0" max="100" step="0.0001" value="'+hrNum(s.rat_rate)+'"></label>'+
-  '<label>Terceiros / Sistema S (%)<input name="third_party_rate" type="number" min="0" max="100" step="0.0001" value="'+hrNum(s.third_party_rate)+'"></label>'+
+  '<label>RAT/SAT básico (%)<input name="rat_rate" type="number" min="0" max="3" step="0.01" value="'+(s.rat_rate??'')+'"></label>'+
+  '<label>FAP vigente (fator 0,5000 a 2,0000)<input name="fap_factor" type="number" min="0.5" max="2" step="0.0001" value="'+(s.fap_factor??'')+'" placeholder="Conforme consulta oficial"></label>'+
+  '<label class="check"><input type="checkbox" name="rat_confirmed" '+(s.rat_confirmed?'checked':'')+'> RAT e FAP conferidos</label>'+
+  '<label>Terceiros / Sistema S (%)<input name="third_party_rate" type="number" min="0" max="20" step="0.01" value="'+(s.third_party_rate??'')+'"></label>'+
+  '<label>Código FPAS<input name="fpas_code" maxlength="12" value="'+hrEsc(s.fpas_code||'')+'" placeholder="Conforme enquadramento"></label>'+
+  '<label class="check"><input type="checkbox" name="third_party_confirmed" '+(s.third_party_confirmed?'checked':'')+'> Terceiros/FPAS conferidos</label>'+
   '<label class="check"><input type="checkbox" name="use_13th_provision" '+(s.use_13th_provision?'checked':'')+'> Incluir provisão mensal de 13º</label>'+
   '<label class="check"><input type="checkbox" name="use_vacation_provision" '+(s.use_vacation_provision?'checked':'')+'> Incluir provisão mensal de férias + 1/3</label>'+
   '<label class="wide">Observações / fonte das alíquotas<textarea name="notes" rows="3" maxlength="1500" placeholder="Ex.: parâmetros confirmados com contador em DD/MM/AAAA">'+hrEsc(s.notes||'')+'</textarea></label>'+
@@ -174,11 +193,18 @@ function hrBind(){
  const exportBtn=$hr('hrExport');if(exportBtn)exportBtn.onclick=()=>hrCsv('equipe');
  const costExport=$hr('hrExportCosts');if(costExport)costExport.onclick=()=>hrCsv('custos');
  const eventForm=$hr('hrEventForm');if(eventForm)eventForm.onsubmit=async ev=>{ev.preventDefault();const f=new FormData(eventForm);const p=Object.fromEntries(f.entries());if(!p.end_date)p.end_date=null;try{await api('/rest/v1/hr_events',{method:'POST',body:{...p,company_id:companyId,created_by:session.user.id}});await hrLoad();await hrRenderTab()}catch(error){alert('Não foi possível salvar o evento: '+error.message)}};
- const settingsForm=$hr('hrSettingsForm');if(settingsForm)settingsForm.onsubmit=async ev=>{ev.preventDefault();const f=new FormData(settingsForm);const p=Object.fromEntries(f.entries());p.use_13th_provision=f.has('use_13th_provision');p.use_vacation_provision=f.has('use_vacation_provision');for(const k of ['employer_inss_rate','fgts_rate','rat_rate','third_party_rate'])p[k]=hrNum(p[k]);if(p.simples_annex==='')p.simples_annex=null;
-  if(p.tax_regime==='mei'){p.employer_inss_mode='mei_3_percent';p.employer_inss_rate=3;p.fgts_rate=8;p.simples_annex=null;}
-  if(p.tax_regime==='simples_nacional'&&p.simples_annex!=='IV'){p.employer_inss_mode='included_in_das';p.employer_inss_rate=0;}
-  if(p.tax_regime==='simples_nacional'&&p.simples_annex==='IV'&&p.employer_inss_mode==='included_in_das'){p.employer_inss_mode='separate';if(!p.employer_inss_rate)p.employer_inss_rate=20;}
-  if(['lucro_presumido','lucro_real'].includes(p.tax_regime)&&p.employer_inss_mode==='included_in_das'){p.employer_inss_mode='separate';if(!p.employer_inss_rate)p.employer_inss_rate=20;}
+ const settingsForm=$hr('hrSettingsForm');if(settingsForm)settingsForm.onsubmit=async ev=>{ev.preventDefault();const f=new FormData(settingsForm);const p=Object.fromEntries(f.entries());p.use_13th_provision=f.has('use_13th_provision');p.use_vacation_provision=f.has('use_vacation_provision');p.rat_confirmed=f.has('rat_confirmed');p.third_party_confirmed=f.has('third_party_confirmed');for(const k of ['employer_inss_rate','fgts_rate','rat_rate','fap_factor','third_party_rate','anexo_iv_revenue_share'])p[k]=p[k]===''||p[k]==null?null:hrNum(p[k]);if(p.simples_annex==='')p.simples_annex=null;p.fpas_code=String(p.fpas_code||'').trim()||null;
+  if(p.tax_regime==='mei'){p.employer_inss_mode='mei_3_percent';p.employer_inss_rate=3;p.fgts_rate=8;p.simples_annex=null;p.rat_rate=0;p.fap_factor=null;p.rat_confirmed=false;p.third_party_rate=0;p.third_party_confirmed=true;p.anexo_iv_revenue_share=null;p.fpas_code=null;}
+  if(p.tax_regime==='simples_nacional'){
+   if(!p.simples_annex){alert('Selecione o anexo do Simples Nacional.');return}
+   if(['I','II','III','V'].includes(p.simples_annex)){p.employer_inss_mode='included_in_das';p.employer_inss_rate=0;p.rat_rate=0;p.fap_factor=null;p.rat_confirmed=false;p.third_party_rate=0;p.third_party_confirmed=true;p.anexo_iv_revenue_share=null;p.fpas_code=null;}
+   if(p.simples_annex==='IV'){p.employer_inss_mode='separate';p.employer_inss_rate=20;p.third_party_rate=0;p.third_party_confirmed=true;p.fpas_code=null;p.anexo_iv_revenue_share=100;if(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null){alert('No Anexo IV, informe RAT e FAP vigentes e marque a confirmação.');return}}
+   if(p.simples_annex==='mixed'){p.employer_inss_mode='separate';p.employer_inss_rate=20;if(p.anexo_iv_revenue_share==null||p.anexo_iv_revenue_share<0||p.anexo_iv_revenue_share>100){alert('Informe a participação da receita bruta do Anexo IV (0 a 100%).');return}p.third_party_rate=0;p.third_party_confirmed=true;p.fpas_code=null;if(p.anexo_iv_revenue_share>0&&(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null)){alert('Para atividades mistas com receita no Anexo IV, informe RAT e FAP e confirme os dados.');return}}
+  }
+  if(['lucro_presumido','lucro_real'].includes(p.tax_regime)){p.employer_inss_mode='separate';if(p.employer_inss_rate==null)p.employer_inss_rate=20;if(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null||!p.third_party_confirmed||p.third_party_rate==null||!p.fpas_code){alert('Para Lucro Presumido/Real, informe RAT, FAP, terceiros e FPAS conforme o enquadramento e marque as confirmações.');return}}
+  if(p.tax_regime==='outro'&&p.employer_inss_mode==='included_in_das'){alert('Para Outro regime, escolha alíquota personalizada ou não aplicável e informe a fonte.');return}
+  if(p.fap_factor!=null&&(p.fap_factor<0.5||p.fap_factor>2)){alert('O FAP deve estar entre 0,5000 e 2,0000.');return}
+  if(!p.notes||p.notes.trim().length<5){alert('Informe a fonte dos parâmetros e a data de conferência nas observações.');return}
   try{if(hrSettings)await api('/rest/v1/hr_company_settings?id=eq.'+hrSettings.id,{method:'PATCH',body:{...p,updated_at:new Date().toISOString()}});else await api('/rest/v1/hr_company_settings',{method:'POST',body:{...p,company_id:companyId,created_by:session.user.id}});await hrLoad();await hrRenderTab();}catch(error){alert('Não foi possível salvar a configuração: '+error.message)}
  };
  const post=$hr('hrPostCost');if(post)post.onclick=async()=>{const active=hrEmployees.filter(hrActive);const total=active.reduce((s,e)=>s+hrCost(hrCompOf(e.id)).total,0);if(!confirm('Lançar '+hrMoney(total)+' como despesa estimada de folha no Financeiro, com vencimento no primeiro dia deste mês?'))return;post.disabled=true;try{await api('/rest/v1/rpc/gei_post_hr_monthly_cost',{method:'POST',body:{p_company_id:companyId,p_period:hrMonth(),p_amount:Number(total.toFixed(2)),p_notes:'Estimativa gerencial calculada no módulo RH do G.E.I360. Não substitui folha oficial.'}});await hrLoad();await hrRenderTab();alert('Custo estimado lançado no Financeiro. Confira a despesa na área Financeiro.')}catch(error){alert(error.message);post.disabled=false}};
