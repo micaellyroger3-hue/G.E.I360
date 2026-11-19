@@ -131,6 +131,7 @@ const hrSql = fs.readFileSync('supabase/migrations/20261119130000_hr_management.
 assert.ok(hrSql.includes('enable row level security') && hrSql.includes("array['owner','admin']"), 'HR sensitive data must be protected by RLS and owner/admin roles');
 assert.ok(hrSql.includes('gei_hr_guard_employee_link') && hrSql.includes('gei_post_hr_monthly_cost'), 'HR database integrity and finance RPC missing');
 assert.ok(hrSql.includes('unique(company_id, period)'), 'HR finance posting must be unique per company and period');
+assert.ok(hrSql.includes('from public, anon') && hrSql.includes('grant select, insert on public.hr_cost_postings'), 'HR tables must revoke PUBLIC/anon access and keep cost postings append-only');
 assert.ok(fs.existsSync('docs/HR_MODULE.md'), 'HR module documentation missing');
 assert.ok(worker.includes('gei360-shell-v24'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
