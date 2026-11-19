@@ -67,7 +67,7 @@ A tela **Apuração de jornada** (menu RH) acrescenta:
 
 - Até 15/12/2026, o teto geral usado na apuração é 44h semanais; de 16/12/2026 a 15/12/2027, 42h; a partir de 16/12/2027, 40h. O salário cadastrado não é reduzido.
 - A partir de 16/12/2026, a regra geral passa a prever dois repousos semanais remunerados. A tela calcula a média de repousos no mês e alerta para mais de seis dias consecutivos de trabalho. Folgas extras e trabalho em dia de folga podem ser lançados por funcionário para refletir ACT/CCT.
-- Escalas 6x1 e 12x36 após a transição exigem conferência do instrumento coletivo e das normas complementares do MTE. Para 6x1, cadastre as folgas adicionais necessárias e informe a referência do ACT/CCT. Para 12x36, a apuração não aplica horas extras semanais comuns nem presume adicional de feriado/prorrogação noturna, em razão do tratamento especial do art. 59-A; a validade do regime e os repousos devem ser conferidos com DP/contador.
+- Escalas 6x1 e 12x36 após a transição exigem conferência do instrumento coletivo e das normas complementares do MTE. Para 6x1, cadastre as folgas adicionais necessárias e informe a referência do ACT/CCT aplicável. Para 12x36, registre a referência do acordo individual escrito ou ACT/CCT, conforme o caso; a apuração não aplica horas extras semanais comuns nem presume adicional de feriado/prorrogação noturna, em razão do tratamento especial do art. 59-A. A validade do regime e os repousos devem ser conferidos com DP/contador.
 - O MTE anunciou regulamentação complementar para regimes especiais até 23/11/2026; essa regulamentação deve ser incorporada após publicação. Esta tela não substitui a validação do instrumento coletivo nem certifica a escala.
 
 ### Limite regulatório do ponto eletrônico
