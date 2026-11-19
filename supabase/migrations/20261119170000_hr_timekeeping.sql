@@ -1,5 +1,9 @@
 
 -- RH: jornadas, escalas e ponto. Registros brutos são imutáveis.
+alter table public.employee_compensation
+  add column remuneration_basis text not null default 'monthly' check (remuneration_basis in ('monthly','hourly')),
+  add column hourly_rate numeric(12,2) not null default 0 check (hourly_rate >= 0);
+
 alter table public.employees
   add column auth_user_id uuid null references auth.users(id) on delete set null;
 
