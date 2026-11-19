@@ -74,7 +74,8 @@ function sessionsH(){
    const confirmed=dataH.occurrences.find(o=>o.employee_id===p.employee_id&&o.occurrence_date===s.day&&['missing_break_start','missing_break_end'].includes(o.occurrence_type)&&o.status==='unjustified'&&Number(o.minutes)>0);
    s.breakTaken=recorded;s.breakUnverified=s.requiredBreak>0&&s.breaks.length===0;
    s.breakDeficit=s.breaks.length?Math.max(0,s.requiredBreak-recorded):Number(confirmed?.minutes||0);
-   s.actual=Math.max(0,elapsed-(s.breaks.length?recorded:s.requiredBreak)-(s.breaks.length?s.breakDeficit:0));
+   const effectiveBreak=s.breaks.length?recorded:(confirmed?Number(confirmed.minutes):s.requiredBreak);
+   s.actual=Math.max(0,elapsed-effectiveBreak-(s.breaks.length?s.breakDeficit:0));
    s.open=false;out.push(s);open.delete(p.employee_id);
   }
  }
