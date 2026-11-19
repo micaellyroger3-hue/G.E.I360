@@ -133,6 +133,8 @@ assert.ok(hrSql.includes('gei_hr_guard_employee_link') && hrSql.includes('gei_po
 assert.ok(hrSql.includes('unique(company_id, period)'), 'HR finance posting must be unique per company and period');
 assert.ok(hrSql.includes('from public, anon') && hrSql.includes('grant select, insert on public.hr_cost_postings'), 'HR tables must revoke PUBLIC/anon access and keep cost postings append-only');
 assert.ok(fs.existsSync('docs/HR_MODULE.md'), 'HR module documentation missing');
+const hrPrivilegeSql = fs.readFileSync('supabase/migrations/20261119132000_hr_privilege_tightening.sql', 'utf8');
+assert.ok(hrPrivilegeSql.includes('revoke truncate, references, trigger') && hrPrivilegeSql.includes('revoke update, delete on public.hr_cost_postings'), 'HR table privileges must follow least privilege');
 assert.ok(worker.includes('gei360-shell-v24'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
