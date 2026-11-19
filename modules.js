@@ -221,7 +221,7 @@ async function erpRenderSectorOperations(options={}){
     const summary=Object.entries(record.payload||{}).filter(([,value])=>value!==null&&value!=='').map(([key,value])=>key.replaceAll('_',' ')+': '+String(value)).join(' | ');
     return [definition?.label||record.record_type,summary,new Date(record.created_at).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})];
    })];
-   const csv='\\uFEFF'+rows.map(row=>row.map(value=>'"'+String(value??'').replace(/"/g,'""')+'"').join(';')).join('\\r\\n');
+   const csv='\uFEFF'+rows.map(row=>row.map(value=>'"'+String(value??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
    const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
    const link=document.createElement('a');link.href=url;link.download='gei360-operacao-'+erpToday()+'.csv';document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
   };
