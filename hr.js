@@ -84,8 +84,8 @@ function hrSummary(){
  const missing=active.filter(e=>!hrComp.some(c=>c.employee_id===e.id)).length;
  const otherContracts=active.filter(e=>!['clt','aprendiz'].includes(hrCompOf(e.id).contract_type)).length;
  const incomplete=active.filter(e=>['clt','aprendiz'].includes(hrCompOf(e.id).contract_type)&&!hrCost(hrCompOf(e.id)).complete).length;
- const meiSalaryReview=hrSettings?.tax_regime==='mei'&&active.some(e=>hrCost(hrCompOf(e.id)).base>1621);
- const meiOverLimit=hrSettings?.tax_regime==='mei'&&active.length>1;
+ const meiSalaryReview=hrSettings?.tax_regime==='mei'&&meiEmployees.some(e=>hrCost(hrCompOf(e.id)).base>1621);
+ const meiEmployees=active.filter(e=>['clt','aprendiz'].includes(hrCompOf(e.id).contract_type));\n const meiOverLimit=hrSettings?.tax_regime==='mei'&&meiEmployees.length>1;
  const rates=hrRateSettings();
  const posted=hrPostings.find(p=>p.period===hrMonth());
  return '<div class="gei-hr-kpis">'+hrKpi('Funcionários ativos',active.length,'Vínculos ativos')+hrKpi('Remuneração estimada',hrMoney(payroll),'Total bruto mensal equivalente')+hrKpi('Custo estimado',hrMoney(total),'Salários, benefícios e encargos')+hrKpi('Eventos em aberto',eventCount,'Férias, ausências e afastamentos')+'</div>'+
@@ -224,7 +224,7 @@ function hrBind(){
    if(p.simples_annex==='mixed'){if(p.employer_inss_mode!=='custom'){p.employer_inss_mode='separate';p.employer_inss_rate=20}else if(p.employer_inss_rate==null||p.employer_inss_rate<=0){alert('Informe a alíquota patronal personalizada e sua fonte.');return}if(p.anexo_iv_revenue_share==null||p.anexo_iv_revenue_share<0||p.anexo_iv_revenue_share>100){alert('Informe a participação da receita bruta do Anexo IV (0 a 100%).');return}p.third_party_rate=0;p.third_party_confirmed=true;p.fpas_code=null;if(p.anexo_iv_revenue_share>0&&(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null)){alert('Para atividades mistas com receita no Anexo IV, informe RAT e FAP e confirme os dados.');return}}
   }
   if(['lucro_presumido','lucro_real'].includes(p.tax_regime)){if(p.employer_inss_mode!=='custom'){p.employer_inss_mode='separate';if(p.employer_inss_rate==null)p.employer_inss_rate=20}else if(p.employer_inss_rate==null||p.employer_inss_rate<=0){alert('Informe a alíquota patronal personalizada e sua fonte.');return}if(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null||!p.third_party_confirmed||p.third_party_rate==null||!p.fpas_code){alert('Para Lucro Presumido/Real, informe RAT, FAP, terceiros e FPAS conforme o enquadramento e marque as confirmações.');return}}
-  if(p.tax_regime==='outro'&&p.employer_inss_mode==='included_in_das'){alert('Para Outro regime, escolha alíquota personalizada ou não aplicável e informe a fonte.');return}
+  if(p.tax_regime==='outro'&&!['custom','not_applicable'].includes(p.employer_inss_mode)){alert('Para Outro regime, escolha alíquota personalizada ou não aplicável e informe a fonte.');return}if(p.tax_regime==='outro'&&p.employer_inss_mode==='custom'&&(p.employer_inss_rate==null||p.employer_inss_rate<=0)){alert('Informe a alíquota patronal personalizada e sua fonte.');return}
   if(p.fap_factor!=null&&(p.fap_factor<0.5||p.fap_factor>2)){alert('O FAP deve estar entre 0,5000 e 2,0000.');return}
   if(!p.notes||p.notes.trim().length<5){alert('Informe a fonte dos parâmetros e a data de conferência nas observações.');return}
   try{if(hrSettings)await api('/rest/v1/hr_company_settings?id=eq.'+hrSettings.id,{method:'PATCH',body:{...p,updated_at:new Date().toISOString()}});else await api('/rest/v1/hr_company_settings',{method:'POST',body:{...p,company_id:companyId,created_by:session.user.id}});await hrLoad();await hrRenderTab();}catch(error){alert('Não foi possível salvar a configuração: '+error.message)}
