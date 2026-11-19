@@ -26,7 +26,7 @@ Salários e benefícios não são adicionados à tabela pública de cadastro de 
 
 ## Limitações importantes
 
-Este módulo é uma ferramenta de gestão e estimativa. Não gera folha oficial, holerite, recibo legal, férias/rescisão oficial, eventos ou guias do eSocial, FGTS Digital, DCTFWeb ou sistemas governamentais. Não calcula automaticamente convenção coletiva, piso regional, adicionais, horas extras, FAP, SST, terceiros específicos ou regras particulares de cada vínculo. As alíquotas e o enquadramento precisam ser confirmados por contador ou profissional de DP antes de decisões, recolhimentos ou pagamentos.
+Este módulo é uma ferramenta de gestão e estimativa. Não gera folha oficial, holerite, recibo legal, férias/rescisão oficial, eventos ou guias do eSocial, FGTS Digital, DCTFWeb ou sistemas governamentais. Não interpreta automaticamente convenção coletiva, piso regional, FAP, SST, terceiros específicos, reflexos em DSR/13º/férias ou regras particulares de cada vínculo. As horas extras e adicionais mostrados na apuração são estimativas parametrizadas, não rubricas oficiais de folha. As alíquotas e o enquadramento precisam ser confirmados por contador ou profissional de DP antes de decisões, recolhimentos ou pagamentos.
 
 O lançamento no Financeiro cria uma despesa gerencial pendente, uma vez por competência; não marca pagamento automaticamente e não substitui o fechamento da folha.
 
@@ -51,8 +51,8 @@ A tela **Apuração de jornada** (menu RH) acrescenta:
 - Calendário de feriados nacional, estadual, municipal e da empresa. Há atalho para cadastrar feriados nacionais fixos; feriados estaduais/municipais e datas móveis locais precisam ser conferidos e cadastrados pelo responsável.
 - Conferência de escala x marcações, com alertas de ausência, entrada/saída faltante e intervalo sem marcação. O sistema não aplica desconto automático.
 - Ocorrências justificadas/não justificadas, com observação e responsável pela revisão.
-- Livro de banco de horas append-only (crédito/débito/expiração/pagamento/ajuste), validade do crédito e saldo por funcionário.
-- Exportação CSV gerencial e fechamento mensal por funcionário, com resumo persistido de horas, extras, atrasos, saídas antecipadas e adicionais, bloqueio de novos pontos/tratamentos e possibilidade de reabertura mediante justificativa.
+- Livro de banco de horas append-only (crédito/débito/expiração/pagamento/ajuste), validade do crédito e saldo por funcionário; a expiração processa apenas o saldo remanescente de cada crédito e impede uso após o vencimento.
+- Exportação CSV gerencial e fechamento mensal por funcionário, com resumo persistido de horas, extras, atrasos, saídas antecipadas e adicionais, bloqueio de novos pontos, ajustes, ocorrências e mudanças de escala na competência fechada, e possibilidade de reabertura mediante justificativa.
 
 ### Critérios e cautelas de cálculo
 
@@ -68,7 +68,7 @@ A tela **Apuração de jornada** (menu RH) acrescenta:
 - Até 15/12/2026, o teto geral usado na apuração é 44h semanais; de 16/12/2026 a 15/12/2027, 42h; a partir de 16/12/2027, 40h. O salário cadastrado não é reduzido.
 - A partir de 16/12/2026, a regra geral passa a prever dois repousos semanais remunerados. A tela calcula a média de repousos no mês e alerta para mais de seis dias consecutivos de trabalho. Folgas extras e trabalho em dia de folga podem ser lançados por funcionário para refletir ACT/CCT.
 - Escalas 6x1 e 12x36 após a transição exigem conferência do instrumento coletivo e das normas complementares do MTE. Para 6x1, cadastre as folgas adicionais necessárias e informe a referência do ACT/CCT. Para 12x36, a apuração não aplica horas extras semanais comuns nem presume adicional de feriado/prorrogação noturna, em razão do tratamento especial do art. 59-A; a validade do regime e os repousos devem ser conferidos com DP/contador.
-- A Portaria complementar do MTE para regimes especiais deve ser incorporada quando publicada; esta tela não substitui a validação do instrumento coletivo nem certifica a escala.
+- O MTE anunciou regulamentação complementar para regimes especiais até 23/11/2026; essa regulamentação deve ser incorporada após publicação. Esta tela não substitui a validação do instrumento coletivo nem certifica a escala.
 
 ### Limite regulatório do ponto eletrônico
 
