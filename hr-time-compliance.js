@@ -36,8 +36,8 @@ function baseExpectedH(s,date){
  const days=Array.isArray(s.weekdays)&&s.weekdays.length?s.weekdays:(s.schedule_type==='5x2'?[1,2,3,4,5]:s.schedule_type==='6x1'?[1,2,3,4,5,6]:[1,2,3,4,5]);
  return days.includes(dow);
 }
-function expectedH(s,date){
- const exception=dataH.scheduleExceptions.find(x=>x.employee_id===s?.employee_id&&x.exception_date===date);
+function expectedH(s,date,employeeId){
+ const exception=dataH.scheduleExceptions.find(x=>x.employee_id===(employeeId||s?.employee_id)&&x.exception_date===date);
  if(exception?.exception_type==='extra_rest')return false;
  if(exception?.exception_type==='extra_work')return true;
  return baseExpectedH(s,date);
@@ -53,7 +53,7 @@ function restComplianceH(employeeId){
  let rest=0,work=0,consecutive=0,maxWork=0;
  const begin=new Date(start+'T12:00:00-03:00');begin.setDate(begin.getDate()-6);
  for(let i=0;i<days+6;i++){const dt=new Date(begin);dt.setDate(begin.getDate()+i);const d=dt.toISOString().slice(0,10);if(d<start) {if(expectedH(scheduleForH(employeeId,d),d,employeeId))consecutive++;else consecutive=0;continue}
-  if(expectedH(scheduleForH(employeeId,d),d)){work++;consecutive++;maxWork=Math.max(maxWork,consecutive)}else{rest++;consecutive=0}
+  if(expectedH(scheduleForH(employeeId,d),d,employeeId)){work++;consecutive++;maxWork=Math.max(maxWork,consecutive)}else{rest++;consecutive=0}
  }
  return {special:false,rest,target:Math.ceil(days*2/7),maxWork,compliant:rest>=Math.ceil(days*2/7)&&maxWork<=6};
 }
