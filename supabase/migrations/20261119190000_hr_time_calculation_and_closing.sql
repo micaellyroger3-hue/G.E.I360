@@ -49,6 +49,19 @@ create table if not exists public.hr_holidays (
   unique(company_id,holiday_date,title)
 );
 
+create table if not exists public.hr_schedule_exceptions (
+  id uuid primary key default gen_random_uuid(),
+  company_id uuid not null references public.companies(id) on delete cascade,
+  employee_id uuid not null,
+  exception_date date not null,
+  exception_type text not null check (exception_type in ('extra_rest','extra_work')),
+  reason text not null check (length(trim(reason)) between 3 and 500),
+  created_by uuid not null default auth.uid() references auth.users(id),
+  created_at timestamptz not null default now(),
+  unique(company_id,employee_id,exception_date),
+  foreign key(company_id,employee_id) references public.employees(company_id,id) on delete cascade
+);
+
 create table if not exists public.hr_time_occurrences (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references public.companies(id) on delete cascade,
@@ -107,6 +120,8 @@ create table if not exists public.hr_time_periods (
 create index if not exists hr_holidays_company_date_idx on public.hr_holidays(company_id,holiday_date);
 create index if not exists hr_holidays_created_by_idx on public.hr_holidays(created_by);
 create index if not exists hr_time_rules_created_by_idx on public.hr_time_rules(created_by);
+create index if not exists hr_schedule_exceptions_employee_date_idx on public.hr_schedule_exceptions(company_id,employee_id,exception_date);
+create index if not exists hr_schedule_exceptions_created_by_idx on public.hr_schedule_exceptions(created_by);
 create index if not exists hr_occurrences_company_date_idx on public.hr_time_occurrences(company_id,occurrence_date,employee_id);
 create index if not exists hr_occurrences_employee_status_idx on public.hr_time_occurrences(employee_id,status,occurrence_date);
 create index if not exists hr_occurrences_requested_by_idx on public.hr_time_occurrences(requested_by);
@@ -120,6 +135,7 @@ create unique index if not exists hr_bank_source_once_uidx on public.hr_time_ban
 
 alter table public.hr_time_rules enable row level security;
 alter table public.hr_holidays enable row level security;
+alter table public.hr_schedule_exceptions enable row level security;
 alter table public.hr_time_occurrences enable row level security;
 alter table public.hr_time_bank_entries enable row level security;
 alter table public.hr_time_periods enable row level security;
@@ -136,6 +152,18 @@ drop policy if exists hr_holidays_admin_write on public.hr_holidays;
 create policy hr_holidays_admin_write on public.hr_holidays for all to authenticated
 using (public.has_company_role(company_id,array['owner','admin']))
 with check (public.has_company_role(company_id,array['owner','admin']) and created_by=(select auth.uid()));
+
+drop policy if exists hr_schedule_exceptions_member_read on public.hr_schedule_exceptions;
+create policy hr_schedule_exceptions_member_read on public.hr_schedule_exceptions for select to authenticated
+using (public.has_company_role(company_id,array['owner','admin','manager']) or exists (
+ select 1 from public.employees e join public.company_members cm on cm.company_id=e.company_id
+ where e.id=hr_schedule_exceptions.employee_id and e.company_id=hr_schedule_exceptions.company_id
+ and e.auth_user_id=(select auth.uid()) and cm.user_id=(select auth.uid()) and cm.status='active' and cm.role='employee'
+));
+drop policy if exists hr_schedule_exceptions_manager_write on public.hr_schedule_exceptions;
+create policy hr_schedule_exceptions_manager_write on public.hr_schedule_exceptions for all to authenticated
+using (public.has_company_role(company_id,array['owner','admin','manager']))
+with check (public.has_company_role(company_id,array['owner','admin','manager']) and created_by=(select auth.uid()));
 
 drop policy if exists hr_occurrences_manager_read on public.hr_time_occurrences;
 create policy hr_occurrences_manager_read on public.hr_time_occurrences for select to authenticated
@@ -177,7 +205,7 @@ create policy hr_periods_admin_all on public.hr_time_periods for all to authenti
 using (public.has_company_role(company_id,array['owner','admin']))
 with check (public.has_company_role(company_id,array['owner','admin']));
 
-grant select,insert,update,delete on public.hr_time_rules,public.hr_holidays,public.hr_time_occurrences,public.hr_time_periods to authenticated;
+grant select,insert,update,delete on public.hr_time_rules,public.hr_holidays,public.hr_schedule_exceptions,public.hr_time_occurrences,public.hr_time_periods to authenticated;
 grant select,insert on public.hr_time_bank_entries to authenticated;
 revoke all on public.hr_time_rules,public.hr_holidays,public.hr_time_occurrences,public.hr_time_bank_entries,public.hr_time_periods from anon;
 
@@ -215,6 +243,11 @@ end;
 $function$;
 
 revoke all on function public.hr_guard_closed_time_period() from public, anon, authenticated;
+
+drop trigger if exists hr_schedule_exceptions_closed_period_guard on public.hr_schedule_exceptions;
+create trigger hr_schedule_exceptions_closed_period_guard
+before insert or update or delete on public.hr_schedule_exceptions
+for each row execute function public.hr_guard_closed_time_period();
 
 drop trigger if exists hr_time_punches_closed_period_guard on public.hr_time_punches;
 create trigger hr_time_punches_closed_period_guard
