@@ -55,7 +55,7 @@ function sessionsH(){
 }
 function workNightMinutesH(s){
  if(!s.end)return 0;
- const start=new Date(s.start).getTime(),end=new Date(s.end).getTime(),rules=dataH.rules||{};
+ const start=new Date(s.start).getTime(),end=new Date(s.end).getTime(),rules=dataH.rules||{},schedule=scheduleForH(s.employee_id,zonedPartsH(s.start).date),applyExtension=schedule?.schedule_type!=='12x36'&&rules.night_extension!==false;
  const breaks=[...s.breaks].map(([a,b])=>[new Date(a).getTime(),new Date(b).getTime()]).sort((a,b)=>a[0]-b[0]);
  const intervals=[];let cursor=start;
  for(const [a,b] of breaks){if(a>cursor)intervals.push([cursor,a]);cursor=Math.max(cursor,b)}
@@ -70,7 +70,7 @@ function workNightMinutesH(s){
    if(nightEnd<=nightStart)nightEnd+=86400000;
    const overlap=Math.max(0,Math.min(b,nightEnd)-Math.max(a,nightStart));
    total+=overlap/60000;
-   if(overlap>0&&rules.night_extension!==false&&b>nightEnd){
+   if(overlap>0&&applyExtension&&b>nightEnd){
     const nextNight=new Date(day+'T'+startText+':00-03:00').getTime()+86400000;
     total+=Math.max(0,Math.min(b,nextNight)-Math.max(a,nightEnd))/60000;
    }
@@ -118,7 +118,7 @@ function summaryH(){
   if(overtime<=tolerance)overtime=0;
   const nightHours=d.night/(rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5));
   const nightValue=nightHours*base*Number(rules.night_additional_percent??20)/100;
-  const scheduledSunday=expectedH(scheduleForH(d.employee_id,d.day),d.day);const premium=(d.holiday||(d.sunday&&!scheduledSunday))?Math.max(0,d.actual)*base/60*(Number(rules.sunday_holiday_multiplier||2)-1):0;
+  const daySchedule=scheduleForH(d.employee_id,d.day),scheduledSunday=expectedH(daySchedule,d.day),premium=(daySchedule?.schedule_type!=='12x36'&&(d.holiday||(d.sunday&&!scheduledSunday)))?Math.max(0,d.actual)*base/60*(Number(rules.sunday_holiday_multiplier||2)-1):0;
   const overtimeValue=overtime/60*base*(Number(rules.overtime_multiplier||1.5)-1);
   return {...d,name:emp?.full_name||'Funcionário',base,overtime,nightHours,nightValue,premium,overtimeValue,estimatedAdditional:nightValue+premium+overtimeValue};
  });
@@ -185,7 +185,7 @@ function renderH(){
  '<div class="field"><label>Limite diário para hora extra (minutos; vazio = escala)</label><input name="overtime_daily_threshold_minutes" type="number" min="0" max="1440" value="'+(rules.overtime_daily_threshold_minutes??'')+'"></div>'+
  '<div class="field"><label>Adicional de hora extra (%)</label><input name="overtime_multiplier" type="number" min="100" max="500" step=".1" value="'+Number(rules.overtime_multiplier||1.5)*100+'"></div>'+
  '<div class="field"><label>Multiplicador domingo/feriado (%)</label><input name="sunday_holiday_multiplier" type="number" min="100" max="500" step=".1" value="'+Number(rules.sunday_holiday_multiplier||2)*100+'"></div>'+
- '<div class="field"><label>Prorrogação do adicional noturno após 5h</label><select name="night_extension"><option value="true" '+(rules.night_extension===false?'':'selected')+'>Aplicar quando houver continuidade</option><option value="false" '+(rules.night_extension===false?'selected':'')+'>Não aplicar</option></select></div><div class="field"><label>Hora noturna reduzida</label><select name="night_reduced_hour"><option value="true" '+(rules.night_reduced_hour===false?'':'selected')+'>Sim — 52min30s (se aplicável)</option><option value="false" '+(rules.night_reduced_hour===false?'selected':'')+'>Não</option></select></div><div class="field"><label>Adicional noturno (%)</label><input name="night_additional_percent" type="number" min="0" max="200" value="'+Number(rules.night_additional_percent??20)+'"></div>'+
+ '<div class="field"><label>Prorrogação noturna após 5h (exceto 12x36)</label><select name="night_extension"><option value="true" '+(rules.night_extension===false?'':'selected')+'>Aplicar quando houver continuidade</option><option value="false" '+(rules.night_extension===false?'selected':'')+'>Não aplicar</option></select></div><div class="field"><label>Hora noturna reduzida</label><select name="night_reduced_hour"><option value="true" '+(rules.night_reduced_hour===false?'':'selected')+'>Sim — 52min30s (se aplicável)</option><option value="false" '+(rules.night_reduced_hour===false?'selected':'')+'>Não</option></select></div><div class="field"><label>Adicional noturno (%)</label><input name="night_additional_percent" type="number" min="0" max="200" value="'+Number(rules.night_additional_percent??20)+'"></div>'+
  '<div class="field"><label>Início período noturno</label><input name="night_start" type="time" value="'+(rules.night_start||'22:00')+'"></div>'+
  '<div class="field"><label>Fim período noturno</label><input name="night_end" type="time" value="'+(rules.night_end||'05:00')+'"></div>'+
  '<div class="field"><label>Duração hora noturna reduzida (minutos)</label><input name="night_hour_minutes" type="number" min="1" max="60" step=".001" value="'+Number(rules.night_hour_minutes||52.5)+'"></div>'+
