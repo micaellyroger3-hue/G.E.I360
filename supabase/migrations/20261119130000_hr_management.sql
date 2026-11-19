@@ -76,6 +76,36 @@ create table if not exists public.hr_cost_postings (
   unique(financial_entry_id)
 );
 
+
+-- Integridade multiempresa: cada registro de RH precisa apontar para funcionário da mesma empresa.
+create or replace function public.gei_hr_guard_employee_link()
+returns trigger
+language plpgsql
+set search_path = ''
+as $function$
+begin
+  if tg_op = 'UPDATE' and new.company_id is distinct from old.company_id then
+    raise exception 'O registro de RH não pode ser transferido para outra empresa.';
+  end if;
+  if not exists (
+    select 1 from public.employees e
+    where e.id = new.employee_id and e.company_id = new.company_id
+  ) then
+    raise exception 'O funcionário informado não pertence à empresa deste registro.';
+  end if;
+  return new;
+end;
+$function$;
+revoke all on function public.gei_hr_guard_employee_link() from public, anon, authenticated;
+drop trigger if exists gei_hr_compensation_employee_guard on public.employee_compensation;
+create trigger gei_hr_compensation_employee_guard
+before insert or update on public.employee_compensation
+for each row execute function public.gei_hr_guard_employee_link();
+drop trigger if exists gei_hr_event_employee_guard on public.hr_events;
+create trigger gei_hr_event_employee_guard
+before insert or update on public.hr_events
+for each row execute function public.gei_hr_guard_employee_link();
+
 create index if not exists employee_compensation_company_idx on public.employee_compensation(company_id, employee_id);
 create index if not exists hr_events_company_date_idx on public.hr_events(company_id, start_date desc);
 create index if not exists hr_cost_postings_company_period_idx on public.hr_cost_postings(company_id, period desc);
@@ -101,7 +131,7 @@ for insert to authenticated with check (
 drop policy if exists gei_hr_compensation_update on public.employee_compensation;
 create policy gei_hr_compensation_update on public.employee_compensation
 for update to authenticated using (public.has_company_role(company_id, array['owner','admin']::text[]))
-with check (public.has_company_role(company_id, array['owner','admin']::text[]));
+with check (public.has_company_role(company_id, array['owner','admin']::text[]) and exists (select 1 from public.employees e where e.id = employee_id and e.company_id = employee_compensation.company_id));
 drop policy if exists gei_hr_compensation_delete on public.employee_compensation;
 create policy gei_hr_compensation_delete on public.employee_compensation
 for delete to authenticated using (public.has_company_role(company_id, array['owner','admin']::text[]));
@@ -133,7 +163,7 @@ for insert to authenticated with check (
 drop policy if exists gei_hr_events_update on public.hr_events;
 create policy gei_hr_events_update on public.hr_events
 for update to authenticated using (public.has_company_role(company_id, array['owner','admin']::text[]))
-with check (public.has_company_role(company_id, array['owner','admin']::text[]));
+with check (public.has_company_role(company_id, array['owner','admin']::text[]) and exists (select 1 from public.employees e where e.id = employee_id and e.company_id = hr_events.company_id));
 drop policy if exists gei_hr_events_delete on public.hr_events;
 create policy gei_hr_events_delete on public.hr_events
 for delete to authenticated using (public.has_company_role(company_id, array['owner','admin']::text[]));
