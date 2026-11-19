@@ -56,7 +56,7 @@ function buildSessions(){
     const a=Number(sch.shift_start.slice(0,2))*60+Number(sch.shift_start.slice(3,5));
     const b=Number(sch.shift_end.slice(0,2))*60+Number(sch.shift_end.slice(3,5));
     planned=((b-a+1440)%1440)-Number(sch.break_minutes||0);
-    late=Math.max(0,minutesSP(s.start)-a);
+    const entryMinute=minutesSP(s.start),entryDelta=entryMinute-a;late=entryDelta>=0?entryDelta:(entryDelta < -720?entryDelta+1440:0);
     early=Math.max(0,((b-a+1440)%1440)-((minutesSP(p.punched_at)-a+1440)%1440));
    }
    done.push({...s,end:p.punched_at,actual,planned,late,early,employee_id:p.employee_id,day});
