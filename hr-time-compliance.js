@@ -42,7 +42,7 @@ function expectedH(s,date,employeeId){
  if(exception?.exception_type==='extra_work')return true;
  return baseExpectedH(s,date);
 }
-function restComplianceH(employeeId){
+function restComplianceH(employeeId,sessions){
  if(monthPick<'2026-12')return null;
  const start=monthPick==='2026-12'?'2026-12-16':monthPick+'-01';
  const end=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),0).toISOString().slice(0,10);
@@ -53,8 +53,8 @@ function restComplianceH(employeeId){
  if(monthSchedules.every(s=>['por_hora','variavel'].includes(s.schedule_type)))return null;
  let rest=0,work=0,consecutive=0,maxWork=0;
  const begin=new Date(start+'T12:00:00-03:00');begin.setDate(begin.getDate()-6);
- for(let i=0;i<days+6;i++){const dt=new Date(begin);dt.setDate(begin.getDate()+i);const d=dt.toISOString().slice(0,10);if(d<start) {if(expectedH(scheduleForH(employeeId,d),d,employeeId))consecutive++;else consecutive=0;continue}
-  if(expectedH(scheduleForH(employeeId,d),d,employeeId)){work++;consecutive++;maxWork=Math.max(maxWork,consecutive)}else{rest++;consecutive=0}
+ for(let i=0;i<days+6;i++){const dt=new Date(begin);dt.setDate(begin.getDate()+i);const d=dt.toISOString().slice(0,10);if(d<start) {if(expectedH(scheduleForH(employeeId,d),d,employeeId)||(sessions||[]).some(s=>s.employee_id===employeeId&&s.day===d&&s.actual>0))consecutive++;else consecutive=0;continue}
+  if(expectedH(scheduleForH(employeeId,d),d,employeeId)||(sessions||[]).some(s=>s.employee_id===employeeId&&s.day===d&&s.actual>0)){work++;consecutive++;maxWork=Math.max(maxWork,consecutive)}else{rest++;consecutive=0}
  }
  return {special:false,rest,target:Math.ceil(days*2/7),maxWork,compliant:rest>=Math.ceil(days*2/7)&&maxWork<=6};
 }
@@ -203,12 +203,12 @@ async function loadH(){
 }
 function renderH(){
  const host=$('view');if(!host)return;
- const rows=summaryH(),rules=dataH.rules||{},bankByEmp=new Map(),restRows=dataH.employees.map(e=>({employee:e,rest:restComplianceH(e.id)})).filter(x=>x.rest),monthCap=statutoryWeeklyCapH(monthPick+'-28')/60,specialSchedules=dataH.schedules.filter(s=>monthPick>='2026-12'&&['6x1','12x36'].includes(s.schedule_type)&&s.effective_from<=(monthPick+'-31')&&(!s.effective_to||s.effective_to>=(monthPick==='2026-12'?'2026-12-16':monthPick+'-01')));
+ const attendanceSessions=sessionsH(),rows=summaryH(attendanceSessions),rules=dataH.rules||{},bankByEmp=new Map(),restRows=dataH.employees.map(e=>({employee:e,rest:restComplianceH(e.id,attendanceSessions)})).filter(x=>x.rest),monthCap=statutoryWeeklyCapH(monthPick+'-28')/60,specialSchedules=dataH.schedules.filter(s=>monthPick>='2026-12'&&['6x1','12x36'].includes(s.schedule_type)&&s.effective_from<=(monthPick+'-31')&&(!s.effective_to||s.effective_to>=(monthPick==='2026-12'?'2026-12-16':monthPick+'-01')));
  for(const b of dataH.bank){const delta=bankBalanceH(b.employee_id);bankByEmp.set(b.employee_id,delta)}
  const periodByEmp=new Map(dataH.periods.map(p=>[p.employee_id,p]));
  const total=rows.reduce((a,r)=>{a.minutes+=r.actual;a.ot+=r.overtime;a.extra+=r.estimatedAdditional;return a},{minutes:0,ot:0,extra:0});
  const monthStart=monthPick+'-01',lastDay=new Date(Number(monthPick.slice(0,4)),Number(monthPick.slice(5,7)),0).getDate();
- const missing=[],monthSessions=sessionsH();
+ const missing=[],monthSessions=attendanceSessions;
  for(const e of dataH.employees.filter(x=>x.status!=='inactive'&&x.employment_status!=='inativo')){
   for(let day=1;day<=lastDay;day++){const d=monthPick+'-'+String(day).padStart(2,'0');if(d>todayH())continue;const sch=scheduleForH(e.id,d);if(!expectedH(sch,d,e.id))continue;
    const daySessions=monthSessions.filter(s=>s.employee_id===e.id&&s.day===d);
