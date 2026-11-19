@@ -139,11 +139,11 @@ function summaryH(sessions=sessionsH()){
   const emp=dataH.employees.find(e=>e.id===d.employee_id),comp=dataH.comp.find(x=>x.employee_id===d.employee_id)||{};
   const legalWeekly=statutoryWeeklyCapH(d.day)/60,contractWeekly=Number(comp.weekly_hours||rules.weekly_standard_minutes/60||legalWeekly),companyWeekly=Number(rules.weekly_standard_minutes||legalWeekly*60)/60,effectiveWeekly=Math.min(contractWeekly,legalWeekly,companyWeekly),divisor=Number(comp.monthly_hour_divisor||effectiveWeekly*5);
   const base=comp.remuneration_basis==='hourly'?Number(comp.hourly_rate||0):Number(comp.salary_base||0)/Math.max(1,divisor);
-  const tolerance=Number(rules.daily_tolerance_minutes??10),dailySchedule=scheduleForH(d.employee_id,d.day),weeklyContract=Number(comp.weekly_hours||rules.weekly_standard_minutes/60||0),ordinaryDailyCap=d.day<'2026-12-16'&&dailySchedule?.schedule_type==='5x2'&&!rules.rest_schedule_agreement_reference?480:null,transitionDailyCap=d.day>='2026-12-16'&&d.day<'2027-12-16'&&dailySchedule?.schedule_type==='5x2'&&weeklyContract>=42&&!rules.rest_schedule_agreement_reference?504:null,finalDailyCap=d.day>='2027-12-16'&&dailySchedule?.schedule_type==='5x2'&&!rules.rest_schedule_agreement_reference?480:null;
-  let dailyLimit=rules.overtime_daily_threshold_minutes==null?(d.planned>0?d.planned:null):Number(rules.overtime_daily_threshold_minutes);
-  if(ordinaryDailyCap!=null)dailyLimit=rules.overtime_daily_threshold_minutes==null?ordinaryDailyCap:Math.min(dailyLimit,ordinaryDailyCap);
+  const tolerance=Number(rules.daily_tolerance_minutes??10),dailySchedule=scheduleForH(d.employee_id,d.day),weeklyContract=Number(comp.weekly_hours||rules.weekly_standard_minutes/60||0),noAgreement=!rules.rest_schedule_agreement_reference,transitionDailyCap=d.day>='2026-12-16'&&d.day<'2027-12-16'&&dailySchedule?.schedule_type==='5x2'&&weeklyContract>=42&&noAgreement?504:null;
+  const defaultDailyLimit=dailySchedule?.schedule_type==='12x36'?(d.planned>0?d.planned:720):(!noAgreement&&d.planned>0?d.planned:480);
+  let dailyLimit=rules.overtime_daily_threshold_minutes==null?defaultDailyLimit:Number(rules.overtime_daily_threshold_minutes);
+  if(noAgreement&&dailySchedule?.schedule_type!=='12x36')dailyLimit=Math.min(dailyLimit,480);
   if(transitionDailyCap!=null)dailyLimit=rules.overtime_daily_threshold_minutes==null?transitionDailyCap:Math.min(dailyLimit,transitionDailyCap);
-  if(finalDailyCap!=null)dailyLimit=rules.overtime_daily_threshold_minutes==null?finalDailyCap:Math.min(dailyLimit,finalDailyCap);
   let overtime=dailyLimit==null?0:Math.max(0,d.actual-dailyLimit);if(overtime<=tolerance)overtime=0;
   const nightDivisor=rules.night_reduced_hour===false?60:Number(rules.night_hour_minutes||52.5);
   const daySchedule=scheduleForH(d.employee_id,d.day),dayException=dataH.scheduleExceptions.find(x=>x.employee_id===d.employee_id&&x.exception_date===d.day);
