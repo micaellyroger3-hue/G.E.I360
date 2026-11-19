@@ -95,7 +95,8 @@ create policy hr_work_schedules_admin_select on public.hr_work_schedules
   for select to authenticated using (public.has_company_role(company_id, array['owner','admin','manager']));
 create policy hr_work_schedules_employee_select on public.hr_work_schedules
   for select to authenticated using (
-    exists (select 1 from public.employees e where e.id = employee_id and e.company_id = hr_work_schedules.company_id and e.auth_user_id = (select auth.uid()))\n    and exists (select 1 from public.company_members cm where cm.company_id = hr_work_schedules.company_id and cm.user_id = (select auth.uid()) and cm.status = 'active' and cm.role = 'employee')
+    exists (select 1 from public.employees e where e.id = employee_id and e.company_id = hr_work_schedules.company_id and e.auth_user_id = (select auth.uid()))
+    and exists (select 1 from public.company_members cm where cm.company_id = hr_work_schedules.company_id and cm.user_id = (select auth.uid()) and cm.status = 'active' and cm.role = 'employee')
   );
 create policy hr_work_schedules_admin_insert on public.hr_work_schedules
   for insert to authenticated with check (
@@ -112,7 +113,8 @@ create policy hr_work_schedules_admin_delete on public.hr_work_schedules
 create policy hr_time_punches_read on public.hr_time_punches
   for select to authenticated using (
     public.has_company_role(company_id, array['owner','admin','manager'])
-    or (exists (select 1 from public.employees e where e.id = employee_id and e.company_id = hr_time_punches.company_id and e.auth_user_id = (select auth.uid()))\n      and exists (select 1 from public.company_members cm where cm.company_id = hr_time_punches.company_id and cm.user_id = (select auth.uid()) and cm.status = 'active' and cm.role = 'employee'))
+    or (exists (select 1 from public.employees e where e.id = employee_id and e.company_id = hr_time_punches.company_id and e.auth_user_id = (select auth.uid()))
+      and exists (select 1 from public.company_members cm where cm.company_id = hr_time_punches.company_id and cm.user_id = (select auth.uid()) and cm.status = 'active' and cm.role = 'employee'))
   );
 
 create policy hr_time_adjustments_admin_read on public.hr_time_adjustments
