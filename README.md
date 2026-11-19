@@ -27,7 +27,7 @@ Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A l
 ## Supabase e segurança
 Projeto `mxikqdarqgatqoecfprg`, status ativo/saudável, PostgreSQL 17.
 
-Vinte e três migrations direcionadas estão registradas no Supabase:
+Vinte e cinco migrations direcionadas estão registradas no Supabase:
 1. `company_business_profiles`
 2. `integrity_hardening`
 3. `product_categories`
@@ -51,9 +51,11 @@ Vinte e três migrations direcionadas estão registradas no Supabase:
 21. `hr_timekeeping_and_hourly_pay`
 22. `hr_timekeeping_index_policy_tuning`
 23. `hr_punch_clock_timestamp`
+24. `hr_time_calculation_and_closing`
+25. `hr_occurrences_composite_fk_index`
 
 Verificações confirmadas:
-- 23/23 tabelas públicas com RLS habilitado.
+- 33/33 tabelas públicas com RLS habilitado.
 - Nenhum grant de tabela a `anon` nas tabelas empresariais auditadas.
 - Nenhum privilégio estrutural `TRUNCATE/REFERENCES/TRIGGER/MAINTAIN` para `authenticated` nas tabelas auditadas.
 - Catálogo de módulos somente leitura pela API; exclusões de empresa/membros e criação/exclusão direta de perfis revogadas do cliente.
