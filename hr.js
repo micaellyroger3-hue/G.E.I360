@@ -30,7 +30,7 @@ function hrRateSettings(){
   third=hrNum(s.third_party_rate);needsRat=true;needsThird=true;
  }
  else if(regime==='outro'&&s.employer_inss_mode==='custom')inss=hrNum(s.employer_inss_rate);
- if(needsRat)rat=hrNum(s.rat_rate)*hrNum(s.fap_factor);
+ if(needsRat){const share=regime==='simples_nacional'&&annex==='mixed'?hrNum(s.anexo_iv_revenue_share)/100:1;rat=hrNum(s.rat_rate)*hrNum(s.fap_factor)*share;}
  const ratReady=!needsRat||(s.rat_confirmed===true&&s.rat_rate!=null&&Number(s.fap_factor)>=0.5&&Number(s.fap_factor)<=2);
  const thirdReady=!needsThird||s.third_party_confirmed===true;
  const shareReady=!(regime==='simples_nacional'&&annex==='mixed')||(Number(s.anexo_iv_revenue_share)>=0&&Number(s.anexo_iv_revenue_share)<=100);
