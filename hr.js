@@ -29,7 +29,7 @@ function hrRateSettings(comp={}){
   rat=hrNum(s.rat_rate)*hrNum(s.fap_factor);
   third=hrNum(s.third_party_rate);needsRat=true;needsThird=true;
  }
- else if(regime==='outro'&&s.employer_inss_mode==='custom')inss=hrNum(s.employer_inss_rate);
+ else if(regime==='outro'){inss=s.employer_inss_mode==='custom'?hrNum(s.employer_inss_rate):0;needsRat=true;needsThird=true;third=hrNum(s.third_party_rate);}
  if(needsRat){const share=regime==='simples_nacional'&&annex==='mixed'?hrNum(employeeShare)/100:1;rat=hrNum(s.rat_rate)*hrNum(s.fap_factor)*share;}
  const ratReady=!needsRat||(s.rat_confirmed===true&&s.rat_rate!=null&&Number(s.fap_factor)>=0.5&&Number(s.fap_factor)<=2);
  const thirdReady=!needsThird||s.third_party_confirmed===true;
@@ -201,18 +201,19 @@ function hrBind(){
  if(settingsForm){
   const syncTaxFields=()=>{
    const regime=settingsForm.elements.tax_regime.value,annex=settingsForm.elements.simples_annex.value;
-   const mixed=regime==='simples_nacional'&&annex==='mixed',ratApplies=regime==='lucro_presumido'||regime==='lucro_real'||(regime==='simples_nacional'&&(annex==='IV'||(mixed&&Number(settingsForm.elements.anexo_iv_revenue_share.value)>0)));
-   const lucro=['lucro_presumido','lucro_real'].includes(regime);
+   const mixed=regime==='simples_nacional'&&annex==='mixed',ratApplies=regime==='outro'||regime==='lucro_presumido'||regime==='lucro_real'||(regime==='simples_nacional'&&(annex==='IV'||(mixed&&Number(settingsForm.elements.anexo_iv_revenue_share.value)>0)));
+   const lucro=['lucro_presumido','lucro_real'].includes(regime),thirdPartyApplies=lucro||regime==='outro';
    const hide=(name,visible)=>{const field=settingsForm.elements[name];if(field?.closest('label'))field.closest('label').hidden=!visible};
    hide('simples_annex',regime==='simples_nacional');hide('anexo_iv_revenue_share',mixed);
    hide('rat_rate',ratApplies);hide('fap_factor',ratApplies);hide('rat_confirmed',ratApplies);
-   hide('third_party_rate',lucro);hide('fpas_code',lucro);hide('third_party_confirmed',lucro);
+   hide('third_party_rate',thirdPartyApplies);hide('fpas_code',thirdPartyApplies);hide('third_party_confirmed',thirdPartyApplies);
    const customInss=lucro||regime==='outro'||(regime==='simples_nacional'&&(annex==='IV'||mixed));
    hide('employer_inss_mode',customInss);hide('employer_inss_rate',customInss);
   };
   settingsForm.elements.tax_regime.addEventListener('change',syncTaxFields);
   settingsForm.elements.simples_annex.addEventListener('change',syncTaxFields);
   settingsForm.elements.anexo_iv_revenue_share.addEventListener('input',syncTaxFields);
+  settingsForm.elements.employer_inss_mode.addEventListener('change',syncTaxFields);
   syncTaxFields();
  }
  if(settingsForm)settingsForm.onsubmit=async ev=>{ev.preventDefault();const f=new FormData(settingsForm);const p=Object.fromEntries(f.entries());p.use_13th_provision=f.has('use_13th_provision');p.use_vacation_provision=f.has('use_vacation_provision');p.rat_confirmed=f.has('rat_confirmed');p.third_party_confirmed=f.has('third_party_confirmed');for(const k of ['employer_inss_rate','fgts_rate','rat_rate','fap_factor','third_party_rate','anexo_iv_revenue_share'])p[k]=p[k]===''||p[k]==null?null:hrNum(p[k]);if(p.simples_annex==='')p.simples_annex=null;p.fpas_code=String(p.fpas_code||'').trim()||null;
@@ -224,7 +225,7 @@ function hrBind(){
    if(p.simples_annex==='mixed'){if(p.employer_inss_mode!=='custom'){p.employer_inss_mode='separate';p.employer_inss_rate=20}else if(p.employer_inss_rate==null||p.employer_inss_rate<=0){alert('Informe a alíquota patronal personalizada e sua fonte.');return}if(p.anexo_iv_revenue_share==null||p.anexo_iv_revenue_share<0||p.anexo_iv_revenue_share>100){alert('Informe a participação da receita bruta do Anexo IV (0 a 100%).');return}p.third_party_rate=0;p.third_party_confirmed=true;p.fpas_code=null;if(p.anexo_iv_revenue_share>0&&(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null)){alert('Para atividades mistas com receita no Anexo IV, informe RAT e FAP e confirme os dados.');return}}
   }
   if(['lucro_presumido','lucro_real'].includes(p.tax_regime)){if(p.employer_inss_mode!=='custom'){p.employer_inss_mode='separate';if(p.employer_inss_rate==null)p.employer_inss_rate=20}else if(p.employer_inss_rate==null||p.employer_inss_rate<=0){alert('Informe a alíquota patronal personalizada e sua fonte.');return}if(!p.rat_confirmed||!p.fap_factor||p.rat_rate==null||!p.third_party_confirmed||p.third_party_rate==null||!p.fpas_code){alert('Para Lucro Presumido/Real, informe RAT, FAP, terceiros e FPAS conforme o enquadramento e marque as confirmações.');return}}
-  if(p.tax_regime==='outro'&&!['custom','not_applicable'].includes(p.employer_inss_mode)){alert('Para Outro regime, escolha alíquota personalizada ou não aplicável e informe a fonte.');return}if(p.tax_regime==='outro'&&p.employer_inss_mode==='custom'&&(p.employer_inss_rate==null||p.employer_inss_rate<=0)){alert('Informe a alíquota patronal personalizada e sua fonte.');return}
+  if(p.tax_regime==='outro'&&!['custom','not_applicable'].includes(p.employer_inss_mode)){alert('Para Outro regime, escolha alíquota personalizada ou não aplicável e informe a fonte.');return}if(p.tax_regime==='outro'&&p.employer_inss_mode==='custom'&&(p.employer_inss_rate==null||p.employer_inss_rate<=0)){alert('Informe a alíquota patronal personalizada e sua fonte.');return}if(p.tax_regime==='outro'&&p.employer_inss_mode==='not_applicable')p.employer_inss_rate=0;if(p.tax_regime==='outro'&&(!p.rat_confirmed||p.rat_rate==null||p.fap_factor==null||!p.third_party_confirmed||p.third_party_rate==null||!p.fpas_code)){alert('Para Outro regime, confirme também RAT/FAP, terceiros e FPAS, mesmo quando a CPP patronal for marcada como não aplicável.');return}
   if(p.fap_factor!=null&&(p.fap_factor<0.5||p.fap_factor>2)){alert('O FAP deve estar entre 0,5000 e 2,0000.');return}
   if(!p.notes||p.notes.trim().length<5){alert('Informe a fonte dos parâmetros e a data de conferência nas observações.');return}
   try{if(hrSettings)await api('/rest/v1/hr_company_settings?id=eq.'+hrSettings.id,{method:'PATCH',body:{...p,updated_at:new Date().toISOString()}});else await api('/rest/v1/hr_company_settings',{method:'POST',body:{...p,company_id:companyId,created_by:session.user.id}});await hrLoad();await hrRenderTab();}catch(error){alert('Não foi possível salvar a configuração: '+error.message)}

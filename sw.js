@@ -1,11 +1,11 @@
-const CACHE_NAME = 'gei360-shell-v34';
+const CACHE_NAME = 'gei360-shell-v35';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icon.svg',
   './modules.js?v=20261119-02',
-  './hr.js?v=20261119-05',
+  './hr.js?v=20261119-06',
   './hr-time.js?v=20261119-03',
   './hr-time-compliance.js?v=20261119-08',
   './business-profiles.js?v=20261116-02'
