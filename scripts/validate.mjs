@@ -323,7 +323,7 @@ assert.ok(html.includes("linkType==='invite'") && html.includes("api('/auth/v1/u
 assert.ok(inviteFunction.includes('APP_ORIGIN = "https://micaellyroger3-hue.github.io"') && inviteFunction.includes('redirectTo: APP_REDIRECT'), 'Invitation function must restrict browser origin and redirect to the deployed app');
 
 
-const employeeSelfReadMigration = fs.readFileSync('supabase/migrations/20261123100000_hr_employee_self_read.sql', 'utf8').toLowerCase().replace(/\\s+/g, ' ');
+const employeeSelfReadMigration = fs.readFileSync('supabase/migrations/20261123100000_hr_employee_self_read.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
 assert.ok(employeeSelfReadMigration.includes('drop policy if exists employees_members_select'), 'Legacy broad employee read policy must be replaced');
 assert.ok(employeeSelfReadMigration.includes("role = 'employee'") && employeeSelfReadMigration.includes('auth_user_id = (select auth.uid())'), 'Employee role must read only its own linked employee record');
 assert.ok(employeeSelfReadMigration.includes("array['owner','admin','manager']"), 'Owner, admin and manager must retain company roster access');
