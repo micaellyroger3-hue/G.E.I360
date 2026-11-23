@@ -120,7 +120,7 @@ BEGIN
       policy_name, item.table_name, item.module_code, item.module_code
     );
   END LOOP;
-END
+END;
 $module_gates$;
 
 DROP POLICY IF EXISTS gei_module_gate_gei_records ON public.gei_records;
