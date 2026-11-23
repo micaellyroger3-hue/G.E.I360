@@ -331,7 +331,8 @@ function geiPageIsEnabled(page) {
   if (page === 'employees' || page === 'timepayroll') return ['owner','admin'].includes(companyRole) && geiModuleEnabled('rh');
   if (page === 'timeclock') return ['owner','admin','manager'].includes(companyRole) && geiModuleEnabled('rh');
   const pairs = {
-    home:'dashboard', products:'produtos_servicos', stock:'estoque', suppliers:'cadastros',
+    home:'dashboard', employees:'rh', timeclock:'rh', timepayroll:'rh',
+    products:'produtos_servicos', stock:'estoque', suppliers:'cadastros',
     customers:'cadastros', categories:'cadastros', sales:'vendas', purchases:'compras',
     finance:'financeiro', documents:'fiscal', reports:'relatorios'
   };
