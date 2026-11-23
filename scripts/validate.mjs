@@ -345,3 +345,13 @@ const privateHelpersMigration = fs.readFileSync('supabase/migrations/20261123101
 assert.ok(privateHelpersMigration.includes('alter function public.has_company_role') && privateHelpersMigration.includes('set schema private'), 'RLS helper must move out of exposed public schema');
 assert.ok(privateHelpersMigration.includes('security invoker') && privateHelpersMigration.includes('select private.has_company_role') && privateHelpersMigration.includes('select private.is_company_member'), 'Public helper compatibility functions must be SECURITY INVOKER wrappers');
 assert.ok(privateHelpersMigration.includes('revoke execute on functions from public, anon, authenticated'), 'Future private helper functions must not receive default execution grants');
+
+
+const roleModuleMigration = fs.readFileSync('supabase/migrations/20261123102000_enforce_employee_role_and_module_access.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
+assert.ok(roleModuleMigration.includes('private.is_company_module_enabled'), 'Module access must be enforced in the database');
+assert.ok(roleModuleMigration.includes('as restrictive for all to authenticated'), 'Module switches must be enforced by restrictive RLS policies');
+assert.ok(roleModuleMigration.includes("array['owner','admin','manager','viewer']"), 'Employee role must not read company-wide business data');
+assert.ok(roleModuleMigration.includes('company_documents_member_read') && roleModuleMigration.includes('gei_module_gate_company_documents'), 'Private document storage must enforce role and module access');
+assert.ok(modules.includes("if (companyRole === 'employee')") && modules.includes("if (item.is_core === true) return true"), 'Employee navigation and core-module rules must fail closed');
+assert.ok(hrTime.includes("geiPageIsEnabled('timeclock')"), 'Timeclock must enforce the RH module switch');
+assert.ok(hrTimeCompliance.includes("geiPageIsEnabled('timepayroll')"), 'Time payroll must enforce the RH module switch');
