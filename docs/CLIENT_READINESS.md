@@ -2,7 +2,7 @@
 
 ## Estado verificado em 23/11/2026
 
-- PRs de segurança e navegação #31, #36, #37 e #38 integrados à branch main.
+- PRs de segurança e navegação #31, #36, #37, #38, #40 e #41 integrados à branch main.
 - CI de validação passou após as alterações.
 - Supabase: 33/33 tabelas públicas com RLS habilitado.
 - Políticas restritivas de módulo: 26 tabelas; desativar módulo bloqueia consultas REST diretas sem apagar registros.
