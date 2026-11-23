@@ -368,3 +368,8 @@ assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(p_comp
 assert.ok(roleModuleMigration.includes("and e.status = 'active'") && roleModuleMigration.includes("and e.employment_status <> 'inativo'"), 'Employee account claim must reject inactive employee records');
 
 assert.ok(modules.includes("document.addEventListener('visibilitychange'") && modules.includes('getSupportedFormats') && modules.includes("field.dispatchEvent(new Event('input'"), 'Barcode scanner must adapt to supported formats and stop camera when hidden');
+
+
+const sequenceMigration = fs.readFileSync('supabase/migrations/20261123113000_revoke_public_sequence_privileges.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
+assert.ok(sequenceMigration.includes('revoke all on sequence') && sequenceMigration.includes('from public, anon, authenticated'), 'Legacy public sequence grants must be revoked');
+assert.ok(sequenceMigration.includes('grant usage on sequence') && sequenceMigration.includes('to authenticated'), 'Authenticated inserts must retain only required sequence usage');
