@@ -360,3 +360,9 @@ assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(p_comp
 assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(v_employee.company_id, 'rh')") && roleModuleMigration.includes("private.is_company_module_enabled(e.company_id, 'rh')"), 'Timeclock and employee claim RPCs must enforce the RH module switch');
 assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(p_company_id, 'estoque')"), 'Stock RPCs must enforce the stock module switch');
 assert.ok(modules.includes("if (!geiPageIsEnabled(page))") && modules.includes("return setPage('home')"), 'Page access must fail closed and restore the dashboard after catalog load');
+
+for (const rpc of ['create_sale_cart','receive_purchase_cart','record_stock_movement','hr_register_time_punch','hr_claim_employee_account']) {
+  assert.ok(roleModuleMigration.includes('create or replace function public.' + rpc), 'Module migration must preserve and harden RPC: ' + rpc);
+}
+assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(p_company_id, 'produtos_servicos')"), 'Sales and purchasing RPCs must enforce product module availability');
+assert.ok(roleModuleMigration.includes("and e.status = 'active'") && roleModuleMigration.includes("and e.employment_status <> 'inativo'"), 'Employee account claim must reject inactive employee records');
