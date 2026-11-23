@@ -7,7 +7,7 @@
 
 ## Convite de acesso
 - Edge Function: `invite-company-member`.
-- Estado no Supabase: **ACTIVE**, versão 4, com `verify_jwt=false` no gateway e autenticação obrigatória pelo middleware `@supabase/server@1.9.2` em modo `auth: user`.
+- Estado no Supabase: **ACTIVE**, versão 5, com `verify_jwt=true` no gateway e autenticação obrigatória pelo middleware `@supabase/server@1.9.2` em modo `auth: user`.
 - A interface apresenta **Convidar acesso** nas fichas que possuem e-mail, somente para owner/admin.
 - O convite exige confirmação explícita na tela e cria vínculo na empresa com papel inicial `employee`.
 - O middleware `@supabase/server@1.9.2` valida o JWT via JWKS; a função confirma que o usuário atual é membro ativo da empresa e exige papel owner ou admin. Managers, employees e viewers não podem chamar o fluxo.
@@ -18,9 +18,13 @@
 
 ## Segurança
 - A função exige JWT válido e valida a associação e o papel no contexto do próprio usuário antes de usar privilégios administrativos.
-- O middleware usa `SUPABASE_SECRET_KEYS` somente no contexto `supabaseAdmin` da Edge Function. Nenhuma chave administrativa é enviada ao navegador ou armazenada no repositório. O `verify_jwt` do gateway fica desativado para esta função porque a validação do JWT é feita pelo middleware `auth: user`.
+- O middleware usa `SUPABASE_SECRET_KEYS` somente no contexto `supabaseAdmin` da Edge Function. Nenhuma chave administrativa é enviada ao navegador ou armazenada no repositório. O gateway e o middleware `auth: user` validam o JWT em camadas complementares.
 - O papel atribuído por este fluxo é sempre `employee`; a função não permite criar owners ou admins.
 - A função não altera fichas de outros funcionários nem dados operacionais da empresa.
+
+## Acesso à ficha e dados de equipe
+- A leitura da tabela `employees` é limitada por RLS: owner/admin/manager ativos veem a equipe da empresa; o papel `employee` vê somente a ficha vinculada ao próprio `auth.uid()`.
+- O funcionário precisa concluir o vínculo da conta à ficha para acessar os próprios dados de jornada; sem vínculo, não recebe a lista da equipe.
 
 ## Validação e limites
 - A Edge Function foi implantada e está ativa. A validação automatizada do repositório verifica o código, as permissões, a configuração de autenticação e a presença do fluxo no frontend.
