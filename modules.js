@@ -75,7 +75,64 @@ async function erpRenderReports(){
 async function erpRenderPurchases(options={}){const readOnly=!!options.readOnly;erpPage='purchases';try{const [products,suppliers,orders,orderItems]=await Promise.all([erpLoad('products'),erpLoad('suppliers'),erpLoad('purchase_orders'),erpLoad('purchase_order_items')]);const activeProducts=products.filter(p=>p.active);let cart=[];const productOptions=activeProducts.map(p=>'<option value="'+p.id+'" data-stock="'+p.stock_quantity+'">'+esc(p.name)+' — saldo '+p.stock_quantity+'</option>').join('');erpPageShell('Compras e recebimento','Monte um recebimento com vários produtos. O estoque é atualizado em uma única operação.','<div class="card '+(readOnly?'hidden':'')+'"><form id="purchaseForm"><div class="grid"><div class="field"><label>Fornecedor</label><select name="supplier_id"><option value="">Não informado</option>'+suppliers.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('')+'</select></div><div class="field"><label>Produto</label><select name="product_id" required>'+(productOptions||'<option value="">Cadastre produtos ativos primeiro</option>')+'</select></div><div class="field"><label>Quantidade recebida</label><input name="quantity" type="number" min="0.001" step="0.001" value="1" required></div><div class="field"><label>Custo unitário (R$)</label><input name="unit_cost" type="number" min="0" step="0.01" value="0" required></div></div><button type="button" id="addPurchaseItem" '+(!activeProducts.length?'disabled':'')+'>Adicionar ao recebimento</button><div id="purchaseCart" class="tablewrap" style="margin-top:14px"></div><div class="field" style="margin-top:12px"><label>Observações</label><input name="notes"></div><div id="purchaseTotals" class="notice">Total: R$ 0,00</div><button id="finishPurchase" '+(!activeProducts.length?'disabled':'')+'>Confirmar recebimento e atualizar estoque</button></form></div><div id="purchaseTable"></div>');const renderCart=()=>{const el=$('purchaseCart'),totals=$('purchaseTotals');if(!el||!totals)return;const total=cart.reduce((sum,x)=>sum+x.quantity*x.unit_cost,0);el.innerHTML=cart.length?'<table><thead><tr><th>Produto</th><th>Qtd.</th><th>Custo unit.</th><th>Total</th><th></th></tr></thead><tbody>'+cart.map((x,i)=>'<tr><td>'+esc(x.name)+'</td><td>'+x.quantity+'</td><td>'+erpMoney(x.unit_cost)+'</td><td>'+erpMoney(x.quantity*x.unit_cost)+'</td><td><button type="button" data-remove="'+i+'" class="secondary">Remover</button></td></tr>').join('')+'</tbody></table>':'<div class="empty">Nenhum produto adicionado.</div>';totals.textContent='Total do recebimento: '+erpMoney(total);el.querySelectorAll('[data-remove]').forEach(btn=>btn.onclick=()=>{cart.splice(Number(btn.dataset.remove),1);renderCart()})};if(!readOnly){const form=$('purchaseForm');$('addPurchaseItem').onclick=()=>{const f=new FormData(form),product=activeProducts.find(p=>p.id===f.get('product_id')),qty=Number(f.get('quantity')),cost=Number(f.get('unit_cost'));if(!product||!Number.isFinite(qty)||qty<=0||!Number.isFinite(cost)||cost<0){message($('view'),'Confira produto, quantidade e custo.');return}const existing=cart.find(x=>x.product_id===product.id);if(existing){const nextQty=existing.quantity+qty;existing.unit_cost=(existing.quantity*existing.unit_cost+qty*cost)/nextQty;existing.quantity=nextQty}else cart.push({product_id:product.id,name:product.name,quantity:qty,unit_cost:cost});renderCart()};form.onsubmit=async e=>{e.preventDefault();if(!cart.length){message($('view'),'Adicione pelo menos um produto ao recebimento.');return}const f=new FormData(form),btn=$('finishPurchase');btn.disabled=true;try{await api('/rest/v1/rpc/receive_purchase_cart',{method:'POST',body:{p_company_id:companyId,p_supplier_id:f.get('supplier_id')||null,p_items:cart.map(x=>({product_id:x.product_id,quantity:x.quantity,unit_cost:x.unit_cost})),p_notes:f.get('notes')||null}});message($('view'),'Recebimento registrado e estoque atualizado.');await erpRenderPurchases()}catch(err){message($('view'),'Não foi possível registrar o recebimento: '+err.message)}finally{if($('finishPurchase'))$('finishPurchase').disabled=false}};renderCart()}$('purchaseTable').innerHTML=orders.length?'<div class="tablewrap"><table><thead><tr><th>Pedido</th><th>Data</th><th>Itens recebidos</th><th>Total</th><th>Situação</th></tr></thead><tbody>'+orders.map(o=>'<tr><td>#'+o.order_number+'</td><td>'+erpDisplayDate(erpLocalDateFromTimestamp(o.received_at||o.created_at))+'</td><td>'+orderItems.filter(x=>x.purchase_order_id===o.id).map(x=>{const p=products.find(y=>y.id===x.product_id);return esc(p?p.name:'Produto')+' × '+x.quantity}).join('<br>')+'</td><td>'+erpMoney(o.total)+'</td><td>'+erpFmt(o.status)+'</td></tr>').join('')+'</tbody></table></div>':'<div class="card empty">Nenhuma compra registrada.</div>'}catch(e){erpPageShell('Compras e recebimento','Entrada de mercadorias','<div class="notice">Cadastre produtos primeiro. '+esc(e.message)+'</div>')}}
 let erpBarcodeStream=null,erpBarcodeTimer=null;
 function erpStopBarcode(){if(erpBarcodeTimer){clearInterval(erpBarcodeTimer);erpBarcodeTimer=null}if(erpBarcodeStream){erpBarcodeStream.getTracks().forEach(t=>t.stop());erpBarcodeStream=null}const v=$('barcodeVideo');if(v){v.pause();v.srcObject=null;v.classList.add('hidden')}}
-async function erpInitBarcode(){const b=$('scanBarcode');if(!b)return;b.onclick=async()=>{const status=$('barcodeStatus'),video=$('barcodeVideo'),field=$('erpForm').elements.barcode;if(!('BarcodeDetector' in window)){status.textContent='Leitura automática indisponível neste navegador. Digite o código ou use leitor USB/Bluetooth.';return}try{erpStopBarcode();const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf']});erpBarcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});video.srcObject=erpBarcodeStream;video.classList.remove('hidden');await video.play();status.textContent='Aponte a câmera para o código.';erpBarcodeTimer=setInterval(async()=>{try{const found=await detector.detect(video);if(found.length){field.value=found[0].rawValue;status.textContent='Código lido: '+found[0].rawValue;erpStopBarcode()}}catch(e){}},350)}catch(e){status.textContent='Câmera indisponível. Verifique a permissão do navegador.';erpStopBarcode()}}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)erpStopBarcode()});
+document.addEventListener('pagehide',erpStopBarcode);
+async function erpInitBarcode(){
+ const b=$('scanBarcode');
+ if(!b)return;
+ b.onclick=async()=>{
+  const status=$('barcodeStatus'),video=$('barcodeVideo'),form=$('erpForm');
+  const field=form&&form.elements?form.elements.barcode:null;
+  if(!status||!video||!field)return;
+  if(!('BarcodeDetector' in window)){
+   status.textContent='Leitura automática indisponível neste navegador. Digite o código ou use leitor USB/Bluetooth.';
+   return;
+  }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+   status.textContent='Este navegador não disponibiliza acesso à câmera. Digite o código ou use leitor USB/Bluetooth.';
+   return;
+  }
+  try{
+   erpStopBarcode();
+   let detector;
+   if(typeof window.BarcodeDetector.getSupportedFormats==='function'){
+    const supported=await window.BarcodeDetector.getSupportedFormats();
+    const desired=['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf'];
+    const formats=desired.filter(format=>supported.includes(format));
+    detector=formats.length?new window.BarcodeDetector({formats}):new window.BarcodeDetector();
+   }else{
+    detector=new window.BarcodeDetector();
+   }
+   erpBarcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+   video.srcObject=erpBarcodeStream;
+   video.muted=true;
+   video.setAttribute('playsinline','');
+   video.classList.remove('hidden');
+   await video.play();
+   status.textContent='Aponte a câmera para o código.';
+   let scanning=false;
+   erpBarcodeTimer=setInterval(async()=>{
+    if(scanning||!video.isConnected||video.readyState<2)return;
+    scanning=true;
+    try{
+     const found=await detector.detect(video);
+     const raw=found&&found[0]?found[0].rawValue:null;
+     if(raw&&field.isConnected){
+      field.value=raw;
+      field.dispatchEvent(new Event('input',{bubbles:true}));
+      status.textContent='Código lido: '+raw;
+      erpStopBarcode();
+     }
+    }catch(e){}finally{scanning=false}
+   },350);
+  }catch(e){
+   status.textContent=e&&e.name==='NotAllowedError'
+    ?'Permita o acesso à câmera nas configurações do navegador e tente novamente.'
+    :'Câmera indisponível. Verifique a permissão do navegador.';
+   erpStopBarcode();
+  }
+ };
+}
 
 
 function erpMonthKey(date){const d=new Date(date+'T12:00:00');return Number.isNaN(d.getTime())?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
