@@ -180,17 +180,11 @@ IS 'Checks active company membership and the company-specific module switch; use
 
 
 -- SECURITY DEFINER RPCs bypass table RLS, so they enforce module switches directly.
-CREATE OR REPLACE FUNCTION public.create_sale_cart(
-  p_company_id uuid,
-  p_customer_id uuid,
-  p_items jsonb,
-  p_discount numeric DEFAULT 0,
-  p_notes text DEFAULT NULL::text
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO ''
+CREATE OR REPLACE FUNCTION public.create_sale_cart(p_company_id uuid, p_customer_id uuid, p_items jsonb, p_discount numeric DEFAULT 0, p_notes text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
 AS $function$
 declare
   v_user uuid := auth.uid();
@@ -216,8 +210,9 @@ begin
   end if;
 
   if not private.is_company_module_enabled(p_company_id, 'vendas')
-     or not private.is_company_module_enabled(p_company_id, 'produtos_servicos') then
-    raise exception 'Os módulos Vendas e Produtos e Serviços precisam estar habilitados.';
+     or not private.is_company_module_enabled(p_company_id, 'produtos_servicos')
+     or not private.is_company_module_enabled(p_company_id, 'estoque') then
+    raise exception 'Os módulos Vendas, Produtos e Serviços e Estoque precisam estar habilitados.';
   end if;
 
   if jsonb_typeof(p_items) is distinct from 'array'
@@ -238,6 +233,7 @@ begin
     raise exception 'Cliente não pertence a esta empresa.';
   end if;
 
+  -- Bloqueia produtos em ordem determinística.
   for v_item in
     select value
     from jsonb_array_elements(p_items)
@@ -278,20 +274,37 @@ begin
         v_product.stock_quantity;
     end if;
 
-    v_subtotal := v_subtotal + round(v_quantity * v_product.sale_price,2);
+    v_subtotal := v_subtotal
+      + round(v_quantity * v_product.sale_price,2);
+
     v_items_count := v_items_count + 1;
   end loop;
 
   v_total := v_subtotal - p_discount;
+
   if v_total < 0 then
     raise exception 'O desconto não pode superar o subtotal.';
   end if;
 
   insert into public.sales(
-    company_id,customer_id,status,subtotal,discount,total,notes,created_by
+    company_id,
+    customer_id,
+    status,
+    subtotal,
+    discount,
+    total,
+    notes,
+    created_by
   )
   values (
-    p_company_id,p_customer_id,'confirmed',v_subtotal,p_discount,v_total,p_notes,v_user
+    p_company_id,
+    p_customer_id,
+    'confirmed',
+    v_subtotal,
+    p_discount,
+    v_total,
+    p_notes,
+    v_user
   )
   returning * into v_sale;
 
@@ -310,17 +323,39 @@ begin
       and company_id = p_company_id;
 
     insert into public.sale_items(
-      company_id,sale_id,product_id,description,quantity,unit_price,created_by
+      company_id,
+      sale_id,
+      product_id,
+      description,
+      quantity,
+      unit_price,
+      created_by
     )
     values (
-      p_company_id,v_sale.id,v_product.id,v_product.name,v_quantity,v_product.sale_price,v_user
+      p_company_id,
+      v_sale.id,
+      v_product.id,
+      v_product.name,
+      v_quantity,
+      v_product.sale_price,
+      v_user
     );
 
     insert into public.stock_movements(
-      company_id,product_id,movement_type,quantity,note,created_by
+      company_id,
+      product_id,
+      movement_type,
+      quantity,
+      note,
+      created_by
     )
     values (
-      p_company_id,v_product.id,'out',v_quantity,'Venda #' || v_sale.sale_number,v_user
+      p_company_id,
+      v_product.id,
+      'out',
+      v_quantity,
+      'Venda #' || v_sale.sale_number,
+      v_user
     );
   end loop;
 
@@ -333,18 +368,14 @@ begin
     'total',v_total
   );
 end;
-$function$;
+$function$
 
-CREATE OR REPLACE FUNCTION public.receive_purchase_cart(
-  p_company_id uuid,
-  p_supplier_id uuid,
-  p_items jsonb,
-  p_notes text DEFAULT NULL::text
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO ''
+
+CREATE OR REPLACE FUNCTION public.receive_purchase_cart(p_company_id uuid, p_supplier_id uuid, p_items jsonb, p_notes text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
 AS $function$
 declare
   v_user uuid := auth.uid();
@@ -408,7 +439,10 @@ begin
 
     v_seen := array_append(v_seen,v_product_id);
 
-    if v_quantity is null or v_quantity <= 0 or v_unit_cost is null or v_unit_cost < 0 then
+    if v_quantity is null
+       or v_quantity <= 0
+       or v_unit_cost is null
+       or v_unit_cost < 0 then
       raise exception 'Quantidade ou custo inválido.';
     end if;
 
@@ -429,10 +463,22 @@ begin
   end loop;
 
   insert into public.purchase_orders(
-    company_id,supplier_id,status,total,notes,received_at,created_by
+    company_id,
+    supplier_id,
+    status,
+    total,
+    notes,
+    received_at,
+    created_by
   )
   values (
-    p_company_id,p_supplier_id,'received',v_total,p_notes,now(),v_user
+    p_company_id,
+    p_supplier_id,
+    'received',
+    v_total,
+    p_notes,
+    now(),
+    v_user
   )
   returning * into v_order;
 
@@ -452,18 +498,39 @@ begin
       and company_id = p_company_id;
 
     insert into public.purchase_order_items(
-      company_id,purchase_order_id,product_id,quantity,unit_cost,created_by
+      company_id,
+      purchase_order_id,
+      product_id,
+      quantity,
+      unit_cost,
+      created_by
     )
     values (
-      p_company_id,v_order.id,v_product_id,v_quantity,v_unit_cost,v_user
+      p_company_id,
+      v_order.id,
+      v_product_id,
+      v_quantity,
+      v_unit_cost,
+      v_user
     );
 
     insert into public.stock_movements(
-      company_id,product_id,movement_type,quantity,unit_cost,note,created_by
+      company_id,
+      product_id,
+      movement_type,
+      quantity,
+      unit_cost,
+      note,
+      created_by
     )
     values (
-      p_company_id,v_product_id,'in',v_quantity,v_unit_cost,
-      'Recebimento da compra #' || v_order.order_number,v_user
+      p_company_id,
+      v_product_id,
+      'in',
+      v_quantity,
+      v_unit_cost,
+      'Recebimento da compra #' || v_order.order_number,
+      v_user
     );
   end loop;
 
@@ -474,20 +541,14 @@ begin
     'total',v_total
   );
 end;
-$function$;
+$function$
 
-CREATE OR REPLACE FUNCTION public.record_stock_movement(
-  p_company_id uuid,
-  p_product_id uuid,
-  p_movement_type text,
-  p_quantity numeric,
-  p_unit_cost numeric DEFAULT 0,
-  p_note text DEFAULT NULL::text
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO ''
+
+CREATE OR REPLACE FUNCTION public.record_stock_movement(p_company_id uuid, p_product_id uuid, p_movement_type text, p_quantity numeric, p_unit_cost numeric DEFAULT 0, p_note text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
 AS $function$
 declare
   v_user uuid := auth.uid();
@@ -514,7 +575,8 @@ begin
     raise exception 'Tipo de movimentação inválido.';
   end if;
 
-  if p_quantity is null or p_quantity < 0
+  if p_quantity is null
+     or p_quantity < 0
      or (p_movement_type <> 'adjustment' and p_quantity = 0) then
     raise exception 'Quantidade inválida.';
   end if;
@@ -534,15 +596,29 @@ begin
     raise exception 'Produto não encontrado nesta empresa.';
   end if;
 
-  if p_movement_type = 'out' and v_product.stock_quantity < p_quantity then
-    raise exception 'Estoque insuficiente. Saldo atual: %',v_product.stock_quantity;
+  if p_movement_type = 'out'
+     and v_product.stock_quantity < p_quantity then
+    raise exception 'Estoque insuficiente. Saldo atual: %',
+      v_product.stock_quantity;
   end if;
 
   insert into public.stock_movements(
-    company_id,product_id,movement_type,quantity,unit_cost,note,created_by
+    company_id,
+    product_id,
+    movement_type,
+    quantity,
+    unit_cost,
+    note,
+    created_by
   )
   values (
-    p_company_id,p_product_id,p_movement_type,p_quantity,p_unit_cost,p_note,v_user
+    p_company_id,
+    p_product_id,
+    p_movement_type,
+    p_quantity,
+    p_unit_cost,
+    p_note,
+    v_user
   )
   returning * into v_movement;
 
@@ -557,16 +633,14 @@ begin
     )
   );
 end;
-$function$;
+$function$
 
-CREATE OR REPLACE FUNCTION public.hr_register_time_punch(
-  p_employee_id uuid,
-  p_punch_type text
-)
-RETURNS public.hr_time_punches
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO ''
+
+CREATE OR REPLACE FUNCTION public.hr_register_time_punch(p_employee_id uuid, p_punch_type text)
+ RETURNS hr_time_punches
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
 AS $function$
 declare
   v_employee public.employees%rowtype;
@@ -584,9 +658,7 @@ begin
     and e.employment_status <> 'inativo'
     and e.status = 'active';
 
-  if not found then
-    raise exception 'Funcionário não encontrado ou inativo.';
-  end if;
+  if not found then raise exception 'Funcionário não encontrado ou inativo.'; end if;
 
   if not private.is_company_module_enabled(v_employee.company_id, 'rh') then
     raise exception 'O módulo de RH está desativado para esta empresa.';
@@ -631,13 +703,14 @@ begin
 
   return v_result;
 end;
-$function$;
+$function$
+
 
 CREATE OR REPLACE FUNCTION public.hr_claim_employee_account()
-RETURNS integer
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO ''
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
 AS $function$
 declare
   v_email text;
@@ -669,6 +742,7 @@ begin
   get diagnostics v_count = row_count;
   return v_count;
 end;
-$function$;
+$function$
+
 
 COMMIT;
