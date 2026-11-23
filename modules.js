@@ -437,7 +437,9 @@ render = async function() {
     if (geiModuleEnabled('rh')) return setPage('timeclock');
     if (geiModuleEnabled('servicos') || geiModuleEnabled('industria')) return setPage('sector');
     erpPageShell('Acesso restrito','Nenhum módulo de trabalho está habilitado para seu perfil.','<div class="notice">Peça ao proprietário ou administrador para habilitar Jornada e Ponto ou Operação do ramo.</div>');
+    return;
   }
+  if (geiModuleEnabled('dashboard')) return setPage('home');
 };
 const geiOriginalSetPageWithModules = setPage;
 setPage = async function(page) {
