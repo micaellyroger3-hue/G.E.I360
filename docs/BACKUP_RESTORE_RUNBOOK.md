@@ -2,6 +2,27 @@
 
 ## Estado atual e limites do plano
 
+## Gate obrigatório: reconciliação do histórico de migrations
+
+Auditoria de 23/11/2026 encontrou:
+- Histórico remoto do Supabase: **36 versões**.
+- Repositório: **39 arquivos SQL** em `supabase/migrations`.
+- 3 nomes remotos sem arquivo local: `foreign_key_indexes_rls_tuning`, `deduplicate_category_policies`, `hr_timekeeping_and_hourly_pay`.
+- 5 arquivos locais sem nome correspondente no histórico: `employees`, `erp_modules`, `finance_links`, `protect_linked_finance`, `hr_timekeeping`.
+- 23 nomes coincidentes com prefixos de versão diferentes.
+- Dois arquivos locais chamados `hr_time_calculation_and_closing` e um arquivo `hr_timekeeping` compartilham o prefixo `20261119170000`; o remoto registra apenas uma versão de cálculo/fechamento e outra de ponto/folha.
+
+**Não execute** `supabase db push`, `supabase db reset --linked` ou `supabase migration repair` antes de revisar a matriz em `docs/MIGRATION_HISTORY_RECONCILIATION.md), fazer backup e confirmar quais arquivos representam exatamente cada migration remota. A correção do histórico altera metadados de implantação e pode fazer o CLI reaplicar SQL; não foi feita nesta revisão.
+
+Depois de reconciliar em computador:
+1. Rode `supabase migration list` e compare com a matriz.
+2. Recupere/identifique o SQL das três migrations remotas sem arquivo.
+3. Confirme quais arquivos locais são legados/superseded; não os apague antes de comprovar que seus efeitos estão cobertos.
+4. Ajuste os prefixos/arquivos em branch e revise o diff.
+5. Rode `supabase db push --dry-run`; não deve propor recriar objetos existentes.
+6. Só então execute o fluxo de restore em projeto separado.
+
+
 A organização está no plano Free. O Supabase informa que:
 - projetos Free não têm backups automáticos gerenciados para download;
 - o Free não inclui branching;
