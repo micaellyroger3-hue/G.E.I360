@@ -2,7 +2,7 @@
 
 ## Estado verificado em 23/11/2026
 
-- PRs de segurança e navegação #31, #36, #37 e #38 integrados à branch main.
+- PRs de segurança e navegação #31, #36, #37, #38, #40 e #41 integrados à branch main.
 - CI de validação passou após as alterações.
 - Supabase: 33/33 tabelas públicas com RLS habilitado.
 - Políticas restritivas de módulo: 26 tabelas; desativar módulo bloqueia consultas REST diretas sem apagar registros.
@@ -17,11 +17,12 @@
 
 ## Pendências que impedem liberar clientes pagantes
 
-1. **Backup e restauração:** ainda não foi executado um backup lógico completo nem uma restauração em projeto separado. A organização está no plano Free; não há backups gerenciados para download nem branching. O CLI exige computador, Docker e psql. Storage objects e configurações Auth/Edge Functions precisam de cópia separada.
-2. **Proteção de senhas vazadas:** permanece desativada porque o recurso não está incluído no plano Free. O Supabase informa disponibilidade no Pro ou superior.
-3. **Homologação no aparelho:** instalação PWA, atualização de cache, modo avião, câmera/scanner, upload e download ainda precisam ser confirmados no Android real.
-4. **Convite de funcionário:** função de servidor autenticada e protegida por papel foi revisada; nenhum convite real foi enviado. O fluxo completo deve ser testado com endereço de teste e autorização do proprietário.
-5. **Validação operacional/fiscal:** validar documentos e relatórios com dados de teste e confirmar limites e obrigações fiscais antes de anunciar esses recursos.
+1. **Histórico de migrations:** 36 versões remotas e 39 arquivos locais não estão sincronizados; existem 3 migrations remotas sem arquivo local, 5 arquivos locais sem nome correspondente no histórico e prefixos de versão diferentes/duplicados. Não executar `supabase db push` nem `db reset --linked` antes da reconciliação. 
+2. **Backup e restauração:** ainda não foi executado um backup lógico completo nem uma restauração em projeto separado. A organização está no plano Free; não há backups gerenciados para download nem branching. O CLI exige computador, Docker e psql. Storage objects e configurações Auth/Edge Functions precisam de cópia separada.
+3. **Proteção de senhas vazadas:** permanece desativada porque o recurso não está incluído no plano Free. O Supabase informa disponibilidade no Pro ou superior.
+4. **Homologação no aparelho:** instalação PWA, atualização de cache, modo avião, câmera/scanner, upload e download ainda precisam ser confirmados no Android real.
+5. **Convite de funcionário:** função de servidor autenticada e protegida por papel foi revisada; nenhum convite real foi enviado. O fluxo completo deve ser testado com endereço de teste e autorização do proprietário.
+6. **Validação operacional/fiscal:** validar documentos e relatórios com dados de teste e confirmar limites e obrigações fiscais antes de anunciar esses recursos.
 
 ## Segurança antes de convidar clientes
 

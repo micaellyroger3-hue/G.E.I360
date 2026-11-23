@@ -1,30 +1,21 @@
 -- G.E.I360 | ARQUIVO DESATIVADO POR SEGURANÇA
 -- NÃO EXECUTE COMO INSTALADOR.
 --
--- O projeto Supabase alvo já possuía schema e dados antes desta revisão,
--- mas seu histórico de migrations estava vazio. A sequência histórica do
--- repositório não corresponde integralmente ao schema preexistente.
+-- Estado verificado em 23/11/2026:
+-- - histórico remoto Supabase: 36 migrations;
+-- - repositório: 39 arquivos em supabase/migrations;
+-- - 3 nomes remotos sem arquivo local, 5 arquivos locais sem nome remoto;
+-- - vários prefixos de versão diferentes e arquivos locais duplicados.
 --
--- Executar o antigo pacote consolidado poderia ignorar colunas já existentes,
--- duplicar políticas/constraints ou falhar em objetos com formatos diferentes.
--- O banco foi corrigido por migrations direcionadas, registradas no Supabase.
+-- O schema e os dados de produção estão ativos, mas o histórico local/remoto
+-- precisa ser reconciliado antes de qualquer db push, reset --linked ou restore.
+-- O antigo pacote consolidado não é uma fonte confiável para recriar produção.
+-- A baseline de privilégios foi aplicada pela migration api_privilege_hardening;
+-- correções posteriores estão nas migrations direcionadas do diretório migrations.
 --
--- Migrations aplicadas e verificadas:
--- company_business_profiles
--- integrity_hardening
--- product_categories
--- product_barcode_integrity
--- employee_integrity
--- foreign_key_indexes_rls_tuning
--- deduplicate_category_policies
--- api_privilege_hardening
---
--- Antes de qualquer nova migration:
--- 1. Faça backup.
--- 2. Consulte Supabase > Database > Migrations.
--- 3. Compare o schema real com o arquivo específico da migration.
--- 4. Faça preflight de dados, constraints, colunas e políticas.
--- 5. Aplique somente a migration compatível e teste em seguida.
+-- Não foram alterados dados ou histórico de migrations nesta auditoria.
+-- Consulte docs/MIGRATION_HISTORY_RECONCILIATION.md e
+-- docs/BACKUP_RESTORE_RUNBOOK.md antes de qualquer operação.
 --
 -- Esta consulta é apenas um marcador inofensivo para que o arquivo continue
 -- válido como SQL; ela não altera o banco.
