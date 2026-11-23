@@ -10,9 +10,9 @@ Auditoria de 23/11/2026 encontrou:
 - 3 nomes remotos sem arquivo local: `foreign_key_indexes_rls_tuning`, `deduplicate_category_policies`, `hr_timekeeping_and_hourly_pay`.
 - 5 arquivos locais sem nome correspondente no histórico: `employees`, `erp_modules`, `finance_links`, `protect_linked_finance`, `hr_timekeeping`.
 - 23 nomes coincidentes com prefixos de versão diferentes.
-- Dois arquivos locais chamados `hr_time_calculation_and_closing` e um arquivo `hr_timekeeping` compartilham o prefixo `20261119170000`; o remoto registra apenas uma versão de cálculo/fechamento e outra de ponto/folha.
+- Dois arquivos locais chamados `hr_time_calculation_and_closing` usam os prefixos `20261119170000` e `20261119190000`; o arquivo `hr_timekeeping` também usa `20261119170000`, criando colisão de versão; o remoto registra apenas uma versão de cálculo/fechamento e outra de ponto/folha.
 
-**Não execute** `supabase db push`, `supabase db reset --linked` ou `supabase migration repair` antes de revisar a matriz em `docs/MIGRATION_HISTORY_RECONCILIATION.md), fazer backup e confirmar quais arquivos representam exatamente cada migration remota. A correção do histórico altera metadados de implantação e pode fazer o CLI reaplicar SQL; não foi feita nesta revisão.
+**Não execute** `supabase db push`, `supabase db reset --linked` ou `supabase migration repair` antes de revisar a matriz em `docs/MIGRATION_HISTORY_RECONCILIATION.md`), fazer backup e confirmar quais arquivos representam exatamente cada migration remota. A correção do histórico altera metadados de implantação e pode fazer o CLI reaplicar SQL; não foi feita nesta revisão.
 
 Depois de reconciliar em computador:
 1. Rode `supabase migration list` e compare com a matriz.
