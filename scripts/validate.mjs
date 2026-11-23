@@ -334,3 +334,14 @@ for (const statement of [
 ]) {
   assert.ok(privilegeMigration.includes(statement), 'Privilege hardening migration is missing: ' + statement);
 }
+
+
+const employeeSelfReadMigration = fs.readFileSync('supabase/migrations/20261123100000_hr_employee_self_read.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
+assert.ok(employeeSelfReadMigration.includes('drop policy if exists employees_members_select'), 'Legacy broad employee read policy must be replaced');
+assert.ok(employeeSelfReadMigration.includes("role = 'employee'") && employeeSelfReadMigration.includes('auth_user_id = (select auth.uid())'), 'Employee role must read only its own linked employee record');
+assert.ok(employeeSelfReadMigration.includes("array['owner','admin','manager']"), 'Owner, admin and manager must retain company roster access');
+
+const privateHelpersMigration = fs.readFileSync('supabase/migrations/20261123101000_move_rls_helpers_private.sql', 'utf8').toLowerCase();
+assert.ok(privateHelpersMigration.includes('alter function public.has_company_role') && privateHelpersMigration.includes('set schema private'), 'RLS helper must move out of exposed public schema');
+assert.ok(privateHelpersMigration.includes('security invoker') && privateHelpersMigration.includes('select private.has_company_role') && privateHelpersMigration.includes('select private.is_company_member'), 'Public helper compatibility functions must be SECURITY INVOKER wrappers');
+assert.ok(privateHelpersMigration.includes('revoke execute on functions from public, anon, authenticated'), 'Future private helper functions must not receive default execution grants');
