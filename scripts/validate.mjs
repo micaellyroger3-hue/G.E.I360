@@ -373,3 +373,12 @@ assert.ok(modules.includes("document.addEventListener('visibilitychange'") && mo
 const sequenceMigration = fs.readFileSync('supabase/migrations/20261123113000_revoke_public_sequence_privileges.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
 assert.ok(sequenceMigration.includes('revoke all on sequence') && sequenceMigration.includes('from public, anon, authenticated'), 'Legacy public sequence grants must be revoked');
 assert.ok(sequenceMigration.includes('grant usage on sequence') && sequenceMigration.includes('to authenticated'), 'Authenticated inserts must retain only required sequence usage');
+
+
+const privateRpcMigration = fs.readFileSync('supabase/migrations/20261123123000_move_privileged_rpcs_to_private.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
+for (const rpc of ['create_company','create_sale_cart','hr_claim_employee_account','hr_register_time_punch','receive_purchase_cart','record_stock_movement']) {
+  assert.ok(privateRpcMigration.includes('alter function public.' + rpc), 'Privileged RPC must be moved to private schema: ' + rpc);
+  assert.ok(privateRpcMigration.includes('create function public.' + rpc), 'Public RPC wrapper must be recreated: ' + rpc);
+  assert.ok(privateRpcMigration.includes('select private.' + rpc), 'Public RPC wrapper must call private implementation: ' + rpc);
+}
+assert.ok((privateRpcMigration.match(/security invoker/g) || []).length >= 6, 'All public RPC wrappers must be SECURITY INVOKER');
