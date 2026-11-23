@@ -355,3 +355,8 @@ assert.ok(roleModuleMigration.includes('company_documents_member_read') && roleM
 assert.ok(modules.includes("if (companyRole === 'employee')") && modules.includes("if (item.is_core === true) return true"), 'Employee navigation and core-module rules must fail closed');
 assert.ok(hrTime.includes("geiPageIsEnabled('timeclock')"), 'Timeclock must enforce the RH module switch');
 assert.ok(hrTimeCompliance.includes("geiPageIsEnabled('timepayroll')"), 'Time payroll must enforce the RH module switch');
+
+assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(p_company_id, 'vendas')") && roleModuleMigration.includes("private.is_company_module_enabled(p_company_id, 'compras')"), 'Privileged sales and purchase RPCs must enforce their module switches');
+assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(v_employee.company_id, 'rh')") && roleModuleMigration.includes("private.is_company_module_enabled(e.company_id, 'rh')"), 'Timeclock and employee claim RPCs must enforce the RH module switch');
+assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(p_company_id, 'estoque')"), 'Stock RPCs must enforce the stock module switch');
+assert.ok(modules.includes("if (!geiPageIsEnabled(page))") && modules.includes("return setPage('home')"), 'Page access must fail closed and restore the dashboard after catalog load');
