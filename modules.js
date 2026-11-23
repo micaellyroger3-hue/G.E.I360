@@ -302,6 +302,7 @@ let geiModuleLoadError = '';
 function geiModuleEnabled(code) {
   const item = geiModuleCatalog.find(x => x.code === code);
   if (!item || !item.is_available) return false;
+  if (item.is_core === true) return true;
   const assigned = geiCompanyModuleRows.find(x => x.module_code === code);
   return assigned ? assigned.is_enabled === true : item.is_available === true;
 }
@@ -319,16 +320,23 @@ async function geiLoadModuleAccess() {
   geiModuleLoadError = '';
 }
 function geiPageIsEnabled(page) {
+  if (!page) return false;
+  if (companyRole === 'employee') {
+    if (page === 'timeclock') return geiModuleEnabled('rh');
+    if (page === 'sector') return geiModuleEnabled('servicos') || geiModuleEnabled('industria');
+    return false;
+  }
   if (page === 'company') return true;
   if (page === 'sector') return geiModuleEnabled('servicos') || geiModuleEnabled('industria');
+  if (page === 'employees' || page === 'timepayroll') return ['owner','admin'].includes(companyRole) && geiModuleEnabled('rh');
+  if (page === 'timeclock') return ['owner','admin','manager'].includes(companyRole) && geiModuleEnabled('rh');
   const pairs = {
-    home:'dashboard', employees:'rh', timeclock:'rh', timepayroll:'rh', products:'produtos_servicos',
-    stock:'estoque', suppliers:'cadastros', customers:'cadastros',
-    categories:'cadastros', sales:'vendas', purchases:'compras',
+    home:'dashboard', products:'produtos_servicos', stock:'estoque', suppliers:'cadastros',
+    customers:'cadastros', categories:'cadastros', sales:'vendas', purchases:'compras',
     finance:'financeiro', documents:'fiscal', reports:'relatorios'
   };
   const code = pairs[page];
-  return !code || geiModuleEnabled(code);
+  return !!code && geiModuleEnabled(code);
 }
 function geiAddNavButton(nav, page) {
   const button = document.createElement('button');
@@ -339,18 +347,32 @@ function geiAddNavButton(nav, page) {
 }
 function geiRenderModuleNavigation() {
   const nav = document.querySelector('.nav');
-  if (!nav || !geiModuleCatalog.length) return;
+  if (!nav) return;
   const activePage = nav.querySelector('[data-page].active')?.dataset.page || 'home';
   nav.replaceChildren();
+  if (!geiModuleCatalog.length) return;
+  if (companyRole === 'employee') {
+    if (geiModuleEnabled('servicos') || geiModuleEnabled('industria')) geiAddNavButton(nav,'sector');
+    if (geiModuleEnabled('rh')) geiAddNavButton(nav,'timeclock');
+    nav.querySelectorAll('[data-page]').forEach(button => {
+      button.onclick = () => setPage(button.dataset.page);
+      button.classList.toggle('active',button.dataset.page===activePage);
+    });
+    return;
+  }
   if (geiModuleEnabled('dashboard')) geiAddNavButton(nav,'home');
   if (geiModuleEnabled('servicos') || geiModuleEnabled('industria')) geiAddNavButton(nav,'sector');
   geiAddNavButton(nav,'company');
-  const order = [
-    ['rh','employees'],['rh','timeclock'],['rh','timepayroll'],['produtos_servicos','products'],['estoque','stock'],
+  const order = [];
+  if (['owner','admin'].includes(companyRole)) order.push(['rh','employees']);
+  if (['owner','admin','manager'].includes(companyRole)) order.push(['rh','timeclock']);
+  if (['owner','admin'].includes(companyRole)) order.push(['rh','timepayroll']);
+  order.push(
+    ['produtos_servicos','products'],['estoque','stock'],
     ['cadastros','suppliers'],['cadastros','customers'],['cadastros','categories'],
     ['vendas','sales'],['compras','purchases'],['financeiro','finance'],
     ['fiscal','documents'],['relatorios','reports']
-  ];
+  );
   for (const [code,page] of order) {
     if (geiModuleEnabled(code)) geiAddNavButton(nav,page);
   }
@@ -411,12 +433,17 @@ const geiOriginalRenderWithModules = render;
 render = async function() {
   await geiOriginalRenderWithModules();
   await geiRefreshModuleNavigation();
+  if (companyRole === 'employee') {
+    if (geiModuleEnabled('rh')) return setPage('timeclock');
+    if (geiModuleEnabled('servicos') || geiModuleEnabled('industria')) return setPage('sector');
+    erpPageShell('Acesso restrito','Nenhum módulo de trabalho está habilitado para seu perfil.','<div class="notice">Peça ao proprietário ou administrador para habilitar Jornada e Ponto ou Operação do ramo.</div>');
+  }
 };
 const geiOriginalSetPageWithModules = setPage;
 setPage = async function(page) {
-  if (geiModuleCatalog.length && !geiPageIsEnabled(page)) {
+  if (!geiPageIsEnabled(page)) {
     erpStopBarcode();
-    erpPageShell('Módulo desativado','Esta área não está habilitada para a empresa selecionada.','<div class="notice">Peça ao proprietário ou administrador para ativar este módulo em Minha empresa.</div>');
+    erpPageShell('Acesso não permitido','Esta área não está habilitada para seu perfil ou para a empresa selecionada.','<div class="notice">Confira as permissões do seu perfil ou peça ao proprietário/administrador para habilitar o módulo.</div>');
     document.querySelectorAll('[data-page]').forEach(button => button.classList.toggle('active',button.dataset.page===page));
     return;
   }
