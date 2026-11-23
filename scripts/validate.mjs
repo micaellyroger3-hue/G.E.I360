@@ -325,14 +325,12 @@ assert.ok(inviteFunction.includes('APP_ORIGIN = "https://micaellyroger3-hue.gith
 
 // Database privilege hardening: prevent RLS-bypassing structural grants
 // and broad default grants from being inherited by future public objects.
-const privilegeMigration = fs.readFileSync('supabase/migrations/20261123090000_revoke_unsafe_default_privileges.sql', 'utf8').toLowerCase();
+const privilegeMigration = fs.readFileSync('supabase/migrations/20261123090000_revoke_unsafe_default_privileges.sql', 'utf8').toLowerCase().replace(/\\s+/g, ' ');
 for (const statement of [
-  'revoke truncate, references, trigger, maintain',
-  'on all tables in schema public from anon, authenticated',
-  'alter default privileges for role postgres in schema public',
-  'revoke all on tables from anon, authenticated',
-  'revoke all on sequences from anon, authenticated',
-  'revoke execute on functions from anon, authenticated'
+  'revoke truncate, references, trigger, maintain on all tables in schema public from anon, authenticated',
+  'alter default privileges for role postgres in schema public revoke all on tables from anon, authenticated',
+  'alter default privileges for role postgres in schema public revoke all on sequences from anon, authenticated',
+  'alter default privileges for role postgres in schema public revoke execute on functions from anon, authenticated'
 ]) {
   assert.ok(privilegeMigration.includes(statement), 'Privilege hardening migration is missing: ' + statement);
 }
