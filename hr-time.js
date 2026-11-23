@@ -104,6 +104,7 @@ function render(){
 }
 async function open(){
  if(!companyId){el('view').innerHTML='<div class="notice">Selecione uma empresa para acessar Jornada e Ponto.</div>';return;}
+ if(typeof geiPageIsEnabled==='function'&&!geiPageIsEnabled('timeclock')){el('view').innerHTML='<div class="notice">Jornada e Ponto não está habilitado para seu perfil ou para esta empresa.</div>';return;}
  if(!canManage()&&companyRole!=='employee'){el('view').innerHTML='<div class="notice">Seu perfil não tem permissão para acessar Jornada e Ponto.</div>';return;}
  try{await load();if(!canManage()&&!ownEmployee){render();return;}render()}catch(e){el('view').innerHTML='<div class="err">Não foi possível carregar Jornada e Ponto: '+escTime(e.message)+'</div>'}
 }
