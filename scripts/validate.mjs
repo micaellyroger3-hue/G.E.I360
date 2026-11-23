@@ -321,3 +321,9 @@ assert.ok(!html.includes('SUPABASE_SECRET_KEYS') && !html.includes('SUPABASE_SER
 
 assert.ok(html.includes("linkType==='invite'") && html.includes("api('/auth/v1/user'") && html.includes('Defina sua senha'), 'Invited employees must set a password before using the app');
 assert.ok(inviteFunction.includes('APP_ORIGIN = "https://micaellyroger3-hue.github.io"') && inviteFunction.includes('redirectTo: APP_REDIRECT'), 'Invitation function must restrict browser origin and redirect to the deployed app');
+
+
+const privateHelpersMigration = fs.readFileSync('supabase/migrations/20261123101000_move_rls_helpers_private.sql', 'utf8').toLowerCase();
+assert.ok(privateHelpersMigration.includes('alter function public.has_company_role') && privateHelpersMigration.includes('set schema private'), 'RLS helper must move out of exposed public schema');
+assert.ok(privateHelpersMigration.includes('security invoker') && privateHelpersMigration.includes('select private.has_company_role') && privateHelpersMigration.includes('select private.is_company_member'), 'Public helper compatibility functions must be SECURITY INVOKER wrappers');
+assert.ok(privateHelpersMigration.includes('revoke execute on functions from public, anon, authenticated'), 'Future private helper functions must not receive default execution grants');
