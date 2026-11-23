@@ -10,6 +10,8 @@
 -- O schema e os dados de produção estão ativos, mas o histórico local/remoto
 -- precisa ser reconciliado antes de qualquer db push, reset --linked ou restore.
 -- O antigo pacote consolidado não é uma fonte confiável para recriar produção.
+-- A baseline de privilégios foi aplicada pela migration api_privilege_hardening;
+-- correções posteriores estão nas migrations direcionadas do diretório migrations.
 --
 -- Não foram alterados dados ou histórico de migrations nesta auditoria.
 -- Consulte docs/MIGRATION_HISTORY_RECONCILIATION.md e
