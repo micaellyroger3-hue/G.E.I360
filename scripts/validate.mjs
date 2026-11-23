@@ -315,7 +315,7 @@ assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
 assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunction.includes('company_members'), 'Secure employee invitation function missing');
 assert.ok(inviteFunction.includes('npm:@supabase/server@1.9.2') && inviteFunction.includes('withSupabase') && inviteFunction.includes('userClaims?.id') && inviteFunction.includes('supabaseAdmin'), 'Invitation function must use Supabase server middleware for authenticated admin operations');
-assert.ok(functionConfig.includes('[functions.invite-company-member]') && functionConfig.includes('verify_jwt = false') && inviteFunction.includes('auth: "user"'), 'Function must delegate JWT verification to the user-auth middleware');
+assert.ok(functionConfig.includes('[functions.invite-company-member]') && functionConfig.includes('verify_jwt = true') && inviteFunction.includes('auth: "user"'), 'Invitation function must require platform JWT verification and user-auth middleware');
 assert.ok(inviteFunction.includes('includes(membership.role)') && inviteFunction.includes('owner') && inviteFunction.includes('admin'), 'Only company owners/admins may invite employees');
 assert.ok(!html.includes('SUPABASE_SECRET_KEYS') && !html.includes('SUPABASE_SERVICE_ROLE_KEY'), 'Server-side secrets must never be shipped to the browser');
 

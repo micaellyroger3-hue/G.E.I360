@@ -1,2 +1,2 @@
 [functions.invite-company-member]
-verify_jwt = false
+verify_jwt = true
