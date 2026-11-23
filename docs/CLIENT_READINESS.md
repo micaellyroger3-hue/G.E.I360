@@ -6,7 +6,9 @@
 - CI de validação passou após as alterações.
 - Supabase: 33/33 tabelas públicas com RLS habilitado.
 - Políticas restritivas de módulo: 26 tabelas; desativar módulo bloqueia consultas REST diretas sem apagar registros.
-- Helpers de autorização ficam no schema privado; wrappers públicos são SECURITY INVOKER.
+- Grants legados nas sequências públicas de vendas/compras foram removidos: anon sem acesso; authenticated mantém apenas USAGE.
+- Helpers de autorização e as seis implementações privilegiadas ficam no schema privado; os endpoints públicos são wrappers SECURITY INVOKER.
+- Advisor de segurança não aponta mais funções SECURITY DEFINER expostas; o único aviso atual é proteção contra senhas vazadas desativada no plano Free.
 - Teste transacional com rollback confirmou isolamento entre empresas, leitura de viewer, bloqueio de leitura comercial para employee e bloqueio de RPCs quando os módulos necessários estão desligados.
 - Funcionário tem acesso a Jornada e Ponto próprios e Operação do ramo quando habilitada; não lê clientes, fornecedores, produtos, vendas, compras, financeiro ou documentos empresariais.
 - Bucket company-documents é privado; limite configurado em 10 MB; políticas separam leitura e escrita por papel e módulo.
