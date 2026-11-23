@@ -20,7 +20,7 @@ As funções abaixo são chamadas diretamente pelo aplicativo e permanecem `SECU
 | `receive_purchase_cart` | owner/admin/manager; valida fornecedor, produtos, quantidades e módulos Compras, Produtos e Serviços e Estoque |
 | `record_stock_movement` | owner/admin/manager; valida empresa, produto, tipo, quantidade, saldo e módulos Estoque e Produtos e Serviços |
 
-Todas devem manter `SET search_path TO ''`, objetos qualificados, validação de usuário e autorização no escopo da empresa. O aviso do Advisor para essas seis RPCs é acompanhado como risco residual intencional, não como prova isolada de vulnerabilidade.
+Todas as seis implementações permanecem `SECURITY DEFINER` dentro do schema `private`, com `SET search_path TO ''`, objetos qualificados, validação de usuário e autorização no escopo da empresa. Os endpoints `public` correspondentes são wrappers `SECURITY INVOKER`, executáveis por authenticated e não por anon. Após a migração, o Advisor deixou de reportar essas funções expostas.
 
 ## Barreiras de módulo e papel
 - 26 políticas RLS restritivas aplicam o estado do módulo também a chamadas REST diretas.
@@ -30,6 +30,6 @@ Todas devem manter `SET search_path TO ''`, objetos qualificados, validação de
 - Desativar um módulo não apaga dados; apenas suspende o acesso até reativação.
 
 ## Riscos residuais
-- O Advisor ainda reporta as seis RPCs públicas necessárias ao aplicativo.
+- O Advisor não reporta mais funções SECURITY DEFINER no schema exposto; o único aviso de segurança restante é proteção contra senhas vazadas desligada.
 - A proteção contra senhas vazadas permanece desligada no plano Free; Supabase informa que o recurso está disponível no Pro ou superior.
 - Nenhum convite real foi disparado nesta revisão.
