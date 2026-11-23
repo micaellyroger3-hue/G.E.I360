@@ -368,8 +368,7 @@ begin
     'total',v_total
   );
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.receive_purchase_cart(p_company_id uuid, p_supplier_id uuid, p_items jsonb, p_notes text DEFAULT NULL::text)
  RETURNS jsonb
@@ -541,8 +540,7 @@ begin
     'total',v_total
   );
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.record_stock_movement(p_company_id uuid, p_product_id uuid, p_movement_type text, p_quantity numeric, p_unit_cost numeric DEFAULT 0, p_note text DEFAULT NULL::text)
  RETURNS jsonb
@@ -633,8 +631,7 @@ begin
     )
   );
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.hr_register_time_punch(p_employee_id uuid, p_punch_type text)
  RETURNS hr_time_punches
@@ -703,8 +700,7 @@ begin
 
   return v_result;
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.hr_claim_employee_account()
  RETURNS integer
@@ -742,7 +738,6 @@ begin
   get diagnostics v_count = row_count;
   return v_count;
 end;
-$function$
-
+$function$;
 
 COMMIT;
