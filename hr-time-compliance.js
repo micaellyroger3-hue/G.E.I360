@@ -286,7 +286,11 @@ function renderH(){
  $('hrReopenMonth')?.addEventListener('click',async()=>{const reason=prompt('Informe o motivo da reabertura da competência:');if(!reason||reason.trim().length<5)return;try{for(const p of dataH.periods){await api('/rest/v1/hr_time_periods?id=eq.'+p.id,{method:'PATCH',body:{status:'reopened',reopened_by:session.user.id,reopened_at:new Date().toISOString(),reopen_reason:reason,updated_at:new Date().toISOString()}})}await reloadH()}catch(err){alert('Não foi possível reabrir: '+err.message)}});
 }
 async function reloadH(){try{await loadH();renderH()}catch(e){$('view').innerHTML='<div class="err">Não foi possível carregar a apuração: '+escH(e.message)+'</div>'}}
-async function openH(){if(!adminH()){$('view').innerHTML='<div class="notice">A apuração, remuneração e fechamento são restritos a proprietário e administrador.</div>';return}await reloadH()}
+async function openH(){
+ if(typeof geiPageIsEnabled==='function'&&!geiPageIsEnabled('timepayroll')){$('view').innerHTML='<div class="notice">Apuração de jornada não está habilitada para seu perfil ou para esta empresa.</div>';return}
+ if(!adminH()){$('view').innerHTML='<div class="notice">A apuração, remuneração e fechamento são restritos a proprietário e administrador.</div>';return}
+ await reloadH()
+}
 window.setPage=function(page){if(page==='timepayroll'){document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('pageTitle').textContent='Apuração de jornada';openH();return}return baseSetPage(page)};
 
 })();
