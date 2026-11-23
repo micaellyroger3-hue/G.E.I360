@@ -61,7 +61,7 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v37"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v38"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
@@ -127,8 +127,8 @@ new Function(profileJs);
 assert.ok(html.includes('business-profiles.js?v=20261116-02'), 'Business profile script not loaded');
 assert.ok(worker.includes('./business-profiles.js?v=20261116-02'), 'Business profile script missing from offline shell');
 assert.ok(html.includes('./hr.js?v=20261119-07') || html.includes('hr.js?v=20261119-07'), 'HR module script not loaded');
-assert.ok(html.includes('hr-time.js?v=20261119-03') && html.includes('hr-time-compliance.js?v=20261119-09'), 'HR time and calculation modules must be loaded');
-assert.ok(worker.includes('./hr-time.js?v=20261119-03') && worker.includes('./hr-time-compliance.js?v=20261119-09'), 'HR time modules must be cached by the PWA');
+assert.ok(html.includes('hr-time.js?v=20261123-01') && html.includes('hr-time-compliance.js?v=20261123-01'), 'HR time and calculation modules must be loaded');
+assert.ok(worker.includes('./hr-time.js?v=20261123-01') && worker.includes('./hr-time-compliance.js?v=20261123-01'), 'HR time modules must be cached by the PWA');
 assert.ok(modules.includes("['rh','timepayroll']") && modules.includes("timepayroll:'rh'"), 'Monthly HR calculation must be available through the RH module');
 assert.ok(hrTime.includes('hr_register_time_punch') && hrTime.includes('12x36'), 'Timekeeping module missing server-side punches or schedules');
 assert.ok(hrTimeCompliance.includes('hr_time_rules') && hrTimeCompliance.includes('hr_holidays') && hrTimeCompliance.includes('hr_time_occurrences') && hrTimeCompliance.includes('hr_time_bank_entries') && hrTimeCompliance.includes('hr_time_periods'), 'Monthly time calculation, holidays, occurrences, bank and closing missing');
@@ -141,8 +141,8 @@ assert.ok(hrTimeCompliance.includes('monthly_hour_divisor') && hrTimeCompliance.
 assert.ok(hrTimeCompliance.includes('hr_schedule_exceptions') && hrTimeCompliance.includes('statutoryWeeklyCapH') && hrTimeCompliance.includes('restComplianceH') && hrTimeCompliance.includes('interjornada_short'), 'EC 141 weekly/rest compliance and schedule exceptions missing');
 assert.ok(!hrTimeCompliance.includes('minRest7'), 'Do not impose a fixed rolling seven-day rest rule after the STF interim decision');
 
-assert.ok(html.includes('hr-time-compliance.js?v=20261119-09') && worker.includes('hr-time-compliance.js?v=20261119-09'), 'HR calculation asset must be loaded and cached');
-assert.ok(worker.includes('./hr.js?v=20261119-07') && worker.includes('hr-time-compliance.js?v=20261119-09'), 'HR modules missing from offline shell');
+assert.ok(html.includes('hr-time-compliance.js?v=20261123-01') && worker.includes('hr-time-compliance.js?v=20261123-01'), 'HR calculation asset must be loaded and cached');
+assert.ok(worker.includes('./hr.js?v=20261119-07') && worker.includes('hr-time-compliance.js?v=20261123-01'), 'HR modules missing from offline shell');
 assert.ok(hr.includes('employee_compensation') && hr.includes('hr_company_settings') && hr.includes('hr_events'), 'HR data modules missing');
 assert.ok(hr.includes('gei_post_hr_monthly_cost') && hr.includes('Lançar custo estimado'), 'HR finance posting flow missing');
 assert.ok(hr.includes('FGTS') && hr.includes('INSS patronal') && hr.includes('Provisões'), 'HR cost breakdown missing');
@@ -160,7 +160,7 @@ const hrPrivilegeSql = fs.readFileSync('supabase/migrations/20261119132000_hr_pr
 assert.ok(hrPrivilegeSql.includes('revoke truncate, references, trigger') && hrPrivilegeSql.includes('revoke update, delete on public.hr_cost_postings'), 'HR table privileges must follow least privilege');
 const hrIndexesSql = fs.readFileSync('supabase/migrations/20261119133000_hr_fk_indexes.sql', 'utf8');
 assert.ok(hrIndexesSql.includes('employee_compensation_employee_id_idx') && hrIndexesSql.includes('hr_events_employee_id_idx') && hrIndexesSql.includes('hr_cost_postings_created_by_idx'), 'HR foreign keys must have supporting indexes');
-assert.ok(worker.includes('gei360-shell-v37'), 'Offline shell cache version missing');
+assert.ok(worker.includes('gei360-shell-v38'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
 assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
@@ -289,7 +289,7 @@ assert.ok(modules.includes('GEI_MODULE_PAGES'), 'Dynamic module page map missing
 assert.ok(modules.includes('geiLoadModuleAccess') && modules.includes('geiRenderModuleNavigation'), 'Dynamic module catalog loading/navigation missing');
 assert.ok(modules.includes('geiRenderCompanyModuleSettings') && modules.includes('company_modules'), 'Company module controls missing');
 assert.ok(modules.includes('geiPageIsEnabled'), 'Disabled modules must be blocked in navigation routing');
-assert.ok(html.includes('modules.js?v=20261119-02') && html.includes('hr-time-compliance.js?v=20261119-09'), 'Dynamic module and HR calculation asset cache versions missing');
+assert.ok(html.includes('modules.js?v=20261123-01') && html.includes('hr-time-compliance.js?v=20261123-01'), 'Dynamic module and HR calculation asset cache versions missing');
 assert.ok(html.includes('hr.js?v=20261119-07') && worker.includes('hr.js?v=20261119-07'), 'HR tax settings asset cache version missing');
 assert.ok(hr.includes('fap_factor') && hr.includes('anexo_iv_revenue_share') && hr.includes('third_party_confirmed'), 'Verified FAP and mixed Simples tax parameters missing');
 assert.ok(hr.includes('hrRateSettings(c)') && hr.includes('anexo_iv_share'), 'Employee-level Anexo IV payroll allocation missing');
@@ -310,7 +310,7 @@ assert.ok(hrMixedAnnexMigration.includes("'mixed'"), 'Mixed Simples annex databa
 const hrCompRestMigration = fs.readFileSync('supabase/migrations/20261119165726_hr_link_compensatory_rest_to_workday.sql', 'utf8');
 assert.ok(hrCompRestMigration.includes('compensation_for_date') && hrTimeCompliance.includes('x.compensation_for_date===d.day'), 'Compensatory rest must be linked to the exact worked day');
 assert.ok(hrTimeCompliance.includes('transitionDailyCap') && hrTimeCompliance.includes('defaultDailyLimit') && hrTimeCompliance.includes('d.planned>0?d.planned:720'), 'Legal daily work limits must account for 12x36 and the 5x2 transition');
-assert.ok(worker.includes('modules.js?v=20261119-02') && worker.includes('gei360-shell-v37'), 'Service worker cache must match dynamic module release');
+assert.ok(worker.includes('modules.js?v=20261123-01') && worker.includes('gei360-shell-v38'), 'Service worker cache must match dynamic module release');
 
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
 assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunction.includes('company_members'), 'Secure employee invitation function missing');
@@ -345,3 +345,24 @@ const privateHelpersMigration = fs.readFileSync('supabase/migrations/20261123101
 assert.ok(privateHelpersMigration.includes('alter function public.has_company_role') && privateHelpersMigration.includes('set schema private'), 'RLS helper must move out of exposed public schema');
 assert.ok(privateHelpersMigration.includes('security invoker') && privateHelpersMigration.includes('select private.has_company_role') && privateHelpersMigration.includes('select private.is_company_member'), 'Public helper compatibility functions must be SECURITY INVOKER wrappers');
 assert.ok(privateHelpersMigration.includes('revoke execute on functions from public, anon, authenticated'), 'Future private helper functions must not receive default execution grants');
+
+
+const roleModuleMigration = fs.readFileSync('supabase/migrations/20261123102000_enforce_employee_role_and_module_access.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
+assert.ok(roleModuleMigration.includes('private.is_company_module_enabled'), 'Module access must be enforced in the database');
+assert.ok(roleModuleMigration.includes('as restrictive for all to authenticated'), 'Module switches must be enforced by restrictive RLS policies');
+assert.ok(roleModuleMigration.includes("array['owner','admin','manager','viewer']"), 'Employee role must not read company-wide business data');
+assert.ok(roleModuleMigration.includes('company_documents_member_read') && roleModuleMigration.includes('gei_module_gate_company_documents'), 'Private document storage must enforce role and module access');
+assert.ok(modules.includes("if (companyRole === 'employee')") && modules.includes("if (item.is_core === true) return true"), 'Employee navigation and core-module rules must fail closed');
+assert.ok(hrTime.includes("geiPageIsEnabled('timeclock')"), 'Timeclock must enforce the RH module switch');
+assert.ok(hrTimeCompliance.includes("geiPageIsEnabled('timepayroll')"), 'Time payroll must enforce the RH module switch');
+
+assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(p_company_id, 'vendas')") && roleModuleMigration.includes("private.is_company_module_enabled(p_company_id, 'compras')"), 'Privileged sales and purchase RPCs must enforce their module switches');
+assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(v_employee.company_id, 'rh')") && roleModuleMigration.includes("private.is_company_module_enabled(e.company_id, 'rh')"), 'Timeclock and employee claim RPCs must enforce the RH module switch');
+assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(p_company_id, 'estoque')"), 'Stock RPCs must enforce the stock module switch');
+assert.ok(modules.includes("if (!geiPageIsEnabled(page))") && modules.includes("return setPage('home')"), 'Page access must fail closed and restore the dashboard after catalog load');
+
+for (const rpc of ['create_sale_cart','receive_purchase_cart','record_stock_movement','hr_register_time_punch','hr_claim_employee_account']) {
+  assert.ok(roleModuleMigration.includes('create or replace function public.' + rpc), 'Module migration must preserve and harden RPC: ' + rpc);
+}
+assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(p_company_id, 'produtos_servicos')"), 'Sales and purchasing RPCs must enforce product module availability');
+assert.ok(roleModuleMigration.includes("and e.status = 'active'") && roleModuleMigration.includes("and e.employment_status <> 'inativo'"), 'Employee account claim must reject inactive employee records');
