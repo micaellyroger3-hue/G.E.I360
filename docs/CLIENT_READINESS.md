@@ -17,7 +17,8 @@
 
 ## Pendências que impedem liberar clientes pagantes
 
-1. **Histórico de migrations:** 36 versões remotas e 39 arquivos locais não estão sincronizados; existem 3 migrations remotas sem arquivo local, 5 arquivos locais sem nome correspondente no histórico e prefixos de versão diferentes/duplicados. Não executar `supabase db push` nem `db reset --linked` antes da reconciliação.\n2. **Backup e restauração:** ainda não foi executado um backup lógico completo nem uma restauração em projeto separado. A organização está no plano Free; não há backups gerenciados para download nem branching. O CLI exige computador, Docker e psql. Storage objects e configurações Auth/Edge Functions precisam de cópia separada.
+1. **Histórico de migrations:** 36 versões remotas e 39 arquivos locais não estão sincronizados; existem 3 migrations remotas sem arquivo local, 5 arquivos locais sem nome correspondente no histórico e prefixos de versão diferentes/duplicados. Não executar `supabase db push` nem `db reset --linked` antes da reconciliação. 
+2. **Backup e restauração:** ainda não foi executado um backup lógico completo nem uma restauração em projeto separado. A organização está no plano Free; não há backups gerenciados para download nem branching. O CLI exige computador, Docker e psql. Storage objects e configurações Auth/Edge Functions precisam de cópia separada.
 3. **Proteção de senhas vazadas:** permanece desativada porque o recurso não está incluído no plano Free. O Supabase informa disponibilidade no Pro ou superior.
 4. **Homologação no aparelho:** instalação PWA, atualização de cache, modo avião, câmera/scanner, upload e download ainda precisam ser confirmados no Android real.
 5. **Convite de funcionário:** função de servidor autenticada e protegida por papel foi revisada; nenhum convite real foi enviado. O fluxo completo deve ser testado com endereço de teste e autorização do proprietário.
