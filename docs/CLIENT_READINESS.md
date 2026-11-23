@@ -1,28 +1,43 @@
 # G.E.I360 — checklist de preparação para clientes
 
-## Acesso em dispositivos
-- Android: abrir o endereço publicado em Chrome/Edge, menu do navegador e escolher Instalar aplicativo ou Adicionar à tela inicial, se disponível.
-- Computador: abrir em Chrome/Edge e usar o ícone de instalação na barra de endereço ou o menu Instalar página como app.
-- Tablet: mesmo procedimento do Android ou do navegador desktop, conforme o sistema.
-- O acesso exige internet para autenticar e trabalhar com dados da empresa.
-- O modo offline atual mantém somente a estrutura estática de abertura; não permite operações ou leitura de dados empresariais.
+## Estado verificado em 23/11/2026
+
+- PRs de segurança e navegação #31, #36, #37 e #38 integrados à branch main.
+- CI de validação passou após as alterações.
+- Supabase: 33/33 tabelas públicas com RLS habilitado.
+- Políticas restritivas de módulo: 26 tabelas; desativar módulo bloqueia consultas REST diretas sem apagar registros.
+- Helpers de autorização ficam no schema privado; wrappers públicos são SECURITY INVOKER.
+- Teste transacional com rollback confirmou isolamento entre empresas, leitura de viewer, bloqueio de leitura comercial para employee e bloqueio de RPCs quando os módulos necessários estão desligados.
+- Funcionário tem acesso a Jornada e Ponto próprios e Operação do ramo quando habilitada; não lê clientes, fornecedores, produtos, vendas, compras, financeiro ou documentos empresariais.
+- Bucket company-documents é privado; limite configurado em 10 MB; políticas separam leitura e escrita por papel e módulo.
+- Scanner atualizado para formatos suportados pelo navegador e desligamento da câmera ao ocultar/encerrar a página.
+- Service worker mantém somente o shell estático offline; não há leitura ou gravação offline de dados empresariais.
+
+## Pendências que impedem liberar clientes pagantes
+
+1. **Backup e restauração:** ainda não foi executado um backup lógico completo nem uma restauração em projeto separado. A organização está no plano Free; não há backups gerenciados para download nem branching. O CLI exige computador, Docker e psql. Storage objects e configurações Auth/Edge Functions precisam de cópia separada.
+2. **Proteção de senhas vazadas:** permanece desativada porque o recurso não está incluído no plano Free. O Supabase informa disponibilidade no Pro ou superior.
+3. **Homologação no aparelho:** instalação PWA, atualização de cache, modo avião, câmera/scanner, upload e download ainda precisam ser confirmados no Android real.
+4. **Convite de funcionário:** função de servidor autenticada e protegida por papel foi revisada; nenhum convite real foi enviado. O fluxo completo deve ser testado com endereço de teste e autorização do proprietário.
+5. **Validação operacional/fiscal:** validar documentos e relatórios com dados de teste e confirmar limites e obrigações fiscais antes de anunciar esses recursos.
 
 ## Segurança antes de convidar clientes
+
 - Confirmar Site URL e Redirect URLs do Supabase Auth com o domínio publicado correto.
 - Exigir confirmação de e-mail e habilitar MFA para perfis administrativos quando possível.
-- Testar com dois usuários de teste em empresas diferentes: nenhum pode ler, alterar, exportar ou anexar dados da outra empresa.
-- Testar cada papel (owner, admin, manager e demais papéis) e negar ações não autorizadas no banco, não apenas esconder botões.
 - Manter RLS habilitado em todas as tabelas que contêm dados empresariais.
-- Confirmar que bucket de documentos é privado e que URLs de visualização são temporárias.
+- Confirmar que o bucket de documentos é privado e que URLs de visualização são temporárias.
 - Nunca colocar service_role, sb_secret_, certificados digitais ou credenciais de provedor no navegador ou no Git.
-- Definir política de backup, retenção, restauração e resposta a incidentes.
+- Manter backups criptografados fora do repositório público e testar restauração em projeto separado.
+- Não convidar clientes pagantes antes de concluir as pendências acima.
 
-## Operação e suporte
-- Criar fluxo seguro de convite de funcionários com função de servidor e provedor de e-mail; cadastrar funcionário não cria automaticamente uma conta de login.
-- Criar trilha de auditoria para alterações sensíveis, exclusões, movimentações e ações fiscais.
-- Validar importação/exportação e relatórios com dados reais de teste.
-- Documentar suporte, disponibilidade, limites, tratamento de dados e encerramento de contas.
-- Não cadastrar clientes pagantes antes dos testes integrados e de isolamento multiempresa.
+## Acesso em dispositivos
+
+- Android: abrir o endereço HTTPS publicado no Chrome e instalar/adicionar à tela inicial.
+- Computador: abrir em Chrome/Edge e usar o ícone de instalação ou o menu do navegador.
+- O modo offline atual mantém somente a estrutura estática de abertura; não permite operações ou leitura de dados empresariais.
+- O scanner exige câmera permitida pelo navegador e suporte a BarcodeDetector; digitação ou leitor USB/Bluetooth permanece como alternativa.
 
 ## Critério de aceite
-A publicação do site e a validação estática são apenas uma parte. O lançamento comercial exige testes autenticados no Supabase, isolamento entre empresas, recuperação de backup, fluxo de convite e validação fiscal/contábil dos recursos anunciados.
+
+A publicação do site e a validação estática não equivalem à homologação. O lançamento comercial exige backup e restauração comprovados, isolamento multiempresa, convite seguro, testes autenticados por papel, PWA/câmera/documentos homologados no aparelho e revisão fiscal/contábil dos recursos anunciados.
