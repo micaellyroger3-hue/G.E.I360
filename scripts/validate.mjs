@@ -61,7 +61,7 @@ assert.ok(html.includes("window.addEventListener('offline',showOfflineMode)"), '
 assert.ok(html.includes("window.addEventListener('online'"), 'Online recovery handling missing');
 assert.ok(html.includes("if(!navigator.onLine)throw Error('Modo offline"), 'Offline data access guard missing');
 assert.ok(html.includes('beforeinstallprompt'), 'Install prompt handling missing');
-assert.ok(worker.includes("gei360-shell-v38"), 'Offline shell cache version missing');
+assert.ok(worker.includes("gei360-shell-v39"), 'Offline shell cache version missing');
 assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline session preservation missing');
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
@@ -160,7 +160,7 @@ const hrPrivilegeSql = fs.readFileSync('supabase/migrations/20261119132000_hr_pr
 assert.ok(hrPrivilegeSql.includes('revoke truncate, references, trigger') && hrPrivilegeSql.includes('revoke update, delete on public.hr_cost_postings'), 'HR table privileges must follow least privilege');
 const hrIndexesSql = fs.readFileSync('supabase/migrations/20261119133000_hr_fk_indexes.sql', 'utf8');
 assert.ok(hrIndexesSql.includes('employee_compensation_employee_id_idx') && hrIndexesSql.includes('hr_events_employee_id_idx') && hrIndexesSql.includes('hr_cost_postings_created_by_idx'), 'HR foreign keys must have supporting indexes');
-assert.ok(worker.includes('gei360-shell-v38'), 'Offline shell cache version missing');
+assert.ok(worker.includes('gei360-shell-v39'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
 assert.ok(profileJs.includes('aguardando integração oficial'), 'iFood integration must disclose pending official authorization');
 assert.ok(profileJs.includes('geiProfileCompleteness') && profileJs.includes('Cadastro completo') && profileJs.includes('Cadastro incompleto'), 'Business profile completion status missing');
@@ -310,7 +310,7 @@ assert.ok(hrMixedAnnexMigration.includes("'mixed'"), 'Mixed Simples annex databa
 const hrCompRestMigration = fs.readFileSync('supabase/migrations/20261119165726_hr_link_compensatory_rest_to_workday.sql', 'utf8');
 assert.ok(hrCompRestMigration.includes('compensation_for_date') && hrTimeCompliance.includes('x.compensation_for_date===d.day'), 'Compensatory rest must be linked to the exact worked day');
 assert.ok(hrTimeCompliance.includes('transitionDailyCap') && hrTimeCompliance.includes('defaultDailyLimit') && hrTimeCompliance.includes('d.planned>0?d.planned:720'), 'Legal daily work limits must account for 12x36 and the 5x2 transition');
-assert.ok(worker.includes('modules.js?v=20261123-01') && worker.includes('gei360-shell-v38'), 'Service worker cache must match dynamic module release');
+assert.ok(worker.includes('modules.js?v=20261123-01') && worker.includes('gei360-shell-v39'), 'Service worker cache must match dynamic module release');
 
 assert.ok(modules.includes('invite-company-member') && modules.includes('data-employee-invite'), 'Employee invitation UI missing');
 assert.ok(inviteFunction.includes('auth.admin.inviteUserByEmail') && inviteFunction.includes('company_members'), 'Secure employee invitation function missing');
@@ -366,3 +366,5 @@ for (const rpc of ['create_sale_cart','receive_purchase_cart','record_stock_move
 }
 assert.ok(roleModuleMigration.includes("private.is_company_module_enabled(p_company_id, 'produtos_servicos')"), 'Sales and purchasing RPCs must enforce product module availability');
 assert.ok(roleModuleMigration.includes("and e.status = 'active'") && roleModuleMigration.includes("and e.employment_status <> 'inativo'"), 'Employee account claim must reject inactive employee records');
+
+assert.ok(modules.includes("document.addEventListener('visibilitychange'") && modules.includes('getSupportedFormats') && modules.includes("field.dispatchEvent(new Event('input'"), 'Barcode scanner must adapt to supported formats and stop camera when hidden');
