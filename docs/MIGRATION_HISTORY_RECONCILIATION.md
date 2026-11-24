@@ -104,3 +104,14 @@ Consulta somente de leitura ao registro remoto `supabase_migrations.schema_migra
 - `supabase/migrations/20261119153922_hr_timekeeping_and_hourly_pay.sql` permanece idêntico ao arquivo duplicado `20261119170000_hr_timekeeping.sql` (mesmo blob SHA já registrado acima); a versão remota correspondente é `20261119153922`.
 
 A lista remota de migrations foi consultada novamente em 24/11/2026 e contém a versão `20261119162418` uma única vez. Portanto, a correspondência correta do SQL de apuração/fechamento foi identificada, mas a organização final dos arquivos locais ainda exige revisão controlada: não apagar nem renomear os arquivos conflitantes nesta etapa. A PR continua em rascunho; não houve `db push`, reparo de histórico, reset, aplicação de migration ou alteração de dados/schema.
+
+
+## Inventário comparativo de prefixos — 24/11/2026
+
+Nova leitura somente de consulta encontrou **36 versões remotas** e **42 arquivos SQL locais** em `supabase/migrations/`. Comparando apenas os prefixos de 14 dígitos (sem presumir equivalência de conteúdo):
+
+- **23 das 36 versões remotas** não têm arquivo local com o mesmo prefixo.
+- Existem arquivos locais sem prefixo de 14 dígitos e arquivos com prefixos que não aparecem no histórico remoto.
+- Há colisão local de prefixo `20261119170000`: dois arquivos diferentes compartilham a mesma versão, além de um deles duplicar por conteúdo a migration de ponto `20261119153922`.
+
+Esse inventário confirma que não é seguro executar `db push` nem fazer renomeação em lote com base apenas em nomes. O próximo trabalho é comparar o conteúdo de cada migration remota com os arquivos locais e produzir um mapa 1:1 (remota → arquivo local idêntico, arquivo ausente, divergência ou arquivo local legado), preservando todos os arquivos originais. Depois disso ainda será necessário validar em ambiente isolado e comprovar backup/restauração antes de qualquer operação de produção.
