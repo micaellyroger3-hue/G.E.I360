@@ -93,3 +93,14 @@ Comparação dos arquivos na branch de reconciliação:
 Não renomear nem excluir nenhum arquivo ativo ainda. Primeiro preservar uma cópia integral dos 39 arquivos originais, obter o SQL remoto exato da versão `20261119162418`, comparar os arquivos de cálculo por conteúdo e validar a lista resultante com `supabase migration list` e `supabase db push --dry-run` em ambiente isolado. O backup restaurável continua sendo pré-requisito para qualquer reorganização que possa influenciar um push de produção.
 
 **Nenhum comando de push, repair, reset ou alteração do banco foi executado nesta revisão.**
+
+
+## Correspondência exata da migration 20261119162418 — 24/11/2026
+
+Consulta somente de leitura ao registro remoto `supabase_migrations.schema_migrations` recuperou o SQL integral da versão `20261119162418`, nome `hr_time_calculation_and_closing`. A comparação byte a byte (conteúdo UTF-8 retornado pelo GitHub e pelo registro remoto) confirmou:
+
+- `supabase/migrations/20261119190000_hr_time_calculation_and_closing.sql` tem **21.175 caracteres e é idêntico** ao SQL remoto da versão `20261119162418`.
+- `supabase/migrations/20261119170000_hr_time_calculation_and_closing.sql` tem **12.505 caracteres e NÃO é idêntico** ao SQL remoto. Não deve ser tratado como a migration aplicada em produção nem receber o prefixo remoto sem revisão de proveniência.
+- `supabase/migrations/20261119153922_hr_timekeeping_and_hourly_pay.sql` permanece idêntico ao arquivo duplicado `20261119170000_hr_timekeeping.sql` (mesmo blob SHA já registrado acima); a versão remota correspondente é `20261119153922`.
+
+A lista remota de migrations foi consultada novamente em 24/11/2026 e contém a versão `20261119162418` uma única vez. Portanto, a correspondência correta do SQL de apuração/fechamento foi identificada, mas a organização final dos arquivos locais ainda exige revisão controlada: não apagar nem renomear os arquivos conflitantes nesta etapa. A PR continua em rascunho; não houve `db push`, reparo de histórico, reset, aplicação de migration ou alteração de dados/schema.
