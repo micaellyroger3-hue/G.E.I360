@@ -214,3 +214,35 @@ Os tamanhos acima são do texto retornado pelas duas fontes, após normalizaçã
 ### Conclusão da proveniência
 
 O problema dos nove pares é divergência de conteúdo entre o SQL efetivamente registrado no Supabase e o arquivo versionado localmente. O registro remoto é a evidência do que foi aplicado em produção; o arquivo local não deve substituí-lo sem revisão. Próximo passo seguro: revisar cada diff semanticamente, identificar se o SQL local contém correções posteriores não aplicadas ou comentários/estrutura adicionais, e criar uma proposta de reconciliação em branch separada sem sobrescrever os originais. Não executar `migration repair`, `db push` ou SQL de produção para “alinhar” esses pares nesta etapa.
+
+
+## Correção da análise semântica dos 9 pares — 24/11/2026
+
+A revisão anterior classificou os nove pares como divergências de conteúdo com base em comparação textual. Essa classificação foi conservadora demais. Foi feita nova comparação diretamente entre cada registro remoto `schema_migrations.statements` e seu arquivo local relacionado, removendo comentários SQL, diferenças de espaços/caixa e os delimitadores externos `BEGIN/COMMIT`.
+
+**Resultado corrigido: os 9 pares têm SQL operacional equivalente.** Em nenhum dos nove pares foi encontrada diferença nas instruções SQL efetivas após essa normalização. As diferenças observadas são comentários, formatação e, no caso de `company_business_profiles`, os delimitadores externos de transação presentes no arquivo local e ausentes no texto armazenado no histórico remoto.
+
+| Versão remota | Arquivo local relacionado | Resultado da comparação |
+|---|---|---|
+| 20261111213135 company_business_profiles | 202611100002_company_business_profiles.sql | SQL equivalente; diferenças de comentários/formatação e BEGIN/COMMIT |
+| 20261111213202 integrity_hardening | 202611090001_integrity_hardening.sql | SQL equivalente; comentários/formatação |
+| 20261116000938 sector_operations_records | 20261116000938_sector_operations_records.sql | SQL equivalente; comentários/formatação |
+| 20261116001106 legacy_empresas_lockdown | 20261116001106_legacy_empresas_lockdown.sql | SQL equivalente; comentários/formatação |
+| 20261116001449 revoke_unused_legacy_rpcs | 20261116001449_revoke_unused_legacy_rpcs.sql | SQL equivalente; comentários/formatação |
+| 20261116083715 brazil_local_business_dates | 20261116083715_brazil_local_business_dates.sql | SQL equivalente; comentários/formatação |
+| 20261123130925 revoke_unsafe_default_privileges | 20261123090000_revoke_unsafe_default_privileges.sql | SQL equivalente; comentários/formatação |
+| 20261123130928 hr_employee_self_read | 20261123100000_hr_employee_self_read.sql | SQL equivalente; comentários/formatação |
+| 20261123130931 move_rls_helpers_private | 20261123101000_move_rls_helpers_private.sql | SQL equivalente; comentários/formatação |
+
+Essa correção não altera o inventário de versões: continuam existindo 36 migrations remotas, 42 arquivos locais na branch e três arquivos recuperados com SQL remoto exato. Também não elimina a divergência de prefixos: o CLI compara versões, portanto arquivos com prefixos locais diferentes dos remotos ainda podem ser considerados pendentes, mesmo quando o SQL é equivalente.
+
+### Situação operacional após a correção
+
+- Os nove pares acima estão conciliados por conteúdo SQL; não precisam ser reescritos por diferença semântica.
+- Permanecem cinco arquivos locais sem versão remota correspondente identificada, além de arquivos com prefixos diferentes, a duplicidade exata de `hr_timekeeping` e a colisão local de versão `20261119170000`.
+- A PR #45 contém somente a documentação e três SQLs recuperados do histórico remoto; não altera o banco.
+- Não há branch de desenvolvimento Supabase criada no projeto neste momento.
+- Não foi localizado, entre as ações disponíveis nesta conexão, um fluxo de backup/exportação e restauração verificável. Não declarar backup validado.
+- Ainda faltam uma árvore local candidata sem colisões, execução de `supabase migration list` e `supabase db push --dry-run` com CLI em ambiente controlado, e comprovação de backup/restauração antes de qualquer push de produção.
+
+**Bloqueio mantido:** não executar `db push`, `migration repair`, `db reset --linked`, nem reorganizar/excluir migrations ativas até concluir essas validações. Nenhum dado, schema ou histórico remoto foi alterado nesta revisão.
