@@ -77,3 +77,19 @@ Os conteúdos foram reconstruídos diretamente do registro de migrations aplicad
 7. Fazer backup e provar restauração em projeto separado antes de alterar a organização final.
 
 **Bloqueio:** não executar `db push`, `db reset --linked`, `migration repair` nem alterar a tabela de histórico remoto nesta etapa. Não foi feita nenhuma alteração no schema, dados ou histórico de produção.
+
+
+## Verificação adicional por conteúdo — 24/11/2026
+
+Comparação dos arquivos na branch de reconciliação:
+
+- `supabase/migrations/20261119170000_hr_timekeeping.sql` e o arquivo recuperado `20261119153922_hr_timekeeping_and_hourly_pay.sql` têm o mesmo blob SHA do GitHub (`77928cf3f26279c9cf3883fc6cf779e0ccf7bdd0`) e 12.005 caracteres. É uma duplicação exata do conteúdo; manter ambos na pasta ativa faria o CLI enxergar duas versões distintas para o mesmo SQL.
+- Há três arquivos de RH com colisão no prefixo `20261119170000`: `hr_timekeeping.sql` (12.005 caracteres), `hr_time_calculation_and_closing.sql` (12.505 caracteres) e `hr_time_calculation_and_closing.sql` na versão `20261119190000` (21.175 caracteres). Os dois arquivos de cálculo têm conteúdos diferentes.
+- O histórico remoto identifica uma única migration `hr_time_calculation_and_closing` na versão `20261119162418`. O arquivo local de versão correspondente ainda não foi recuperado/validado nesta revisão. Não escolher uma das duas versões locais por suposição.
+- O SQL remoto `hr_timekeeping_and_hourly_pay` foi recuperado literalmente; o blob idêntico confirma que o arquivo local `hr_timekeeping.sql` representa exatamente essa migration, apesar do prefixo divergente.
+
+### Decisão técnica nesta etapa
+
+Não renomear nem excluir nenhum arquivo ativo ainda. Primeiro preservar uma cópia integral dos 39 arquivos originais, obter o SQL remoto exato da versão `20261119162418`, comparar os arquivos de cálculo por conteúdo e validar a lista resultante com `supabase migration list` e `supabase db push --dry-run` em ambiente isolado. O backup restaurável continua sendo pré-requisito para qualquer reorganização que possa influenciar um push de produção.
+
+**Nenhum comando de push, repair, reset ou alteração do banco foi executado nesta revisão.**
