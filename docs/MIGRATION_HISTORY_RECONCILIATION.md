@@ -246,3 +246,29 @@ Essa correção não altera o inventário de versões: continuam existindo 36 mi
 - Ainda faltam uma árvore local candidata sem colisões, execução de `supabase migration list` e `supabase db push --dry-run` com CLI em ambiente controlado, e comprovação de backup/restauração antes de qualquer push de produção.
 
 **Bloqueio mantido:** não executar `db push`, `migration repair`, `db reset --linked`, nem reorganizar/excluir migrations ativas até concluir essas validações. Nenhum dado, schema ou histórico remoto foi alterado nesta revisão.
+
+
+## Avaliação dos 5 arquivos locais sem par remoto — 24/11/2026
+
+A revisão de proveniência foi aprofundada com leitura do SQL local e consulta somente de leitura ao catálogo do banco. Os cinco arquivos abaixo não têm uma versão remota própria correspondente no histórico de 36 migrations. Os objetos centrais existem hoje no banco, mas isso não autoriza reaplicar os arquivos antigos: alguns recriam policies, funções e grants que já foram endurecidos por migrations posteriores.
+
+### Riscos confirmados de reaplicação
+
+1. **`202611070001_employees.sql`** — recria a policy `employees_members_select` usando `is_company_member(company_id)`, enquanto a policy atualmente registrada no banco limita a leitura a gestores autorizados ou ao próprio funcionário autenticado. Reaplicar o arquivo antigo pode ampliar a leitura de fichas de funcionários.
+2. **`202611080001_erp_modules.sql`** — recria policies e concede `SELECT, INSERT, UPDATE, DELETE` em tabelas do ERP. No banco atual, `authenticated` não tem privilégio de tabela para INSERT/UPDATE em `products` e `financial_entries`; a migration antiga concederia novamente esses privilégios amplos, contornando a intenção dos grants por coluna. O arquivo também recria RPCs legadas `create_sale` e `receive_purchase` e concede execução a `authenticated`; no banco atual, ambas estão sem EXECUTE para `authenticated` e `anon`. As migrations posteriores de revogação já estão aplicadas e não seriam repetidas pelo CLI.
+3. **`202611080002_finance_links.sql`** — substitui as funções dos gatilhos financeiros por versões antigas que usam `current_date`. As definições atuais consultadas usam a data local de São Paulo (`America/Sao_Paulo`) e, no recebimento de compra, calculam a data a partir de `received_at/created_at`. Reaplicar a migration antiga pode desfazer essa correção de calendário, pois a migration remota posterior não será reaplicada.
+4. **`202611080003_protect_linked_finance.sql`** — recria a função e o trigger de proteção dos lançamentos financeiros vinculados. Deve permanecer fora de qualquer reaplicação até comparar integralmente sua definição com a versão atual do banco.
+5. **`20261119170000_hr_time_calculation_and_closing.sql`** — é uma versão local antiga de 12.505 caracteres, diferente da migration remota `20261119162418`, cujo arquivo correspondente é `20261119190000_hr_time_calculation_and_closing.sql` (21.175 caracteres, correspondência exata). A versão remota contém regras e proteções adicionais, incluindo exceções de escala, referências de acordo, multiplicadores e políticas mais detalhadas. O banco atual contém `hr_schedule_exceptions` e colunas adicionais como `compensation_for_date`, confirmando que a estrutura evoluiu além do arquivo local antigo. Não substituir a versão remota pela local antiga.
+
+### Evidências consultadas
+
+- Os objetos principais de RH/ERP existem atualmente no schema `public`, incluindo tabelas de funcionários, estoque, vendas, financeiro, compras e as tabelas de apuração de jornada.
+- As funções atuais `create_sale_financial_entry()` e `create_purchase_financial_entry()` usam datas locais do Brasil; o arquivo antigo de vínculos financeiros usa `current_date`.
+- `has_table_privilege` confirmou que `authenticated` não tem INSERT/UPDATE em nível de tabela em `products` e `financial_entries`; o arquivo legado de ERP concederia esses privilégios.
+- `has_function_privilege` confirmou que `authenticated` e `anon` não podem executar as RPCs antigas `create_sale` e `receive_purchase`; o arquivo legado de ERP concederia EXECUTE novamente a `authenticated`.
+
+### Decisão técnica
+
+Os cinco arquivos não devem ser aplicados automaticamente nem apenas renomeados para coincidir com versões remotas. Os quatro arquivos iniciais são artefatos legados que podem desfazer endurecimentos posteriores; o arquivo local de RH é uma versão antiga/incompleta em relação ao SQL remoto aplicado. Preservar os originais em Git, manter a lista remota como fonte de verdade e preparar uma árvore candidata sem esses arquivos ativos somente depois de backup restaurável e validação isolada.
+
+**Bloqueio reforçado:** executar `db push` com a pasta atual pode reintroduzir grants e RPCs revogados, e enfraquecer políticas de leitura. Portanto, não executar push, repair, reset, rename ou exclusão automática. Nenhum dado, schema ou histórico de produção foi alterado nesta análise.
