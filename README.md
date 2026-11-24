@@ -1,98 +1,70 @@
-# G.E.I360
-Plataforma de gestão empresarial multiempresa.
+# G.E.I.360
 
-## Aplicativo publicado
-- **Apresentação para mercadinhos:** [Conheça o G.E.I360 e o projeto-piloto](https://micaellyroger3-hue.github.io/G.E.I360/apresentacao-mercadinhos.html).
-- **Acesso:** https://micaellyroger3-hue.github.io/G.E.I360/
+Plataforma de gestão empresarial multiempresa, com módulos gerais e operações específicas por ramo.
+
+## Acesso
+
+- **Aplicativo:** https://micaellyroger3-hue.github.io/G.E.I360/
+- **Apresentação:** https://micaellyroger3-hue.github.io/G.E.I360/apresentacao-mercadinhos.html
 - **Formato:** PWA instalável em Android e desktop.
-- **Publicação:** deploy do GitHub Pages e validação automatizada confirmados; o histórico atualizado fica em [GitHub Actions](https://github.com/micaellyroger3-hue/G.E.I360/actions).
-
-O modo offline mantém apenas a estrutura de abertura. Login e dados empresariais exigem internet.
+- **Publicação:** GitHub Pages. A validação automatizada e o deploy do commit atual foram concluídos com sucesso em 23/11/2026.
+- **Offline:** somente a estrutura estática de abertura fica disponível; login e dados empresariais exigem internet.
 
 ## Módulos disponíveis no código
+
 - Cadastro, login, renovação de sessão, recuperação de senha e logout.
-- Cadastro e seleção de empresas; perfil por ramo e canais comerciais.
-- Funcionários e RH: fichas da equipe, remuneração mensal ou por hora, convites, escalas (12x36, 6x1, 5x2, fixa e variável) e registro gerencial de ponto (não homologado como REP).
+- Cadastro e seleção de empresas, perfil por ramo e canais comerciais.
+- Minha empresa e configuração de módulos disponíveis.
+- Funcionários e RH: fichas, remuneração mensal ou por hora, convites, escalas e ponto gerencial.
 - Clientes, fornecedores, categorias, produtos, SKU e código de barras.
 - Estoque, entradas, saídas e ajustes.
-- Compras e vendas com carrinho; integração automática com movimentações e lançamentos financeiros.
-- Contas a pagar/receber, documentos e anexos privados.
+- Compras e vendas com carrinho e integração com movimentações e lançamentos financeiros.
+- Contas a pagar e receber, documentos privados e anexos.
 - Painel de indicadores, relatórios e exportação CSV.
-- **Operação específica por ramo:** alimentação preparada (restaurantes, lanchonetes, padarias, pizzarias e cafeterias); mercado e alimentos (mercadinhos, supermercados, mercearias, açougues e hortifrutis); comércio (campanhas e tarefas); serviços (ordens de serviço); distribuidora/e-commerce (expedição); construção (diário de obra). Para outros ramos, os módulos gerais continuam disponíveis e o perfil genérico permite registros operacionais manuais.
+- Operação por ramo: alimentação preparada; mercado e alimentos; comércio; serviços; distribuidora/e-commerce; construção.
 
-## Como funciona a personalização por ramo
-Na tela **Minha empresa**, o responsável informa o ramo e os canais usados. A lista contempla segmentos de alimentação e comércio; quando a atividade não estiver listada, pode ser usado **Outro ramo** para os módulos gerais. A tela **Operação do ramo** apresenta formulários específicos para os perfis implementados. Os registros ficam em `gei_records`, vinculados à empresa e protegidos por RLS.
+Os módulos disponíveis para cada empresa são organizados pelo catálogo `gei_module_catalog` e pelas atribuições `company_modules`. A interface pode ocultar áreas, mas a autorização efetiva também é aplicada no banco por RLS e controles de papel/módulo.
 
-**Limites importantes:** os registros setoriais são lançamentos operacionais manuais. Não dão baixa automática no estoque, não calculam custo real de receita, não sincronizam pedidos com iFood/marketplaces e não substituem módulos completos de produção, logística ou fiscal. A seleção do canal iFood não é integração oficial.
+## Limites funcionais importantes
+
+Os registros específicos por ramo são lançamentos operacionais manuais. Eles não fazem baixa automática no estoque, não calculam custo real de receitas e não substituem módulos completos de produção, logística ou fiscal.
+
+Ainda não existem:
+- Integração oficial com iFood ou sincronização automática de marketplaces.
+- Emissão ou transmissão de NF-e/NFC-e à SEFAZ.
+- Assistente de IA generativa conectado.
+- PDV completo, TEF, processamento de Pix/cartão ou integração bancária automática.
+- Folha oficial, eSocial, FGTS Digital ou ponto eletrônico homologado como REP-P/REP-A/REP-C.
+
+O RH e a apuração de jornada são ferramentas gerenciais e estimativas. Parâmetros e resultados devem ser conferidos por profissional de DP/contabilidade; não declarar conformidade oficial ou certificação.
 
 ## Supabase e segurança
-Projeto `mxikqdarqgatqoecfprg`, status ativo/saudável, PostgreSQL 17.
 
-Trinta migrations direcionadas estão registradas no Supabase:
-1. `company_business_profiles`
-2. `integrity_hardening`
-3. `product_categories`
-4. `product_barcode_integrity`
-5. `employee_integrity`
-6. `foreign_key_indexes_rls_tuning`
-7. `deduplicate_category_policies`
-8. `api_privilege_hardening`
-9. `sector_operations_records`
-10. `legacy_empresas_lockdown`
-11. `revoke_unused_legacy_rpcs`
-12. `brazil_local_business_dates`
-13. `gei_records_role_guard`
-14. `least_privilege_cleanup`
-15. `business_activity_detail`
-16. `business_activity_detail_permissions`
-17. `guard_company_creation_by_role`
-18. `hr_management`
-19. `hr_privilege_tightening`
-20. `hr_fk_indexes`
-21. `hr_timekeeping_and_hourly_pay`
-22. `hr_timekeeping_index_policy_tuning`
-23. `hr_punch_clock_timestamp`
-24. `hr_time_calculation_and_closing`
-25. `hr_occurrences_composite_fk_index`
-26. `hr_tax_parameters_fap_and_mixed_annex`
-27. `hr_allow_mixed_simples_annex`
-28. `hr_link_compensatory_rest_to_workday`
-29. `hr_employee_anexo_iv_share`
-30. `hr_daily_extension_agreement_reference`
-
-Verificações confirmadas:
+- Projeto: `mxikqdarqgatqoecfprg`.
+- Estado verificado em 23/11/2026: `ACTIVE_HEALTHY`, PostgreSQL 17.
 - 33/33 tabelas públicas com RLS habilitado.
-- Nenhum grant de tabela a `anon` nas tabelas empresariais auditadas.
-- Nenhum privilégio estrutural `TRUNCATE/REFERENCES/TRIGGER/MAINTAIN` para `authenticated` nas tabelas auditadas.
-- Catálogo de módulos somente leitura pela API; exclusões de empresa/membros e criação/exclusão direta de perfis revogadas do cliente.
-- Bucket `company-documents` privado.
-- A tabela legada `public.empresas` tem zero linhas; privilégios de `anon`, `public` e `authenticated` revogados e policy restritiva de negação total. A aplicação usa `public.companies`.
-- Testes SQL transacionais aprovados para criação de empresa e vínculo owner, venda, compra, entrada/saída/ajuste de estoque, geração de contas, proteção contra estoque insuficiente e imutabilidade de lançamentos vinculados; todos os registros de teste foram revertidos por `ROLLBACK`.
-- Matriz parcial de papéis testada: owner e manager autorizados para vendas; employee e viewer bloqueados; usuário sem vínculo não visualiza dados empresariais.
-- Registros de operação setorial: employee pode inserir; viewer não pode gravar; atualização direta bloqueada para manter histórico append-only.
-- Datas de vendas e financeiro usam `America/Sao_Paulo`; indicadores de vencimento e relatórios também comparam datas no fuso de Brasília.
+- Controles restritivos de papel e módulo aplicados a 26 tabelas; desativar um módulo bloqueia o acesso correspondente sem apagar registros.
+- Grants legados de sequências públicas removidos para `anon`; `authenticated` mantém somente o uso necessário.
+- Helpers de autorização e implementações privilegiadas movidos para schema privado; endpoints públicos são wrappers `SECURITY INVOKER`.
+- Advisor de segurança: o único aviso atual é a proteção contra senhas vazadas desativada no Auth. No plano Free atual, esse recurso exige upgrade.
+- Bucket `company-documents` privado, com políticas por papel e módulo e limite configurado de 10 MB.
+- Edge Function `invite-company-member` ativa, versão 5, com JWT obrigatório. O convite real e o aceite ainda precisam ser homologados com um e-mail de teste sob controle do proprietário.
 
-### Alertas e limites de homologação
-- O Advisor ainda sinaliza oito funções `SECURITY DEFINER` executáveis por `authenticated`: RPCs usadas pelo app (`create_company`, `create_sale_cart`, `receive_purchase_cart`, `record_stock_movement`) e helpers de RLS (`has_company_role`, `is_company_member`). Três RPCs antigas sem chamadas no frontend (`create_sale`, `receive_purchase`, `get_my_companies`) tiveram EXECUTE revogado. As oito restantes exigem sessão e validam empresa/cargo; `search_path` está vazio. Manter revisão periódica.
-- Proteção de senha vazada permanece desativada no Auth (recurso não disponível no plano Free atual).
-- Ainda falta teste ponta a ponta no navegador com duas contas reais, matriz completa de papéis, upload/download de documentos entre empresas e teste de restauração de backup. Não cadastrar clientes pagantes até essa homologação.
+Esses controles reduzem riscos, mas não representam garantia absoluta de segurança nem substituem backup, monitoramento e homologação.
 
-## Limites funcionais que ainda precisam de implementação
-- O menu agora é montado dinamicamente pelo catálogo `gei_module_catalog` e pelas atribuições `company_modules`. Proprietários e administradores podem ativar/desativar os módulos disponíveis em **Minha empresa**. A ausência de atribuição individual mantém o padrão `is_available` do catálogo; módulos ainda não implementados não são apresentados. Isso organiza a interface, mas não substitui RLS e políticas do banco.
-- O perfil empresarial usa tipos predefinidos (alimentação preparada, mercado/alimentos e outros segmentos), com campo livre para detalhar a subatividade específica (por exemplo, lanchonete, padaria, açougue, hortifruti ou cafeteria).
+## Pendências antes de liberar clientes pagantes
 
-## Integrações que ainda não existem
-- iFood: sem importação/sincronização de pedidos e cardápio.
-- NF-e/NFC-e: documentos e anexos; sem emissão ou transmissão à SEFAZ.
-- IA generativa: não há assistente generativo conectado.
-- Convites de funcionários: Edge Function segura ativa com `@supabase/server`; a ficha não cria login automaticamente. Owner/admin envia convite a partir de uma ficha com e-mail. A pessoa aceita o link e define a senha no aplicativo.
+1. **Backup e restauração:** ainda não foi concluído um backup lógico completo nem uma restauração de ensaio em projeto separado. O plano Free não oferece backups gerenciados para download; banco, objetos do Storage e configurações de Auth/Edge Functions precisam de cópias próprias.
+2. **Histórico de migrations:** auditoria de 23/11/2026 encontrou 36 versões remotas e 39 arquivos locais, com três migrations remotas sem arquivo local, cinco arquivos locais sem correspondência no histórico e divergências de prefixos/duplicidades. Não executar `supabase db push`, `supabase db reset --linked` ou reparo do histórico antes de backup e reconciliação comprovada.
+3. **Homologação em dispositivos:** confirmar instalação/atualização PWA, modo avião, câmera/scanner e upload/download no Android real e em desktop.
+4. **Homologação multiusuário:** testar duas contas reais em empresas distintas e a matriz completa owner/admin/manager/employee/viewer, inclusive documentos e módulos desativados.
+5. **Convite de funcionário:** testar envio, recebimento, aceite e definição de senha com e-mail de teste; confirmar SMTP e URLs de redirecionamento.
+6. **Revisão fiscal e contábil:** conferir documentos, relatórios, parâmetros e limites antes de anunciar recursos fiscais ou de RH.
 
-## Segurança de migrations e chaves
-O banco já tinha tabelas e dados antes desta revisão, sem histórico inicial de migrations. O antigo instalador `supabase/INSTALL_GEI360_ALL.sql` está desativado para impedir execução incompatível. **Não executar o instalador antigo nem `supabase db push`** até reconciliar formalmente todo o histórico.
+**Não cadastrar clientes pagantes antes de concluir essas etapas.** Consulte `docs/CLIENT_READINESS.md`, `docs/MIGRATION_HISTORY_RECONCILIATION.md` e `docs/BACKUP_RESTORE_RUNBOOK.md` para o roteiro detalhado.
 
-O navegador pode conter somente URL do projeto e chave publicável. Nunca expor `service_role`, `sb_secret_` ou credenciais de terceiros no front-end.
-- A navegação dinâmica e os controles do catálogo foram publicados com validação automatizada e cache PWA `gei360-shell-v37`; ainda requerem conferência visual no aparelho do usuário.
+## Proteção de chaves e dados
 
+O navegador pode conter somente a URL do projeto e a chave publicável. Nunca colocar `service_role`, `sb_secret_`, certificados digitais, senhas ou credenciais de terceiros no frontend ou no repositório.
 
-### RH — apuração de jornada
-O módulo inclui escala e ponto gerencial, apuração mensal de horas, extras diárias/semanais estimadas, adicional noturno e hora reduzida configuráveis, calendário de feriados, alertas de marcações ausentes, ocorrências justificadas, livro de banco de horas e fechamento/reabertura de competência. Consulte [docs/HR_MODULE.md](docs/HR_MODULE.md) para critérios e limites regulatórios. **Não declarar REP-P certificado nem folha oficial:** a conformidade integral com a Portaria MTP 671/2021 depende de requisitos técnicos e documentais adicionais, incluindo HLB, armazenamento/NSR, comprovantes e assinaturas ICP-Brasil.
+O instalador consolidado legado `supabase/INSTALL_GEI360_ALL.sql` está desativado. Não executá-lo. Não alterar o histórico remoto de migrations nem fazer operações de reset/push até concluir a reconciliação documentada.
