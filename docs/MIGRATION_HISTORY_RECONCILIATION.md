@@ -191,3 +191,26 @@ Método: leitura do conteúdo SQL integral das 36 linhas de `supabase_migrations
 A comparação de conteúdo fechou 27 correspondências remotas (28 arquivos locais correspondentes, contando a duplicação), identificou 9 SQLs remotos sem arquivo local idêntico e 14 arquivos locais sem par exato. Isso ainda não autoriza um push: arquivos sem par podem ser migrations antigas, drafts locais, migrations já consolidadas sob outra versão ou divergências reais. Não mover, apagar, renomear, reparar ou aplicar automaticamente. Próxima etapa: investigar proveniência dos 9 SQLs ausentes e dos 16 arquivos locais sem par, preparar uma árvore candidata separada e validar em projeto isolado com `supabase migration list` e `supabase db push --dry-run`. Backup completo restaurável segue pré-requisito para produção.
 
 Nenhum SQL foi aplicado; nenhum dado, schema ou histórico remoto foi alterado.
+
+
+## Análise de proveniência dos 9 SQLs remotos sem cópia idêntica — 24/11/2026
+
+Foi feita comparação direcionada entre cada SQL remoto sem correspondência exata e o arquivo local de mesmo propósito/nome. **Os nove têm um arquivo local semanticamente relacionado, mas nenhum é idêntico byte/textualmente após normalização de fim de linha.** Portanto, não são simplesmente nove arquivos ausentes: são nove pares com divergência que exigem revisão de conteúdo.
+
+| Versão remota | Arquivo local relacionado | Tamanho local / remoto (caracteres) | Observação |
+|---|---|---:|---|
+| 20261111213135 company_business_profiles | 202611100002_company_business_profiles.sql | 3581 / 3486 | Divergência começa após os comentários iniciais; remoto inclui preflight de tabela |
+| 20261111213202 integrity_hardening | 202611090001_integrity_hardening.sql | 2048 / 1634 | Divergência após cabeçalho; SQL local tem conteúdo adicional |
+| 20261116000938 sector_operations_records | 20261116000938_sector_operations_records.sql | 540 / 389 | Remoto inicia com transação e alteração de constraint; local contém cabeçalho/comentários adicionais |
+| 20261116001106 legacy_empresas_lockdown | 20261116001106_legacy_empresas_lockdown.sql | 547 / 308 | Remoto inicia com REVOKE; conteúdo local difere |
+| 20261116001449 revoke_unused_legacy_rpcs | 20261116001449_revoke_unused_legacy_rpcs.sql | 489 / 346 | Remoto inicia com REVOKE de RPCs; conteúdo local difere |
+| 20261116083715 brazil_local_business_dates | 20261116083715_brazil_local_business_dates.sql | 2695 / 2592 | Conteúdo remoto começa diretamente com ALTER TABLE; arquivo local tem diferenças |
+| 20261123130925 revoke_unsafe_default_privileges | 20261123090000_revoke_unsafe_default_privileges.sql | 977 / 454 | SQL remoto é menor e começa com REVOKE de privilégios |
+| 20261123130928 hr_employee_self_read | 20261123100000_hr_employee_self_read.sql | 742 / 560 | SQL remoto recria política; arquivo local contém conteúdo diferente |
+| 20261123130931 move_rls_helpers_private | 20261123101000_move_rls_helpers_private.sql | 2215 / 2000 | SQL remoto cria schema private e revoga acesso; arquivo local contém diferenças |
+
+Os tamanhos acima são do texto retornado pelas duas fontes, após normalização de CRLF/LF e trim. O primeiro ponto de divergência foi calculado por comparação textual. Não foi feita inferência de equivalência funcional.
+
+### Conclusão da proveniência
+
+O problema dos nove pares é divergência de conteúdo entre o SQL efetivamente registrado no Supabase e o arquivo versionado localmente. O registro remoto é a evidência do que foi aplicado em produção; o arquivo local não deve substituí-lo sem revisão. Próximo passo seguro: revisar cada diff semanticamente, identificar se o SQL local contém correções posteriores não aplicadas ou comentários/estrutura adicionais, e criar uma proposta de reconciliação em branch separada sem sobrescrever os originais. Não executar `migration repair`, `db push` ou SQL de produção para “alinhar” esses pares nesta etapa.
