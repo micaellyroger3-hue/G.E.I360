@@ -167,7 +167,7 @@ Método: leitura do conteúdo SQL integral das 36 linhas de `supabase_migrations
 | 20261123130928 | hr_employee_self_read |
 | 20261123130931 | move_rls_helpers_private |
 
-### 16 arquivos locais sem correspondência remota exata
+### 14 arquivos locais sem correspondência remota exata
 
 - 202611070001_employees.sql
 - 202611080001_erp_modules.sql
@@ -184,10 +184,10 @@ Método: leitura do conteúdo SQL integral das 36 linhas de `supabase_migrations
 - 20261123100000_hr_employee_self_read.sql
 - 20261123101000_move_rls_helpers_private.sql
 
-**Nota:** o inventário acima é de 42 arquivos e 36 registros remotos. A contagem de 16 arquivos locais sem correspondência inclui o arquivo de RH que colide no prefixo 20261119170000. As versões com mesmo nome/prefixo, mas SQL diferente, permanecem divergências e precisam de proveniência/revisão; não são equivalências.
+**Nota:** o inventário acima é de 42 arquivos e 36 registros remotos. Há 28 arquivos locais com correspondência exata (um SQL remoto é representado por dois arquivos locais duplicados) e 14 arquivos locais sem par exato. As versões com mesmo nome/prefixo, mas SQL diferente, permanecem divergências e precisam de proveniência/revisão; não são equivalências.
 
 ### Decisão operacional
 
-A comparação de conteúdo fechou 27 correspondências, identificou 9 SQLs remotos ausentes localmente e 16 arquivos locais sem par exato. Isso ainda não autoriza um push: arquivos sem par podem ser migrations antigas, drafts locais, migrations já consolidadas sob outra versão ou divergências reais. Não mover, apagar, renomear, reparar ou aplicar automaticamente. Próxima etapa: investigar proveniência dos 9 SQLs ausentes e dos 16 arquivos locais sem par, preparar uma árvore candidata separada e validar em projeto isolado com `supabase migration list` e `supabase db push --dry-run`. Backup completo restaurável segue pré-requisito para produção.
+A comparação de conteúdo fechou 27 correspondências remotas (28 arquivos locais correspondentes, contando a duplicação), identificou 9 SQLs remotos sem arquivo local idêntico e 14 arquivos locais sem par exato. Isso ainda não autoriza um push: arquivos sem par podem ser migrations antigas, drafts locais, migrations já consolidadas sob outra versão ou divergências reais. Não mover, apagar, renomear, reparar ou aplicar automaticamente. Próxima etapa: investigar proveniência dos 9 SQLs ausentes e dos 16 arquivos locais sem par, preparar uma árvore candidata separada e validar em projeto isolado com `supabase migration list` e `supabase db push --dry-run`. Backup completo restaurável segue pré-requisito para produção.
 
 Nenhum SQL foi aplicado; nenhum dado, schema ou histórico remoto foi alterado.
