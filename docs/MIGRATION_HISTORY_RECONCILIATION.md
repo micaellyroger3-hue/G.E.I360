@@ -115,3 +115,79 @@ Nova leitura somente de consulta encontrou **36 versões remotas** e **42 arquiv
 - Há colisão local de prefixo `20261119170000`: dois arquivos diferentes compartilham a mesma versão, além de um deles duplicar por conteúdo a migration de ponto `20261119153922`.
 
 Esse inventário confirma que não é seguro executar `db push` nem fazer renomeação em lote com base apenas em nomes. O próximo trabalho é comparar o conteúdo de cada migration remota com os arquivos locais e produzir um mapa 1:1 (remota → arquivo local idêntico, arquivo ausente, divergência ou arquivo local legado), preservando todos os arquivos originais. Depois disso ainda será necessário validar em ambiente isolado e comprovar backup/restauração antes de qualquer operação de produção.
+
+
+## Matriz de comparação integral — 24/11/2026
+
+Método: leitura do conteúdo SQL integral das 36 linhas de `supabase_migrations.schema_migrations` e dos 42 arquivos SQL da branch. Comparação textual após normalizar CRLF para LF e remover espaços/quebras apenas nas extremidades. Resultado classifica equivalência do conteúdo, não apenas nomes ou prefixos.
+
+### 27 correspondências exatas (36 versões remotas)
+
+| Versão remota | Nome remoto | Arquivo local com SQL idêntico |
+|---|---|---|
+| 20261111213207 | product_categories | 202611100001_product_categories.sql |
+| 20261111213209 | product_barcode_integrity | 202611100003_product_barcode_integrity.sql |
+| 20261111213213 | employee_integrity | 202611110001_employee_integrity.sql |
+| 20261111213231 | foreign_key_indexes_rls_tuning | 20261111213231_foreign_key_indexes_rls_tuning.sql |
+| 20261111213250 | deduplicate_category_policies | 20261111213250_deduplicate_category_policies.sql |
+| 20261111213334 | api_privilege_hardening | 202611120001_api_privilege_hardening.sql |
+| 20261116085058 | gei_records_role_guard | 20261116085000_gei_records_role_guard.sql |
+| 20261116090458 | least_privilege_cleanup | 20261116121000_least_privilege_cleanup.sql |
+| 20261116090607 | business_activity_detail | 20261116122000_business_activity_detail.sql |
+| 20261116090633 | business_activity_detail_permissions | 20261116123000_business_activity_detail_permissions.sql |
+| 20261116125032 | guard_company_creation_by_role | 20261116125032_guard_company_creation_by_role.sql |
+| 20261119131748 | hr_management | 20261119130000_hr_management.sql |
+| 20261119131816 | hr_privilege_tightening | 20261119132000_hr_privilege_tightening.sql |
+| 20261119131859 | hr_fk_indexes | 20261119133000_hr_fk_indexes.sql |
+| 20261119153922 | hr_timekeeping_and_hourly_pay | 20261119153922_hr_timekeeping_and_hourly_pay.sql **e** 20261119170000_hr_timekeeping.sql (duplicação exata) |
+| 20261119153948 | hr_timekeeping_index_policy_tuning | 20261119173000_hr_timekeeping_index_policy_tuning.sql |
+| 20261119154117 | hr_punch_clock_timestamp | 20261119180000_hr_punch_clock_timestamp.sql |
+| 20261119162418 | hr_time_calculation_and_closing | 20261119190000_hr_time_calculation_and_closing.sql |
+| 20261119162606 | hr_occurrences_composite_fk_index | 20261119191000_hr_occurrences_composite_fk_index.sql |
+| 20261119165027 | hr_tax_parameters_fap_and_mixed_annex | 20261119165027_hr_tax_parameters_fap_and_mixed_annex.sql |
+| 20261119165352 | hr_allow_mixed_simples_annex | 20261119165352_hr_allow_mixed_simples_annex.sql |
+| 20261119165726 | hr_link_compensatory_rest_to_workday | 20261119165726_hr_link_compensatory_rest_to_workday.sql |
+| 20261119165904 | hr_employee_anexo_iv_share | 20261119165904_hr_employee_anexo_iv_share.sql |
+| 20261119170819 | hr_daily_extension_agreement_reference | 20261119170819_hr_daily_extension_agreement_reference.sql |
+| 20261123132034 | enforce_employee_role_and_module_access | 20261123102000_enforce_employee_role_and_module_access.sql |
+| 20261123132745 | revoke_public_sequence_privileges | 20261123113000_revoke_public_sequence_privileges.sql |
+| 20261123133003 | move_privileged_rpcs_to_private | 20261123123000_move_privileged_rpcs_to_private.sql |
+
+### 9 versões remotas sem arquivo local de conteúdo idêntico
+
+| Versão remota | Nome remoto |
+|---|---|
+| 20261111213135 | company_business_profiles |
+| 20261111213202 | integrity_hardening |
+| 20261116000938 | sector_operations_records |
+| 20261116001106 | legacy_empresas_lockdown |
+| 20261116001449 | revoke_unused_legacy_rpcs |
+| 20261116083715 | brazil_local_business_dates |
+| 20261123130925 | revoke_unsafe_default_privileges |
+| 20261123130928 | hr_employee_self_read |
+| 20261123130931 | move_rls_helpers_private |
+
+### 16 arquivos locais sem correspondência remota exata
+
+- 202611070001_employees.sql
+- 202611080001_erp_modules.sql
+- 202611080002_finance_links.sql
+- 202611080003_protect_linked_finance.sql
+- 202611090001_integrity_hardening.sql
+- 202611100002_company_business_profiles.sql
+- 20261116000938_sector_operations_records.sql
+- 20261116001106_legacy_empresas_lockdown.sql
+- 20261116001449_revoke_unused_legacy_rpcs.sql
+- 20261116083715_brazil_local_business_dates.sql
+- 20261119170000_hr_time_calculation_and_closing.sql
+- 20261123090000_revoke_unsafe_default_privileges.sql
+- 20261123100000_hr_employee_self_read.sql
+- 20261123101000_move_rls_helpers_private.sql
+
+**Nota:** o inventário acima é de 42 arquivos e 36 registros remotos. A contagem de 16 arquivos locais sem correspondência inclui o arquivo de RH que colide no prefixo 20261119170000. As versões com mesmo nome/prefixo, mas SQL diferente, permanecem divergências e precisam de proveniência/revisão; não são equivalências.
+
+### Decisão operacional
+
+A comparação de conteúdo fechou 27 correspondências, identificou 9 SQLs remotos ausentes localmente e 16 arquivos locais sem par exato. Isso ainda não autoriza um push: arquivos sem par podem ser migrations antigas, drafts locais, migrations já consolidadas sob outra versão ou divergências reais. Não mover, apagar, renomear, reparar ou aplicar automaticamente. Próxima etapa: investigar proveniência dos 9 SQLs ausentes e dos 16 arquivos locais sem par, preparar uma árvore candidata separada e validar em projeto isolado com `supabase migration list` e `supabase db push --dry-run`. Backup completo restaurável segue pré-requisito para produção.
+
+Nenhum SQL foi aplicado; nenhum dado, schema ou histórico remoto foi alterado.
