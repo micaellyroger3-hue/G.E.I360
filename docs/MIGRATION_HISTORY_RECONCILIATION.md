@@ -1,79 +1,53 @@
 # Reconciliação do histórico de migrations — G.E.I360
 
-**Auditoria em 23/11/2026. Somente leitura no banco; arquivos recuperados em branch isolada.**
+**Atualização em 25/11/2026. Auditoria remota somente leitura; sem execução de SQL de alteração.**
 
-## Resultado atual
+## Estado conferido
 
 | Fonte | Quantidade |
 |---|---:|
-| Histórico remoto Supabase | 36 |
-| Arquivos locais originais em `supabase/migrations` | 39 |
-| Migrations remotas sem arquivo correspondente antes desta revisão | 3 |
-| Arquivos locais sem nome correspondente remoto | 5 |
-| Nomes coincidentes com prefixos diferentes | 23 |
+| Histórico remoto Supabase | 36 versões |
+| Arquivos SQL em `supabase/migrations` | 40 |
+| Versões remotas com arquivo canônico ativo correspondente | 36 |
+| Arquivos legados adicionais ainda ativos | 4 |
+| Cópias históricas em `supabase/migrations_archive` | 29 |
 
-O histórico remoto armazena não apenas versão e nome, mas também os SQLs aplicados em `supabase_migrations.schema_migrations.statements`. Foi possível recuperar o SQL exato das três migrations remotas que não tinham arquivo no repositório.
-
-## Arquivos recuperados nesta branch
-
+As 36 versões retornadas por `supabase migration list` foram conferidas contra os nomes canônicos presentes na pasta ativa. Os três SQLs que faltavam na auditoria anterior foram recuperados do histórico remoto e agora estão no repositório:
 - `20261111213231_foreign_key_indexes_rls_tuning.sql`
 - `20261111213250_deduplicate_category_policies.sql`
 - `20261119153922_hr_timekeeping_and_hourly_pay.sql`
 
-Os conteúdos foram reconstruídos diretamente do registro de migrations aplicado no Supabase, sem executar novamente esses SQLs no banco. Os arquivos estão somente nesta branch de documentação/reconciliação; ainda não foram integrados à `main`.
+## Quatro migrations-base históricas adicionais
 
-## Arquivos locais sem nome correspondente remoto
+Estes quatro arquivos continuam na pasta ativa, mas não aparecem como versões no histórico remoto:
+- `202611070001_employees.sql`
+- `202611080001_erp_modules.sql`
+- `202611080002_finance_links.sql`
+- `202611080003_protect_linked_finance.sql`
 
-- `202611070001_employees.sql` — legado; confirmar se seus efeitos estão cobertos pelo schema atual.
-- `202611080001_erp_modules.sql` — legado; confirmar cobertura atual.
-- `202611080002_finance_links.sql` — confirmar triggers e vínculos financeiros existentes.
-- `202611080003_protect_linked_finance.sql` — confirmar trigger/proteção existente.
-- `20261119170000_hr_timekeeping.sql` — provável versão antiga do SQL agora recuperado como `hr_timekeeping_and_hourly_pay`; precisa comparação de conteúdo.
+Os objetos centrais relacionados foram encontrados no banco em consultas somente leitura. Isso não prova, por si só, que executar novamente esses quatro SQLs seja seguro. Eles também estão preservados em `supabase/migrations_archive/`. Não apagar nem mover da pasta ativa até conferir o comportamento do Supabase CLI e revisar cada SQL.
 
-## Nomes coincidentes, prefixos diferentes
+## Arquivos históricos e duplicidades
 
-| Nome | Prefixo local | Versão remota |
-|---|---:|---:|
-| `integrity_hardening` | 202611090001 | 20261111213202 |
-| `product_categories` | 202611100001 | 20261111213207 |
-| `company_business_profiles` | 202611100002 | 20261111213135 |
-| `product_barcode_integrity` | 202611100003 | 20261111213209 |
-| `employee_integrity` | 202611110001 | 20261111213213 |
-| `api_privilege_hardening` | 202611120001 | 20261111213334 |
-| `gei_records_role_guard` | 20261116085000 | 20261116085058 |
-| `least_privilege_cleanup` | 20261116121000 | 20261116090458 |
-| `business_activity_detail` | 20261116122000 | 20261116090607 |
-| `business_activity_detail_permissions` | 20261116123000 | 20261116090633 |
-| `hr_management` | 20261119130000 | 20261119131748 |
-| `hr_privilege_tightening` | 20261119132000 | 20261119131816 |
-| `hr_fk_indexes` | 20261119133000 | 20261119131859 |
-| `hr_timekeeping_index_policy_tuning` | 20261119173000 | 20261119153948 |
-| `hr_punch_clock_timestamp` | 20261119180000 | 20261119154117 |
-| `hr_time_calculation_and_closing` | 20261119170000 e 20261119190000 | 20261119162418 |
-| `hr_occurrences_composite_fk_index` | 20261119191000 | 20261119162606 |
-| `revoke_unsafe_default_privileges` | 20261123090000 | 20261123130925 |
-| `hr_employee_self_read` | 20261123100000 | 20261123130928 |
-| `move_rls_helpers_private` | 20261123101000 | 20261123130931 |
-| `enforce_employee_role_and_module_access` | 20261123102000 | 20261123132034 |
-| `revoke_public_sequence_privileges` | 20261123113000 | 20261123132745 |
-| `move_privileged_rpcs_to_private` | 20261123123000 | 20261123133003 |
+- Prefixos antigos que representam migrations remotas foram preservados no arquivo histórico com prefixo `legacy-prefix-`.
+- Cópias antigas de RH foram arquivadas para preservar o conteúdo original e evitar colisões de versões na pasta ativa.
+- O arquivo `20261119170000_hr_timekeeping.sql` e as cópias antigas de cálculo/fechamento foram mantidos em arquivo, não descartados.
+- A pasta ativa contém os 36 nomes correspondentes às versões remotas e quatro arquivos-base adicionais.
 
-## Duplicidades e observações
+## Segurança e produção
 
-- Dois arquivos locais chamados `hr_time_calculation_and_closing` usam o mesmo prefixo `20261119170000` e `20261119190000`; o remoto registra uma única migration.
-- O arquivo local `hr_timekeeping.sql` também usa o prefixo `20261119170000`, criando colisão de versão com o cálculo/fechamento.
-- A migration remota `hr_timekeeping_and_hourly_pay` tem SQL de 12 KB e foi recuperada literalmente do histórico do banco.
-- A migration remota `foreign_key_indexes_rls_tuning` inclui geração de índices para FKs sem cobertura e ajuste de policy de `gei_records`.
-- A migration `deduplicate_category_policies` remove quatro policies legadas de categorias.
+- A lista remota registra 36 versões.
+- Nenhum `db push`, `db reset`, `migration repair` ou SQL de alteração foi executado nesta revisão.
+- A consulta remota encontrou 33/33 tabelas públicas com RLS habilitado; FORCE RLS está desativado nas 33. Não foi alterado.
+- O papel `anon` não tem concessões diretas de SELECT/INSERT/UPDATE/DELETE nas 33 tabelas públicas examinadas.
+- A proteção contra senhas vazadas permanece desativada no Auth, conforme aviso do Advisor.
 
-## Próximas ações seguras
+## Próximas ações seguras — exigem computador
 
-1. Não aplicar nenhuma migration no projeto de produção: o banco já registra as 36 versões.
-2. Comparar os 39 arquivos locais com os 36 SQLs remotos, por conteúdo, e não só pelo nome.
-3. Identificar e preservar os quatro arquivos legados que não têm par remoto.
-4. Resolver a colisão de prefixo `20261119170000` e remover da pasta ativa somente os arquivos comprovadamente já representados pelo histórico remoto.
-5. Manter um snapshot dos arquivos originais fora de `supabase/migrations` antes de qualquer reorganização.
-6. Rodar `supabase migration list` e `supabase db push --dry-run` em computador com CLI, antes de qualquer push.
-7. Fazer backup e provar restauração em projeto separado antes de alterar a organização final.
+1. No checkout desta branch, executar `supabase migration list` e guardar a saída.
+2. Executar `supabase db push --dry-run`; não confirmar/aplicar nada.
+3. Se o dry-run propor aplicar qualquer uma das quatro migrations-base históricas, parar e revisar o SQL completo, pois seus objetos já existem em produção.
+4. Comparar o plano do CLI com as 36 versões remotas e confirmar que nenhuma migration canônica será reaplicada.
+5. Fazer backup lógico, cópias separadas de Storage/Auth/Edge Functions e provar restauração em projeto separado antes de qualquer mudança de produção.
 
-**Bloqueio:** não executar `db push`, `db reset --linked`, `migration repair` nem alterar a tabela de histórico remoto nesta etapa. Não foi feita nenhuma alteração no schema, dados ou histórico de produção.
+**Bloqueio mantido:** não executar `db push`, `db reset --linked`, `migration repair` nem alterar a tabela remota de histórico até concluir essas verificações e a restauração de ensaio.
