@@ -60,3 +60,11 @@ Consulta somente de leitura ao PostgreSQL confirmou:
 O Advisor de segurança ainda mostra um aviso: proteção contra senhas vazadas desativada. O Advisor de performance mostra 45 índices sem uso observado; nenhum foi removido, pois o projeto está em desenvolvimento e alguns índices atendem integridade/consultas futuras.
 
 **Limite:** FORCE RLS não foi ativado em lote. A configuração atual mantém RLS em todas as tabelas; aplicar FORCE indiscriminadamente pode alterar comportamento de funções proprietárias e rotinas. Qualquer ajuste deve ser avaliado por tabela e testado com contas reais.
+
+## Quatro migrations extras: pendência já identificada
+
+A pasta ativa contém quatro versões locais sem registro remoto: 202611070001, 202611080001, 202611080002 e 202611080003. O CLI deve listá-las como pendentes e o dry-run deve propor sua aplicação. Não executar o push.
+
+A leitura do banco encontrou os principais objetos dessas migrations já presentes, mas 202611080001_erp_modules.sql contém um delimitador inválido (AS $ / $;) em record_stock_movement e inclui definições antigas de funções e privilégios. Reaplicá-la pode falhar ou reverter endurecimentos posteriores. Os quatro arquivos também dependem de objetos-base que não são criados por eles, como companies e helpers de autorização. Isso impede considerar a pasta atual um instalador limpo para projeto vazio.
+
+A solução exige backup/restauração comprovados e decisão técnica entre baseline, arquivamento e reconciliação do histórico. Não fazer migration repair nem editar/aplicar esses arquivos sem revisão.
