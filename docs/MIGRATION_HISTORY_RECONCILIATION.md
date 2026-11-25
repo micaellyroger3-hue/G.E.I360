@@ -51,3 +51,15 @@ Os objetos centrais relacionados foram encontrados no banco em consultas somente
 5. Fazer backup lógico, cópias separadas de Storage/Auth/Edge Functions e provar restauração em projeto separado antes de qualquer mudança de produção.
 
 **Bloqueio mantido:** não executar `db push`, `db reset --linked`, `migration repair` nem alterar a tabela remota de histórico até concluir essas verificações e a restauração de ensaio.
+
+## Bloqueio confirmado das quatro migrations-base extras — 25/11/2026
+
+A árvore ativa tem 40 arquivos: 36 versões que correspondem exatamente ao histórico remoto e quatro versões locais adicionais (202611070001, 202611080001, 202611080002, 202611080003). Como essas quatro versões não existem em supabase_migrations.schema_migrations, o Supabase CLI as tratará como locais pendentes. O dry-run deve listá-las; não executar o push.
+
+Consulta somente de leitura confirmou no banco os principais efeitos dessas quatro migrations: 11 tabelas operacionais, índices de empresa/financeiro, colunas source_type/source_id, funções e triggers de estoque/venda/compra/financeiro, políticas de funcionários e bucket privado company-documents. Isso comprova presença dos principais objetos, não equivalência integral nem segurança para reaplicar SQL antigo.
+
+Achado adicional: 202611080001_erp_modules.sql contém um delimitador de função malformado (AS $ e fechamento $;) na definição de record_stock_movement. Não corrigir silenciosamente o arquivo histórico nem permitir sua execução em produção. A migration também contém definições antigas de RPCs e grants que podem substituir endurecimentos posteriores se reaplicada.
+
+As quatro migrations dependem de objetos preexistentes como companies, company_members e helpers de autorização; não constituem, sozinhas, um bootstrap reproduzível de um projeto Supabase vazio.
+
+Decisão: manter a PR em rascunho. Em computador, primeiro executar apenas supabase migration list --remote e supabase db push --dry-run --remote, registrar a saída e parar se listar qualquer uma das quatro versões extras. A estratégia de arquivo/linha de base ou migration repair --status applied só pode ser decidida após backup restaurável e revisão de todos os efeitos. Nenhum push, repair ou SQL foi executado nesta etapa.
