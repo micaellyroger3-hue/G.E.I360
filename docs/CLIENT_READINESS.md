@@ -1,6 +1,6 @@
 # G.E.I360 — checklist de preparação para clientes
 
-## Estado verificado em 23/11/2026
+## Estado verificado em 25/11/2026
 
 - PRs de segurança e navegação #31, #36, #37, #38, #40 e #41 integrados à branch main.
 - CI de validação passou após as alterações.
@@ -17,8 +17,8 @@
 
 ## Pendências que impedem liberar clientes pagantes
 
-1. **Histórico de migrations:** 36 versões remotas e 39 arquivos locais não estão sincronizados; existem 3 migrations remotas sem arquivo local, 5 arquivos locais sem nome correspondente no histórico e prefixos de versão diferentes/duplicados. Não executar `supabase db push` nem `db reset --linked` antes da reconciliação. 
-2. **Backup e restauração:** ainda não foi executado um backup lógico completo nem uma restauração em projeto separado. A organização está no plano Free; não há backups gerenciados para download nem branching. O CLI exige computador, Docker e psql. Storage objects e configurações Auth/Edge Functions precisam de cópia separada.
+1. **Histórico de migrations:** as 36 versões remotas agora têm arquivos canônicos ativos correspondentes. A pasta ativa tem 40 SQLs, incluindo quatro migrations-base históricas que não constam no histórico remoto. Os objetos correspondentes foram encontrados no banco, mas o CLI ainda precisa confirmar o plano. Não executar `supabase db push`, `db reset --linked` ou `migration repair` antes do `supabase db push --dry-run` e da revisão das quatro migrations extras. 
+2. **Backup e restauração:** ainda não há prova técnica de backup lógico completo nem de restauração em projeto separado. A organização está no plano Free; não há backups gerenciados para download nem branching. O CLI exige computador, Docker e psql. Storage objects e configurações Auth/Edge Functions precisam de cópia separada.
 3. **Proteção de senhas vazadas:** permanece desativada porque o recurso não está incluído no plano Free. O Supabase informa disponibilidade no Pro ou superior.
 4. **Homologação no aparelho:** instalação PWA, atualização de cache, modo avião, câmera/scanner, upload e download ainda precisam ser confirmados no Android real.
 5. **Convite de funcionário:** função de servidor autenticada e protegida por papel foi revisada; nenhum convite real foi enviado. O fluxo completo deve ser testado com endereço de teste e autorização do proprietário.
