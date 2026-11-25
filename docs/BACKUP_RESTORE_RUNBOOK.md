@@ -108,3 +108,9 @@ A etapa só fica concluída quando:
 - Supabase CLI db dump: https://supabase.com/docs/reference/cli/supabase-db-dump
 - Password security: https://supabase.com/docs/guides/auth/password-security
 - Pricing: https://supabase.com/pricing
+
+## Resultado conhecido do dry-run das quatro migrations-base
+
+A pasta ativa contém quatro versões que não estão no histórico remoto: 202611070001, 202611080001, 202611080002 e 202611080003. Portanto, espere que supabase migration list --remote as mostre como locais pendentes e que supabase db push --dry-run --remote as liste para aplicação. Isso é um bloqueio conhecido, não um teste que libera o push. Se aparecerem, não confirme nem execute db push.
+
+A auditoria de leitura confirmou os principais objetos resultantes no banco, mas a migration 202611080001_erp_modules.sql contém um delimitador de função malformado na função record_stock_movement (AS $ / $;) e reintroduz definições antigas de RPCs/grants. Não reaplicar esses SQLs históricos. A decisão entre arquivar, criar uma baseline reproduzível ou marcar versões como aplicadas por migration repair exige backup restaurável e comparação integral; não faça isso por tentativa.
