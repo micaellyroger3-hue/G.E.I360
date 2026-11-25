@@ -1,82 +1,65 @@
 # Reconciliação do histórico de migrations — G.E.I360
 
-**Auditoria somente leitura em 23/11/2026. Não executar reparo ainda.**
+**Atualização em 25/11/2026. Auditoria remota somente leitura; sem execução de SQL de alteração.**
 
-## Resumo
+## Estado conferido
 
 | Fonte | Quantidade |
 |---|---:|
-| Histórico remoto Supabase | 36 |
-| Arquivos locais em `supabase/migrations` | 39 |
-| Nomes remotos sem arquivo local | 3 |
-| Arquivos locais sem nome remoto correspondente | 5 |
-| Nomes correspondentes com prefixo de versão diferente | 23 |
+| Histórico remoto Supabase | 36 versões |
+| Arquivos SQL em `supabase/migrations` | 40 |
+| Versões remotas com arquivo canônico ativo correspondente | 36 |
+| Arquivos legados adicionais ainda ativos | 4 |
+| Cópias históricas em `supabase/migrations_archive` | 29 |
 
-O histórico remoto foi criado/atualizado por aplicações de migration via Supabase. Os arquivos locais mantêm prefixos de timestamp diferentes. O CLI compara versões, não apenas nomes; portanto, um `supabase db push` pode considerar arquivos já aplicados como pendentes.
+As 36 versões retornadas por `supabase migration list` foram conferidas contra os nomes canônicos presentes na pasta ativa. Os três SQLs que faltavam na auditoria anterior foram recuperados do histórico remoto e agora estão no repositório:
+- `20261111213231_foreign_key_indexes_rls_tuning.sql`
+- `20261111213250_deduplicate_category_policies.sql`
+- `20261119153922_hr_timekeeping_and_hourly_pay.sql`
 
-## Remotas sem arquivo local
+## Quatro migrations-base históricas adicionais
 
-| Versão remota | Nome |
-|---|---|
-| 20261111213231 | `foreign_key_indexes_rls_tuning` |
-| 20261111213250 | `deduplicate_category_policies` |
-| 20261119153922 | `hr_timekeeping_and_hourly_pay` |
+Estes quatro arquivos continuam na pasta ativa, mas não aparecem como versões no histórico remoto:
+- `202611070001_employees.sql`
+- `202611080001_erp_modules.sql`
+- `202611080002_finance_links.sql`
+- `202611080003_protect_linked_finance.sql`
 
-O SQL exato dessas três aplicações ainda não foi identificado entre os arquivos locais. Não criar migrations vazias para fingir que estão representadas.
+Os objetos centrais relacionados foram encontrados no banco em consultas somente leitura. Isso não prova, por si só, que executar novamente esses quatro SQLs seja seguro. Eles também estão preservados em `supabase/migrations_archive/`. Não apagar nem mover da pasta ativa até conferir o comportamento do Supabase CLI e revisar cada SQL.
 
-## Arquivos locais sem nome correspondente remoto
+## Arquivos históricos e duplicidades
 
-| Arquivo local | Observação |
-|---|---|
-| `202611070001_employees.sql` | Migration inicial/legada; schema atual de RH evoluiu |
-| `202611080001_erp_modules.sql` | Migration inicial/legada do ERP |
-| `202611080002_finance_links.sql` | Triggers/links financeiros legados; confirmar cobertura no banco |
-| `202611080003_protect_linked_finance.sql` | Trigger de proteção financeira legado; confirmar cobertura |
-| `20261119170000_hr_timekeeping.sql` | Possível correspondência com `hr_timekeeping_and_hourly_pay`; não confirmada |
+- Prefixos antigos que representam migrations remotas foram preservados no arquivo histórico com prefixo `legacy-prefix-`.
+- Cópias antigas de RH foram arquivadas para preservar o conteúdo original e evitar colisões de versões na pasta ativa.
+- O arquivo `20261119170000_hr_timekeeping.sql` e as cópias antigas de cálculo/fechamento foram mantidos em arquivo, não descartados.
+- A pasta ativa contém os 36 nomes correspondentes às versões remotas e quatro arquivos-base adicionais.
 
-## Nomes coincidentes, prefixos diferentes
+## Segurança e produção
 
-| Nome | Prefixo local | Versão remota |
-|---|---:|---:|
-| `integrity_hardening` | 202611090001 | 20261111213202 |
-| `product_categories` | 202611100001 | 20261111213207 |
-| `company_business_profiles` | 202611100002 | 20261111213135 |
-| `product_barcode_integrity` | 202611100003 | 20261111213209 |
-| `employee_integrity` | 202611110001 | 20261111213213 |
-| `api_privilege_hardening` | 202611120001 | 20261111213334 |
-| `gei_records_role_guard` | 20261116085000 | 20261116085058 |
-| `least_privilege_cleanup` | 20261116121000 | 20261116090458 |
-| `business_activity_detail` | 20261116122000 | 20261116090607 |
-| `business_activity_detail_permissions` | 20261116123000 | 20261116090633 |
-| `hr_management` | 20261119130000 | 20261119131748 |
-| `hr_privilege_tightening` | 20261119132000 | 20261119131816 |
-| `hr_fk_indexes` | 20261119133000 | 20261119131859 |
-| `hr_timekeeping_index_policy_tuning` | 20261119173000 | 20261119153948 |
-| `hr_punch_clock_timestamp` | 20261119180000 | 20261119154117 |
-| `hr_time_calculation_and_closing` | 20261119170000 **e** 20261119190000 | 20261119162418 |
-| `hr_occurrences_composite_fk_index` | 20261119191000 | 20261119162606 |
-| `revoke_unsafe_default_privileges` | 20261123090000 | 20261123130925 |
-| `hr_employee_self_read` | 20261123100000 | 20261123130928 |
-| `move_rls_helpers_private` | 20261123101000 | 20261123130931 |
-| `enforce_employee_role_and_module_access` | 20261123102000 | 20261123132034 |
-| `revoke_public_sequence_privileges` | 20261123113000 | 20261123132745 |
-| `move_privileged_rpcs_to_private` | 20261123123000 | 20261123133003 |
+- A lista remota registra 36 versões.
+- Nenhum `db push`, `db reset`, `migration repair` ou SQL de alteração foi executado nesta revisão.
+- A consulta remota encontrou 33/33 tabelas públicas com RLS habilitado; FORCE RLS está desativado nas 33. Não foi alterado.
+- O papel `anon` não tem concessões diretas de SELECT/INSERT/UPDATE/DELETE nas 33 tabelas públicas examinadas.
+- A proteção contra senhas vazadas permanece desativada no Auth, conforme aviso do Advisor.
 
-## Duplicidades e correspondências ainda não provadas
+## Próximas ações seguras — exigem computador
 
-- Existem dois arquivos locais chamados `hr_time_calculation_and_closing`, um com 220 linhas e outro com 352 linhas, enquanto o remoto registra uma única versão.
-- O arquivo `hr_timekeeping.sql` pode corresponder à migration remota `hr_timekeeping_and_hourly_pay`, mas a equivalência precisa ser confirmada pelo conteúdo e pelo schema.
-- A tabela `gei_records` atual usa `module_code`, `record_type` e `payload`; a migration antiga do PR #1 usa `module` e `data`, portanto é obsoleta e não deve ser aplicada.
+1. No checkout desta branch, executar `supabase migration list` e guardar a saída.
+2. Executar `supabase db push --dry-run`; não confirmar/aplicar nada.
+3. Se o dry-run propor aplicar qualquer uma das quatro migrations-base históricas, parar e revisar o SQL completo, pois seus objetos já existem em produção.
+4. Comparar o plano do CLI com as 36 versões remotas e confirmar que nenhuma migration canônica será reaplicada.
+5. Fazer backup lógico, cópias separadas de Storage/Auth/Edge Functions e provar restauração em projeto separado antes de qualquer mudança de produção.
 
-## Plano seguro
+**Bloqueio mantido:** não executar `db push`, `db reset --linked`, `migration repair` nem alterar a tabela remota de histórico até concluir essas verificações e a restauração de ensaio.
 
-1. Fazer backup antes de tocar no histórico.
-2. Em computador com Supabase CLI, executar `supabase migration list` e salvar a saída.
-3. Recuperar o SQL exato das três migrations remotas sem arquivo (Git history, branch antiga ou dump revisado).
-4. Confirmar quais migrations locais são legadas e quais são a fonte real de cada objeto.
-5. Criar uma branch que alinhe nomes/versões sem mudar o schema de produção.
-6. Usar `supabase migration repair` somente para versões cuja equivalência tenha sido comprovada; essa operação altera a tabela de histórico.
-7. Rodar `supabase db push --dry-run` e revisar cada operação antes de qualquer push real.
-8. Repetir o processo em um projeto de homologação antes de considerar o histórico sincronizado.
+## Bloqueio confirmado das quatro migrations-base extras — 25/11/2026
 
-**Proibido nesta etapa:** `db push`, `db reset --linked`, exclusão de migrations, reparo de histórico ou qualquer alteração destrutiva em produção.
+A árvore ativa tem 40 arquivos: 36 versões que correspondem exatamente ao histórico remoto e quatro versões locais adicionais (202611070001, 202611080001, 202611080002, 202611080003). Como essas quatro versões não existem em supabase_migrations.schema_migrations, o Supabase CLI as tratará como locais pendentes. O dry-run deve listá-las; não executar o push.
+
+Consulta somente de leitura confirmou no banco os principais efeitos dessas quatro migrations: 11 tabelas operacionais, índices de empresa/financeiro, colunas source_type/source_id, funções e triggers de estoque/venda/compra/financeiro, políticas de funcionários e bucket privado company-documents. Isso comprova presença dos principais objetos, não equivalência integral nem segurança para reaplicar SQL antigo.
+
+Achado adicional: 202611080001_erp_modules.sql contém um delimitador de função malformado (AS $ e fechamento $;) na definição de record_stock_movement. Não corrigir silenciosamente o arquivo histórico nem permitir sua execução em produção. A migration também contém definições antigas de RPCs e grants que podem substituir endurecimentos posteriores se reaplicada.
+
+As quatro migrations dependem de objetos preexistentes como companies, company_members e helpers de autorização; não constituem, sozinhas, um bootstrap reproduzível de um projeto Supabase vazio.
+
+Decisão: manter a PR em rascunho. Em computador, primeiro executar apenas supabase migration list --remote e supabase db push --dry-run --remote, registrar a saída e parar se listar qualquer uma das quatro versões extras. A estratégia de arquivo/linha de base ou migration repair --status applied só pode ser decidida após backup restaurável e revisão de todos os efeitos. Nenhum push, repair ou SQL foi executado nesta etapa.

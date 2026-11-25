@@ -4,23 +4,22 @@
 
 ## Gate obrigatório: reconciliação do histórico de migrations
 
-Auditoria de 23/11/2026 encontrou:
+Atualização da auditoria em 25/11/2026:
 - Histórico remoto do Supabase: **36 versões**.
-- Repositório: **39 arquivos SQL** em `supabase/migrations`.
-- 3 nomes remotos sem arquivo local: `foreign_key_indexes_rls_tuning`, `deduplicate_category_policies`, `hr_timekeeping_and_hourly_pay`.
-- 5 arquivos locais sem nome correspondente no histórico: `employees`, `erp_modules`, `finance_links`, `protect_linked_finance`, `hr_timekeeping`.
-- 23 nomes coincidentes com prefixos de versão diferentes.
+- Repositório: **40 arquivos SQL ativos** em `supabase/migrations`.
+- As 36 versões remotas agora têm arquivos canônicos ativos correspondentes; os três SQLs ausentes foram recuperados do histórico aplicado.
+- Quatro migrations-base históricas adicionais (`employees`, `erp_modules`, `finance_links`, `protect_linked_finance`) continuam ativas, mas não constam no histórico remoto. Os objetos centrais correspondentes foram encontrados no banco, mas o CLI precisa confirmar se as trataria como pendentes.
+- Cópias históricas antigas estão preservadas em `supabase/migrations_archive/`.
 - Dois arquivos locais chamados `hr_time_calculation_and_closing` usam os prefixos `20261119170000` e `20261119190000`; o arquivo `hr_timekeeping` também usa `20261119170000`, criando colisão de versão; o remoto registra apenas uma versão de cálculo/fechamento e outra de ponto/folha.
 
 **Não execute** `supabase db push`, `supabase db reset --linked` ou `supabase migration repair` antes de revisar a matriz em `docs/MIGRATION_HISTORY_RECONCILIATION.md`), fazer backup e confirmar quais arquivos representam exatamente cada migration remota. A correção do histórico altera metadados de implantação e pode fazer o CLI reaplicar SQL; não foi feita nesta revisão.
 
 Depois de reconciliar em computador:
 1. Rode `supabase migration list` e compare com a matriz.
-2. Recupere/identifique o SQL das três migrations remotas sem arquivo.
-3. Confirme quais arquivos locais são legados/superseded; não os apague antes de comprovar que seus efeitos estão cobertos.
-4. Ajuste os prefixos/arquivos em branch e revise o diff.
-5. Rode `supabase db push --dry-run`; não deve propor recriar objetos existentes.
-6. Só então execute o fluxo de restore em projeto separado.
+2. Confirme no CLI que as 36 versões remotas estão reconhecidas.
+3. Revise as quatro migrations-base extras e não permita que sejam reaplicadas sem validação explícita.
+4. Rode `supabase db push --dry-run`; interrompa se propor aplicar qualquer SQL já refletido no banco.
+5. Só então execute o fluxo de backup e restore em projeto separado.
 
 
 A organização está no plano Free. O Supabase informa que:
@@ -109,3 +108,9 @@ A etapa só fica concluída quando:
 - Supabase CLI db dump: https://supabase.com/docs/reference/cli/supabase-db-dump
 - Password security: https://supabase.com/docs/guides/auth/password-security
 - Pricing: https://supabase.com/pricing
+
+## Resultado conhecido do dry-run das quatro migrations-base
+
+A pasta ativa contém quatro versões que não estão no histórico remoto: 202611070001, 202611080001, 202611080002 e 202611080003. Portanto, espere que supabase migration list --remote as mostre como locais pendentes e que supabase db push --dry-run --remote as liste para aplicação. Isso é um bloqueio conhecido, não um teste que libera o push. Se aparecerem, não confirme nem execute db push.
+
+A auditoria de leitura confirmou os principais objetos resultantes no banco, mas a migration 202611080001_erp_modules.sql contém um delimitador de função malformado na função record_stock_movement (AS $ / $;) e reintroduz definições antigas de RPCs/grants. Não reaplicar esses SQLs históricos. A decisão entre arquivar, criar uma baseline reproduzível ou marcar versões como aplicadas por migration repair exige backup restaurável e comparação integral; não faça isso por tentativa.

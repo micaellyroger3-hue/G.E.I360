@@ -68,9 +68,9 @@ assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase ke
 for (const file of [
   '202611070001_employees.sql','202611080001_erp_modules.sql',
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
-  '202611090001_integrity_hardening.sql','202611100001_product_categories.sql',
-  '202611100002_company_business_profiles.sql','202611100003_product_barcode_integrity.sql',
-  '202611110001_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql','20261116085000_gei_records_role_guard.sql','20261116121000_least_privilege_cleanup.sql','20261116122000_business_activity_detail.sql','20261116123000_business_activity_detail_permissions.sql','20261116121000_least_privilege_cleanup.sql','20261116125032_guard_company_creation_by_role.sql'
+  '20261111213202_integrity_hardening.sql','20261111213207_product_categories.sql',
+  '20261111213135_company_business_profiles.sql','20261111213209_product_barcode_integrity.sql',
+  '20261111213213_employee_integrity.sql','20261116000938_sector_operations_records.sql','20261116001106_legacy_empresas_lockdown.sql','20261116001449_revoke_unused_legacy_rpcs.sql','20261116083715_brazil_local_business_dates.sql','20261116085058_gei_records_role_guard.sql','20261116090458_least_privilege_cleanup.sql','20261116090607_business_activity_detail.sql','20261116090633_business_activity_detail_permissions.sql','20261116090458_least_privilege_cleanup.sql','20261116125032_guard_company_creation_by_role.sql'
 ]) assert.ok(fs.existsSync('supabase/migrations/' + file), 'Missing migration: ' + file);
 
 const brazilDatesSql = fs.readFileSync('supabase/migrations/20261116083715_brazil_local_business_dates.sql', 'utf8');
@@ -84,8 +84,8 @@ assert.ok(legacyLockdown.includes('revoke all privileges') && legacyLockdown.inc
 
 const sectorOpsMigration = fs.readFileSync('supabase/migrations/20261116000938_sector_operations_records.sql', 'utf8');
 assert.ok(sectorOpsMigration.includes("'sector_ops'") && sectorOpsMigration.includes('gei_records_module_code_check'), 'Sector operations module code migration missing');
-const sectorRoleGuard = fs.readFileSync('supabase/migrations/20261116085000_gei_records_role_guard.sql', 'utf8');
-const leastPrivilege = fs.readFileSync('supabase/migrations/20261116121000_least_privilege_cleanup.sql', 'utf8').toLowerCase();
+const sectorRoleGuard = fs.readFileSync('supabase/migrations/20261116085058_gei_records_role_guard.sql', 'utf8');
+const leastPrivilege = fs.readFileSync('supabase/migrations/20261116090458_least_privilege_cleanup.sql', 'utf8').toLowerCase();
 assert.ok(leastPrivilege.includes('revoke all privileges on table public.gei_module_catalog') && leastPrivilege.includes('grant select on table public.gei_module_catalog'), 'Module catalog must be read-only to authenticated clients');
 assert.ok(leastPrivilege.includes('revoke delete on table public.companies') && leastPrivilege.includes('revoke delete on table public.company_members'), 'Unused company and membership delete grants must be revoked');
 assert.ok(leastPrivilege.includes('revoke insert, delete on table public.profiles'), 'Client profile creation/deletion grants must be revoked');
@@ -96,7 +96,7 @@ const coreSql = fs.readFileSync('supabase/migrations/202611080001_erp_modules.sq
 assert.ok(coreSql.includes('enable row level security'), 'RLS setup missing from core migration');
 assert.ok(coreSql.includes("values ('company-documents', 'company-documents', false"), 'Private document bucket configuration missing');
 assert.ok(coreSql.includes('create_sale_cart') && coreSql.includes('receive_purchase_cart'), 'Transactional sales/purchase RPCs missing');
-const hardeningSql = fs.readFileSync('supabase/migrations/202611090001_integrity_hardening.sql', 'utf8');
+const hardeningSql = fs.readFileSync('supabase/migrations/20261111213202_integrity_hardening.sql', 'utf8');
 assert.ok(hardeningSql.includes('quantity >= 0'), 'Zero-stock adjustment support missing');
 assert.ok(hardeningSql.includes('revoke insert, update on table public.products'), 'Direct stock quantity insert/update protection missing');
 assert.ok(hardeningSql.includes('grant insert (') && !/grant insert\s*\([^)]*stock_quantity/s.test(hardeningSql), 'Product stock must not be set directly on insert');
@@ -109,13 +109,13 @@ assert.ok(fs.existsSync('supabase/diagnostics/health_check.sql'), 'Supabase diag
 assert.ok(fs.existsSync('supabase/diagnostics/FINALIZATION_PRECHECK.sql'), 'Consolidated finalization precheck missing');
 const finalPrecheck = fs.readFileSync('supabase/diagnostics/FINALIZATION_PRECHECK.sql', 'utf8');
 assert.ok(finalPrecheck.includes('from pg_policies') && finalPrecheck.includes('information_schema.table_privileges') && finalPrecheck.includes('pg_get_functiondef'), 'Finalization precheck must inspect RLS, grants and function definitions');
-assert.ok(fs.existsSync('supabase/migrations/202611120001_api_privilege_hardening.sql'), 'Consolidated API privilege hardening migration missing');
+assert.ok(fs.existsSync('supabase/migrations/20261111213334_api_privilege_hardening.sql'), 'Consolidated API privilege hardening migration missing');
 assert.ok(fs.existsSync('supabase/INSTALL_GEI360_ALL.sql'), 'Supabase migration safety notice missing');
 const installer = fs.readFileSync('supabase/INSTALL_GEI360_ALL.sql', 'utf8');
 assert.ok(installer.includes('INSTALLER_DISABLED_SCHEMA_DRIFT') && installer.includes('NÃO EXECUTE COMO INSTALADOR'), 'Legacy installer must be disabled when schema drift exists');
 assert.ok(installer.includes('api_privilege_hardening'), 'Disabled installer must document the targeted security migration');
 
-const privilegeHardening = fs.readFileSync('supabase/migrations/202611120001_api_privilege_hardening.sql', 'utf8');
+const privilegeHardening = fs.readFileSync('supabase/migrations/20261111213334_api_privilege_hardening.sql', 'utf8');
 assert.ok(privilegeHardening.includes('from anon, public'), 'Anonymous and PUBLIC table grants must be revoked');
 assert.ok(privilegeHardening.includes('truncate, references, trigger, maintain'), 'Authenticated structural privileges must be revoked');
 assert.ok(privilegeHardening.includes('grant execute on function public.create_sale_cart') && privilegeHardening.includes('grant execute on function public.receive_purchase_cart'), 'Authenticated transactional RPC grants must be preserved');
@@ -146,19 +146,19 @@ assert.ok(worker.includes('./hr.js?v=20261119-07') && worker.includes('hr-time-c
 assert.ok(hr.includes('employee_compensation') && hr.includes('hr_company_settings') && hr.includes('hr_events'), 'HR data modules missing');
 assert.ok(hr.includes('gei_post_hr_monthly_cost') && hr.includes('Lançar custo estimado'), 'HR finance posting flow missing');
 assert.ok(hr.includes('FGTS') && hr.includes('INSS patronal') && hr.includes('Provisões'), 'HR cost breakdown missing');
-const hrSql = fs.readFileSync('supabase/migrations/20261119130000_hr_management.sql', 'utf8');
+const hrSql = fs.readFileSync('supabase/migrations/20261119131748_hr_management.sql', 'utf8');
 assert.ok(hrSql.includes('enable row level security') && hrSql.includes("array['owner','admin']"), 'HR sensitive data must be protected by RLS and owner/admin roles');
 assert.ok(hrSql.includes('gei_hr_guard_employee_link') && hrSql.includes('gei_post_hr_monthly_cost'), 'HR database integrity and finance RPC missing');
 assert.ok(hrSql.includes('unique(company_id, period)'), 'HR finance posting must be unique per company and period');
 assert.ok(hrSql.includes('from public, anon') && hrSql.includes('grant select, insert on public.hr_cost_postings'), 'HR tables must revoke PUBLIC/anon access and keep cost postings append-only');
 assert.ok(fs.existsSync('docs/HR_MODULE.md'), 'HR module documentation missing');
-const hrTimeCalcSql = fs.readFileSync('supabase/migrations/20261119190000_hr_time_calculation_and_closing.sql', 'utf8');
+const hrTimeCalcSql = fs.readFileSync('supabase/migrations/20261119162418_hr_time_calculation_and_closing.sql', 'utf8');
 assert.ok(hrTimeCalcSql.includes('hr_time_rules') && hrTimeCalcSql.includes('hr_holidays') && hrTimeCalcSql.includes('hr_time_occurrences') && hrTimeCalcSql.includes('hr_time_bank_entries') && hrTimeCalcSql.includes('hr_time_periods'), 'HR time calculation schema missing');
 assert.ok(hrTimeCalcSql.includes('enable row level security') && hrTimeCalcSql.includes('append-only'), 'HR time calculation tables must use RLS and immutable bank ledger');
 assert.ok(hrTimeCalcSql.includes('hr_schedule_exceptions') && hrTimeCalcSql.includes('monthly_hour_divisor') && hrTimeCalcSql.includes('night_extension') && hrTimeCalcSql.includes('hr_guard_closed_time_period'), 'HR compliance migration must protect schedules and closed periods');
-const hrPrivilegeSql = fs.readFileSync('supabase/migrations/20261119132000_hr_privilege_tightening.sql', 'utf8');
+const hrPrivilegeSql = fs.readFileSync('supabase/migrations/20261119131816_hr_privilege_tightening.sql', 'utf8');
 assert.ok(hrPrivilegeSql.includes('revoke truncate, references, trigger') && hrPrivilegeSql.includes('revoke update, delete on public.hr_cost_postings'), 'HR table privileges must follow least privilege');
-const hrIndexesSql = fs.readFileSync('supabase/migrations/20261119133000_hr_fk_indexes.sql', 'utf8');
+const hrIndexesSql = fs.readFileSync('supabase/migrations/20261119131859_hr_fk_indexes.sql', 'utf8');
 assert.ok(hrIndexesSql.includes('employee_compensation_employee_id_idx') && hrIndexesSql.includes('hr_events_employee_id_idx') && hrIndexesSql.includes('hr_cost_postings_created_by_idx'), 'HR foreign keys must have supporting indexes');
 assert.ok(worker.includes('gei360-shell-v39'), 'Offline shell cache version missing');
 assert.ok(profileJs.includes("['ifood','iFood']"), 'iFood sales channel option missing');
@@ -169,10 +169,10 @@ assert.ok(profileJs.includes('Outro ramo (qualquer atividade)'), 'Generic busine
 assert.ok(profileJs.includes("'Estoque (se aplicável)':'products'"), 'Generic profile must link to the available stock module');
 assert.ok(profileJs.includes('Produção e fichas de preparo (registro manual)') && profileJs.includes('Controle manual de validade e perdas'), 'Sector recommendations must match implemented manual workflows');
 assert.ok(!/access_token|refresh_token|client_secret|service_role/i.test(profileJs), 'Third-party secrets must not be stored in browser profile code');
-const profileSql = fs.readFileSync('supabase/migrations/202611100002_company_business_profiles.sql', 'utf8');
-const activityDetailSql = fs.readFileSync('supabase/migrations/20261116122000_business_activity_detail.sql', 'utf8');
+const profileSql = fs.readFileSync('supabase/migrations/20261111213135_company_business_profiles.sql', 'utf8');
+const activityDetailSql = fs.readFileSync('supabase/migrations/20261116090607_business_activity_detail.sql', 'utf8');
 assert.ok(activityDetailSql.includes('business_activity_detail') && activityDetailSql.includes('<= 120'), 'Flexible business activity detail schema missing');
-const activityPermissionsSql = fs.readFileSync('supabase/migrations/20261116123000_business_activity_detail_permissions.sql', 'utf8').toLowerCase();
+const activityPermissionsSql = fs.readFileSync('supabase/migrations/20261116090633_business_activity_detail_permissions.sql', 'utf8').toLowerCase();
 assert.ok(activityPermissionsSql.includes('grant insert (business_activity_detail)') && activityPermissionsSql.includes('grant update (business_activity_detail)'), 'Business activity detail column grants missing');
 assert.ok(profileSql.includes('enable row level security'), 'Business profile RLS missing');
 assert.ok(profileSql.includes('is_company_member(company_id)'), 'Business profile member read policy missing');
@@ -185,7 +185,7 @@ const barcodeModule = fs.readFileSync('modules.js', 'utf8');
 assert.ok(barcodeModule.includes("['barcode','Código de barras','text']"), 'Product barcode field missing');
 assert.ok(barcodeModule.includes("id=\"scanBarcode\"") && barcodeModule.includes("BarcodeDetector"), 'Camera barcode scanning missing');
 assert.ok(barcodeModule.includes("getUserMedia"), 'Camera permission flow missing');
-const barcodeSql = fs.readFileSync('supabase/migrations/202611100003_product_barcode_integrity.sql', 'utf8');
+const barcodeSql = fs.readFileSync('supabase/migrations/20261111213209_product_barcode_integrity.sql', 'utf8');
 assert.ok(barcodeSql.includes('products_company_barcode_uidx'), 'Company-scoped unique barcode index missing');
 assert.ok(barcodeSql.includes('gei360_normalize_product_barcode'), 'Barcode normalization trigger missing');
 assert.ok(fs.existsSync('supabase/diagnostics/202611100003_barcode_preflight.sql'), 'Barcode preflight diagnostic missing');
@@ -195,7 +195,7 @@ const categoryModule = fs.readFileSync('modules.js', 'utf8');
 assert.ok(html.includes('data-page="categories"'), 'Categories navigation missing');
 assert.ok(categoryModule.includes("categories:{table:'product_categories'"), 'Categories CRUD module missing');
 assert.ok(categoryModule.includes("category_id") && categoryModule.includes("product_categories"), 'Product/category relationship missing');
-const categorySql = fs.readFileSync('supabase/migrations/202611100001_product_categories.sql', 'utf8');
+const categorySql = fs.readFileSync('supabase/migrations/20261111213207_product_categories.sql', 'utf8');
 assert.ok(categorySql.includes('products_company_category_fk'), 'Company-scoped product/category foreign key missing');
 assert.ok(categorySql.includes('enable row level security'), 'Product category RLS missing');
 assert.ok(categorySql.includes('gei360_categories_member_guard'), 'Restrictive company-membership guard missing');
@@ -239,7 +239,7 @@ assert.ok(modules.includes("data-status-toggle") && modules.includes("paid_at:ne
 assert.ok(modules.includes("await api('/rest/v1/rpc/create_sale_cart'") && modules.includes("await api('/rest/v1/rpc/receive_purchase_cart'"), 'UI must use transactional cart RPCs');
 
 
-const employeeSecurity = fs.readFileSync('supabase/migrations/202611110001_employee_integrity.sql', 'utf8');
+const employeeSecurity = fs.readFileSync('supabase/migrations/20261111213213_employee_integrity.sql', 'utf8');
 assert.ok(employeeSecurity.includes('gei360_guard_employee_integrity'), 'Employee immutable ownership trigger missing');
 assert.ok(employeeSecurity.includes('new.company_id is distinct from old.company_id'), 'Employee company transfer must be blocked');
 assert.ok(employeeSecurity.includes('new.created_by is distinct from old.created_by'), 'Employee creator changes must be blocked');
@@ -325,7 +325,7 @@ assert.ok(inviteFunction.includes('APP_ORIGIN = "https://micaellyroger3-hue.gith
 
 // Database privilege hardening: prevent RLS-bypassing structural grants
 // and broad default grants from being inherited by future public objects.
-const privilegeMigration = fs.readFileSync('supabase/migrations/20261123090000_revoke_unsafe_default_privileges.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
+const privilegeMigration = fs.readFileSync('supabase/migrations/20261123130925_revoke_unsafe_default_privileges.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
 for (const statement of [
   'revoke truncate, references, trigger, maintain on all tables in schema public from anon, authenticated',
   'alter default privileges for role postgres in schema public revoke all on tables from anon, authenticated',
@@ -336,18 +336,18 @@ for (const statement of [
 }
 
 
-const employeeSelfReadMigration = fs.readFileSync('supabase/migrations/20261123100000_hr_employee_self_read.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
+const employeeSelfReadMigration = fs.readFileSync('supabase/migrations/20261123130928_hr_employee_self_read.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
 assert.ok(employeeSelfReadMigration.includes('drop policy if exists employees_members_select'), 'Legacy broad employee read policy must be replaced');
 assert.ok(employeeSelfReadMigration.includes("role = 'employee'") && employeeSelfReadMigration.includes('auth_user_id = (select auth.uid())'), 'Employee role must read only its own linked employee record');
 assert.ok(employeeSelfReadMigration.includes("array['owner','admin','manager']"), 'Owner, admin and manager must retain company roster access');
 
-const privateHelpersMigration = fs.readFileSync('supabase/migrations/20261123101000_move_rls_helpers_private.sql', 'utf8').toLowerCase();
+const privateHelpersMigration = fs.readFileSync('supabase/migrations/20261123130931_move_rls_helpers_private.sql', 'utf8').toLowerCase();
 assert.ok(privateHelpersMigration.includes('alter function public.has_company_role') && privateHelpersMigration.includes('set schema private'), 'RLS helper must move out of exposed public schema');
 assert.ok(privateHelpersMigration.includes('security invoker') && privateHelpersMigration.includes('select private.has_company_role') && privateHelpersMigration.includes('select private.is_company_member'), 'Public helper compatibility functions must be SECURITY INVOKER wrappers');
 assert.ok(privateHelpersMigration.includes('revoke execute on functions from public, anon, authenticated'), 'Future private helper functions must not receive default execution grants');
 
 
-const roleModuleMigration = fs.readFileSync('supabase/migrations/20261123102000_enforce_employee_role_and_module_access.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
+const roleModuleMigration = fs.readFileSync('supabase/migrations/20261123132034_enforce_employee_role_and_module_access.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
 assert.ok(roleModuleMigration.includes('private.is_company_module_enabled'), 'Module access must be enforced in the database');
 assert.ok(roleModuleMigration.includes('as restrictive for all to authenticated'), 'Module switches must be enforced by restrictive RLS policies');
 assert.ok(roleModuleMigration.includes("array['owner','admin','manager','viewer']"), 'Employee role must not read company-wide business data');
@@ -370,12 +370,12 @@ assert.ok(roleModuleMigration.includes("and e.status = 'active'") && roleModuleM
 assert.ok(modules.includes("document.addEventListener('visibilitychange'") && modules.includes('getSupportedFormats') && modules.includes("field.dispatchEvent(new Event('input'"), 'Barcode scanner must adapt to supported formats and stop camera when hidden');
 
 
-const sequenceMigration = fs.readFileSync('supabase/migrations/20261123113000_revoke_public_sequence_privileges.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
+const sequenceMigration = fs.readFileSync('supabase/migrations/20261123132745_revoke_public_sequence_privileges.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
 assert.ok(sequenceMigration.includes('revoke all on sequence') && sequenceMigration.includes('from public, anon, authenticated'), 'Legacy public sequence grants must be revoked');
 assert.ok(sequenceMigration.includes('grant usage on sequence') && sequenceMigration.includes('to authenticated'), 'Authenticated inserts must retain only required sequence usage');
 
 
-const privateRpcMigration = fs.readFileSync('supabase/migrations/20261123123000_move_privileged_rpcs_to_private.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
+const privateRpcMigration = fs.readFileSync('supabase/migrations/20261123133003_move_privileged_rpcs_to_private.sql', 'utf8').toLowerCase().replace(/\s+/g, ' ');
 for (const rpc of ['create_company','create_sale_cart','hr_claim_employee_account','hr_register_time_punch','receive_purchase_cart','record_stock_movement']) {
   assert.ok(privateRpcMigration.includes('alter function public.' + rpc), 'Privileged RPC must be moved to private schema: ' + rpc);
   assert.ok(privateRpcMigration.includes('create function public.' + rpc), 'Public RPC wrapper must be recreated: ' + rpc);
