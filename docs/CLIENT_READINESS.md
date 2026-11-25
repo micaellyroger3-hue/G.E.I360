@@ -44,3 +44,19 @@
 ## Critério de aceite
 
 A publicação do site e a validação estática não equivalem à homologação. O lançamento comercial exige backup e restauração comprovados, isolamento multiempresa, convite seguro, testes autenticados por papel, PWA/câmera/documentos homologados no aparelho e revisão fiscal/contábil dos recursos anunciados.
+
+
+## Auditoria SQL complementar — 25/11/2026
+
+Consulta somente de leitura ao PostgreSQL confirmou:
+- 33/33 tabelas públicas com RLS habilitado; 0/33 com FORCE RLS.
+- 126 políticas RLS públicas; nenhuma política encontrada com papel `anon`/PUBLIC ou condição universal `true`.
+- Nenhum privilégio direto de tabela para `anon` em SELECT/INSERT/UPDATE/DELETE nas tabelas públicas.
+- 12 funções `SECURITY DEFINER` em `public`: todas com `search_path = ''`, sem EXECUTE para `anon` e sem EXECUTE para `authenticated` (funções internas/trigger-only).
+- 9 funções `SECURITY DEFINER` em `private`: todas com `search_path = ''`; EXECUTE para `authenticated`, sem EXECUTE para `anon`.
+- Schema `private`: USAGE negado a `anon` e permitido a `authenticated`. A permissão SQL não confirma se o schema está ou não exposto pelo PostgREST/Data API; essa configuração precisa ser conferida no painel Supabase em API/Exposed schemas antes de convidar clientes.
+- Nenhuma função `SECURITY DEFINER` do schema público ou privado é executável por `anon`.
+
+O Advisor de segurança ainda mostra um aviso: proteção contra senhas vazadas desativada. O Advisor de performance mostra 45 índices sem uso observado; nenhum foi removido, pois o projeto está em desenvolvimento e alguns índices atendem integridade/consultas futuras.
+
+**Limite:** FORCE RLS não foi ativado em lote. A configuração atual mantém RLS em todas as tabelas; aplicar FORCE indiscriminadamente pode alterar comportamento de funções proprietárias e rotinas. Qualquer ajuste deve ser avaliado por tabela e testado com contas reais.
