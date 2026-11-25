@@ -52,10 +52,19 @@ O RH e a apuração de jornada são ferramentas gerenciais e estimativas. Parâm
 
 Esses controles reduzem riscos, mas não representam garantia absoluta de segurança nem substituem backup, monitoramento e homologação.
 
+## Estado da revisão de prontidão — 25/11/2026
+
+- CI da PR #48: aprovado em duas execuções; PR ainda em rascunho e não integrada à `main`.
+- Histórico remoto Supabase: 36 versões, todas com arquivos canônicos ativos correspondentes no repositório.
+- Pasta ativa: 40 SQLs; quatro migrations-base históricas adicionais não registradas no histórico remoto aguardam `supabase migration list` e `supabase db push --dry-run` no computador. Não executar push/repair/reset antes dessa conferência.
+- Banco: 33/33 tabelas públicas com RLS; FORCE RLS desativado nas 33; nenhuma concessão direta de SELECT/INSERT/UPDATE/DELETE a `anon` nas tabelas examinadas.
+- Advisor de segurança: proteção contra senhas vazadas desativada. A exposição do schema `private` na Data API ainda precisa ser confirmada no painel.
+- Nenhuma alteração SQL de produção foi executada nesta revisão.
+
 ## Pendências antes de liberar clientes pagantes
 
 1. **Backup e restauração:** ainda não foi concluído um backup lógico completo nem uma restauração de ensaio em projeto separado. O plano Free não oferece backups gerenciados para download; banco, objetos do Storage e configurações de Auth/Edge Functions precisam de cópias próprias.
-2. **Histórico de migrations:** auditoria de 23/11/2026 encontrou 36 versões remotas e 39 arquivos locais, com três migrations remotas sem arquivo local, cinco arquivos locais sem correspondência no histórico e divergências de prefixos/duplicidades. Não executar `supabase db push`, `supabase db reset --linked` ou reparo do histórico antes de backup e reconciliação comprovada.
+2. **Histórico de migrations:** as 36 versões remotas agora têm arquivos canônicos ativos correspondentes. Há quatro migrations-base adicionais na pasta ativa, ausentes do histórico remoto; o dry-run do CLI precisa confirmar que não serão reaplicadas. Não executar `supabase db push`, `supabase db reset --linked` ou reparo do histórico antes dessa conferência.
 3. **Homologação em dispositivos:** confirmar instalação/atualização PWA, modo avião, câmera/scanner e upload/download no Android real e em desktop.
 4. **Homologação multiusuário:** testar duas contas reais em empresas distintas e a matriz completa owner/admin/manager/employee/viewer, inclusive documentos e módulos desativados.
 5. **Convite de funcionário:** testar envio, recebimento, aceite e definição de senha com e-mail de teste; confirmar SMTP e URLs de redirecionamento.
