@@ -66,7 +66,7 @@ assert.ok(html.includes('session=saved;showOfflineMode();return;'), 'Offline ses
 assert.ok(!/service_role|sb_secret_/i.test(html + modules), 'Private Supabase key found in browser code');
 
 for (const file of [
-  '20261111213213_employee_integrity.sql','202611080001_erp_modules.sql',
+  '202611070001_employees.sql','202611080001_erp_modules.sql',
   '202611080002_finance_links.sql','202611080003_protect_linked_finance.sql',
   '20261111213202_integrity_hardening.sql','20261111213207_product_categories.sql',
   '20261111213135_company_business_profiles.sql','20261111213209_product_barcode_integrity.sql',
